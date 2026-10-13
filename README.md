@@ -237,6 +237,9 @@ ou "Entrar na fila de espera" (nome + WhatsApp, com consentimento).
   9 abas direto do Google (título, autor, categoria, sinopse, dono, empréstimos em andamento e
   fila). Pode rodar de novo: exemplares que já existem são pulados. O link da planilha não fica no
   código, porque ela tem nomes de quem pegou livros.
+- **Capas**: as capas vieram da coluna "Capa" da planilha (imagem original de cada livro), reduzidas
+  e guardadas no Storage do site (`images/biblioteca/capas/<id>.jpg`). Para livros novos, use no
+  painel "Foto da capa" (foto tirada no celular, já reduzida) ou "Buscar capa" (Open Library).
 - Pedidos concluídos ou cancelados são apagados pelo painel depois de 6 meses.
 
 ## Segurança
