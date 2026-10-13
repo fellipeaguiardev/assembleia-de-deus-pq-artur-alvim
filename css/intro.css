@@ -1,0 +1,823 @@
+/* ============================================================
+   VINHETA DE ABERTURA — 6 s, estilo vinheta de estúdio
+   ------------------------------------------------------------
+   Linha do tempo (modo "full", sempre que o site é aberto):
+     0,0 s  ponto de luz + partículas convergindo (canvas, js/intro.js)
+     1,1 s  a luz vira linhas que desenham o contorno do brasão
+     2,3 s  formas geométricas se encaixam (overshoot + motion blur)
+     3,4 s  clarão: as formas formam o brasão completo (vetor, nítido)
+     3,8 s  brilho varre o brasão
+     4,1 s  o brasão sobe e o nome aparece
+     4,7 s  frase surge letra por letra
+     6,0 s  fim (some quando o site terminar de carregar)
+   Sem data-intro (JS falhou) ou com "reduzir movimento": só a tela
+   final, sem animação. Modo "short" (o site recarregou sozinho para
+   atualizar): entrada rápida de ~1,2 s.
+   ============================================================ */
+#splash {
+  --logo-w: min(62vw, 36vh, 330px);
+  --gap: clamp(18px, 3.2vh, 34px);
+  --name-size: clamp(22px, min(5.6vw, 4.4vh), 44px);
+  --sub-size: clamp(10.5px, min(2.6vw, 1.6vh), 14px);
+  --tag-size: clamp(15px, min(4vw, 2.7vh), 23px);
+  --pop: cubic-bezier(0.2, 0.9, 0.25, 1);
+  position: fixed;
+  inset: 0;
+  z-index: 2000000;
+  overflow: hidden;
+  color: #fff;
+  background: #01060f;
+  cursor: default;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    opacity 550ms var(--ease-out),
+    visibility 0s linear 550ms;
+}
+#splash.done {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* ---------- Fundo ---------- */
+.intro-bg {
+  position: absolute;
+  inset: -6%;
+  background:
+    radial-gradient(ellipse 62% 58% at 50% 46%, color-mix(in srgb, var(--c-primary) 62%, #000) 0%, color-mix(in srgb, var(--c-secondary) 72%, #000) 52%, #01050d 100%);
+}
+/* Vinheta escura nas bordas + granulação leve de filme */
+.intro-bg::before,
+.intro-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+.intro-bg::before {
+  background: radial-gradient(ellipse 75% 70% at 50% 48%, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
+}
+.intro-bg::after {
+  opacity: 0.07;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.intro-particles {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* ---------- Palco ---------- */
+.intro-stage {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  transition:
+    transform 550ms var(--ease-out),
+    filter 550ms var(--ease-out);
+}
+#splash:not(.ready) .intro-stage {
+  visibility: hidden; /* até o js/intro.js preparar a frase */
+}
+#splash.done .intro-stage {
+  transform: scale(1.06);
+  filter: blur(6px);
+}
+.intro-lockup {
+  position: relative;
+  width: var(--logo-w);
+  aspect-ratio: 402 / 497;
+  transform: translateY(calc(var(--shift, 0px) * -1));
+}
+.intro-logo {
+  position: absolute;
+  inset: 0;
+}
+.intro-logo > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.intro-defs {
+  width: 0 !important;
+  height: 0 !important;
+}
+/* O brasão é feito das próprias peças (.piece), sempre visíveis.
+   Sem filter no conjunto parado: a profundidade fica por conta do
+   brilho (.intro-halo) atrás dele. */
+.p-sheen,
+.intro-lines,
+.intro-core,
+.intro-flare,
+.intro-ring,
+.intro-flash,
+.intro-skip {
+  display: none;
+}
+.intro-halo {
+  position: absolute;
+  inset: -30% -45%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--c-accent) 55%, transparent), transparent 100%);
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* Brilho que atravessa o brasão: uma faixa clara recortada no formato do
+   próprio desenho (clipPath), então nunca vira um retângulo. */
+.p-sheen {
+  pointer-events: none;
+}
+.sheen-bar {
+  opacity: 0;
+}
+
+/* ---------- Textos ---------- */
+.intro-text {
+  position: absolute;
+  top: calc(100% + var(--gap));
+  left: 50%;
+  width: max-content;
+  max-width: 92vw;
+  transform: translateX(-50%);
+  text-align: center;
+}
+.intro-name {
+  font-family: var(--font-heading);
+  font-size: var(--name-size);
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  color: #fff;
+  text-wrap: balance;
+}
+.intro-sub {
+  margin-top: 0.7em;
+  font-family: var(--font-body);
+  font-size: var(--sub-size);
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--c-accent) 80%, #fff);
+}
+.intro-tagline {
+  margin-top: 1em;
+  font-family: var(--font-heading);
+  font-size: var(--tag-size);
+  font-style: italic;
+  font-weight: 400;
+  color: rgba(236, 243, 255, 0.92);
+}
+.intro-tagline .word {
+  display: inline-block;
+  white-space: nowrap;
+}
+.intro-tagline .ch {
+  display: inline-block;
+}
+#splash:not(.ready) .intro-tagline {
+  visibility: hidden;
+}
+/* Aparece só se a vinheta acabar e o site ainda estiver carregando */
+.intro-wait {
+  position: relative;
+  width: 120px;
+  height: 2px;
+  margin: 22px auto 0;
+  border-radius: 2px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.14);
+  opacity: 0;
+  transition: opacity 400ms ease;
+}
+.intro-wait span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 40%;
+  border-radius: 2px;
+  background: var(--c-accent);
+  animation: introBar 1.2s var(--ease-in-out) infinite;
+}
+html.intro-waiting .intro-wait {
+  opacity: 1;
+}
+
+/* ---------- Pular ---------- */
+.intro-skip {
+  position: absolute;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: calc(18px + env(safe-area-inset-bottom));
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.06);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  font: 600 13px/1 var(--font-body);
+  color: rgba(255, 255, 255, 0.78);
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    opacity 0.3s ease,
+    transform 160ms var(--ease-out);
+}
+.intro-skip:active {
+  transform: scale(0.96);
+}
+.intro-skip:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .intro-skip:hover {
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+  }
+}
+html.intro-ended .intro-skip {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ============================================================
+   MODO COMPLETO
+   ============================================================ */
+[data-intro="full"] .p-sheen,
+[data-intro="full"] .intro-lines,
+[data-intro="full"] .intro-core,
+[data-intro="full"] .intro-flare,
+[data-intro="full"] .intro-ring,
+[data-intro="full"] .intro-flash {
+  display: block;
+}
+[data-intro="full"] .intro-skip {
+  display: inline-flex;
+  animation: introFade 500ms ease 800ms both;
+}
+[data-intro="full"] .intro-bg {
+  animation: introBgZoom 6.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* 1) Ponto de luz */
+.intro-core {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 140px;
+  height: 140px;
+  margin: -70px 0 0 -70px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0 9%, rgba(200, 230, 255, 0.95) 17%, rgba(90, 160, 255, 0.4) 38%, transparent 68%);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+[data-intro="full"] .intro-core {
+  animation: introCore 1.4s cubic-bezier(0.5, 0, 0.3, 1) both;
+}
+/* Risco horizontal de lente no momento em que a luz "explode" em linhas */
+.intro-flare {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 120vmax;
+  height: 3px;
+  margin: -1.5px 0 0 -60vmax;
+  background: linear-gradient(90deg, transparent, rgba(150, 205, 255, 0.55) 30%, #fff 50%, rgba(150, 205, 255, 0.55) 70%, transparent);
+  box-shadow: 0 0 18px 2px rgba(120, 185, 255, 0.55);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+[data-intro="full"] .intro-flare {
+  animation: introFlare 0.75s cubic-bezier(0.2, 0.8, 0.2, 1) 1.02s both;
+}
+
+/* 2) Linhas desenham o contorno */
+.intro-lines {
+  filter: drop-shadow(0 0 3px rgba(150, 210, 255, 0.95)) drop-shadow(0 0 10px rgba(80, 160, 255, 0.7));
+}
+.ln {
+  stroke: #d6ebff;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+[data-intro="full"] .intro-lines {
+  animation:
+    introDim 0.5s ease 2.55s both,
+    introVanish 0.14s linear 3.48s both;
+}
+[data-intro="full"] .ln {
+  animation: introDraw var(--dur, 0.9s) cubic-bezier(0.65, 0, 0.35, 1) var(--at) both;
+}
+.ln-shield {
+  --at: 1.12s;
+  --dur: 1.05s;
+}
+.ln-band {
+  --at: 1.4s;
+  --dur: 0.7s;
+}
+.ln-split {
+  --at: 1.55s;
+  --dur: 0.6s;
+}
+.ln-flame {
+  --at: 1.6s;
+  --dur: 0.85s;
+}
+.ln-ribbon {
+  --at: 1.72s;
+  --dur: 0.75s;
+}
+.ln-ribbon2 {
+  --at: 1.84s;
+  --dur: 0.75s;
+}
+
+/* 3) Formas se encaixam (overshoot + motion blur) */
+[data-intro="full"] .piece {
+  will-change: transform, filter, opacity;
+  animation: var(--snap) 0.56s var(--pop) var(--at) both;
+}
+.p-band {
+  --snap: introSnapDown;
+  --at: 2.3s;
+  transform-origin: 50% 27%;
+}
+.p-lt {
+  --snap: introSnapLeft;
+  --at: 2.36s;
+  transform-origin: 50% 41%;
+}
+.p-r {
+  --snap: introSnapRight;
+  --at: 2.42s;
+  transform-origin: 50% 60%;
+}
+.p-lb {
+  --snap: introSnapUp;
+  --at: 2.48s;
+  transform-origin: 32% 55%;
+}
+.p-cup {
+  --snap: introPop;
+  --at: 2.52s;
+  transform-origin: 50.5% 21.5%;
+}
+.p-flame {
+  --snap: introRise;
+  --at: 2.6s;
+  transform-origin: 50.5% 21%;
+}
+.p-sword {
+  --snap: introSnapDown;
+  --at: 2.7s;
+  transform-origin: 66% 82%;
+}
+.p-dove {
+  --snap: introPop;
+  --at: 2.74s;
+  transform-origin: 32% 41%;
+}
+.p-letters {
+  --snap: introPop;
+  --at: 2.8s;
+  transform-origin: 68% 42%;
+}
+.p-ribbon {
+  --snap: introUnfurl;
+  --at: 2.9s;
+  transform-origin: 50% 92%;
+}
+
+/* 4) Clarão: o brasão completo aparece */
+.intro-flash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, #fff 0%, rgba(225, 240, 255, 0.9) 16%, rgba(120, 180, 255, 0.28) 42%, transparent 70%);
+  mix-blend-mode: screen;
+  opacity: 0;
+  pointer-events: none;
+}
+[data-intro="full"] .intro-flash {
+  animation: introFlash 0.62s cubic-bezier(0.3, 0, 0.2, 1) 3.34s both;
+}
+.intro-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 44vmin;
+  height: 44vmin;
+  margin: -22vmin 0 0 -22vmin;
+  border-radius: 50%;
+  border: 2px solid rgba(210, 235, 255, 0.9);
+  box-shadow:
+    0 0 26px rgba(120, 185, 255, 0.6),
+    inset 0 0 26px rgba(120, 185, 255, 0.45);
+  opacity: 0;
+  pointer-events: none;
+}
+[data-intro="full"] .intro-ring {
+  animation: introRing 0.95s cubic-bezier(0.1, 0.7, 0.3, 1) 3.42s both;
+}
+[data-intro="full"] .intro-halo {
+  animation:
+    introHalo 1.2s ease-out 3.46s both,
+    introBreathe 3s ease-in-out 4.7s infinite alternate;
+}
+
+/* 5) Brilho varrendo o brasão */
+[data-intro="full"] .sheen-bar {
+  animation: introSheen 1s cubic-bezier(0.45, 0, 0.25, 1) 3.8s both;
+}
+
+/* 6) Brasão sobe, nome e frase */
+[data-intro="full"] .intro-lockup {
+  animation: introShift 0.85s cubic-bezier(0.22, 1, 0.36, 1) 4.05s both;
+}
+[data-intro="full"] .intro-name {
+  animation: introRiseText 0.8s cubic-bezier(0.22, 1, 0.36, 1) 4.25s both;
+}
+[data-intro="full"] .intro-sub {
+  animation: introTrack 0.9s cubic-bezier(0.22, 1, 0.36, 1) 4.45s both;
+}
+[data-intro="full"] .intro-tagline .ch {
+  animation: introLetter 0.42s cubic-bezier(0.2, 0.8, 0.2, 1) calc(4.75s + var(--i) * var(--step, 38ms)) both;
+}
+
+/* ============================================================
+   MODO CURTO (outras visitas no mesmo dia)
+   ============================================================ */
+[data-intro="short"] .intro-logo {
+  animation: introLogoIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+[data-intro="short"] .intro-halo {
+  animation: introHalo 0.8s ease-out both;
+}
+[data-intro="short"] .intro-name {
+  animation: introRiseText 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
+}
+[data-intro="short"] .intro-sub {
+  animation: introRiseText 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+}
+[data-intro="short"] .intro-tagline .ch {
+  animation: introLetter 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) calc(0.3s + var(--i) * 12ms) both;
+}
+
+/* Segurança extra: com "reduzir movimento", nada se mexe. */
+@media (prefers-reduced-motion: reduce) {
+  #splash *,
+  #splash *::before,
+  #splash *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  #splash .p-sheen,
+  #splash .intro-lines,
+  #splash .intro-core,
+  #splash .intro-flare,
+  #splash .intro-ring,
+  #splash .intro-flash {
+    display: none;
+  }
+}
+
+/* ============================================================
+   KEYFRAMES
+   ============================================================ */
+@keyframes introFade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes introBgZoom {
+  from {
+    transform: scale(1.14);
+    filter: brightness(0.6);
+  }
+}
+@keyframes introCore {
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  10% {
+    opacity: 1;
+    transform: scale(0.3);
+  }
+  68% {
+    transform: scale(0.75);
+  }
+  80% {
+    opacity: 1;
+    transform: scale(1.7);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+}
+@keyframes introFlare {
+  0% {
+    opacity: 0;
+    transform: scaleX(0) scaleY(1);
+  }
+  25% {
+    opacity: 1;
+    transform: scaleX(1) scaleY(1.4);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleX(1.2) scaleY(0.2);
+  }
+}
+@keyframes introDraw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes introDim {
+  to {
+    opacity: 0.35;
+  }
+}
+@keyframes introVanish {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes introAppear {
+  from {
+    opacity: 0;
+  }
+}
+/* Cada encaixe: entra esticado e borrado na direção do movimento,
+   passa um pouco do ponto, volta e assenta. */
+@keyframes introSnapLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-80%) scaleX(1.7);
+    filter: blur(14px);
+  }
+  40% {
+    opacity: 1;
+    filter: blur(3px);
+  }
+  62% {
+    transform: translateX(4%) scaleX(0.96);
+    filter: blur(0);
+  }
+  82% {
+    transform: translateX(-1.2%) scaleX(1.01);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+@keyframes introSnapRight {
+  0% {
+    opacity: 0;
+    transform: translateX(80%) scaleX(1.7);
+    filter: blur(14px);
+  }
+  40% {
+    opacity: 1;
+    filter: blur(3px);
+  }
+  62% {
+    transform: translateX(-4%) scaleX(0.96);
+    filter: blur(0);
+  }
+  82% {
+    transform: translateX(1.2%) scaleX(1.01);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+@keyframes introSnapDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-70%) scaleY(1.8);
+    filter: blur(14px);
+  }
+  40% {
+    opacity: 1;
+    filter: blur(3px);
+  }
+  62% {
+    transform: translateY(3%) scaleY(0.95);
+    filter: blur(0);
+  }
+  82% {
+    transform: translateY(-1%) scaleY(1.01);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+@keyframes introSnapUp {
+  0% {
+    opacity: 0;
+    transform: translate(-30%, 60%) scale(1.25, 1.6);
+    filter: blur(14px);
+  }
+  40% {
+    opacity: 1;
+    filter: blur(3px);
+  }
+  62% {
+    transform: translate(1.5%, -3%) scale(0.97);
+    filter: blur(0);
+  }
+  82% {
+    transform: translate(-0.5%, 1%) scale(1.01);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+@keyframes introPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.2);
+    filter: blur(10px);
+  }
+  45% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  62% {
+    transform: scale(1.16);
+  }
+  82% {
+    transform: scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+@keyframes introRise {
+  0% {
+    opacity: 0;
+    transform: translateY(18%) scale(0.3, 0.1);
+    filter: blur(10px);
+  }
+  45% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  62% {
+    transform: translateY(-2%) scale(0.92, 1.18);
+  }
+  82% {
+    transform: translateY(0.5%) scale(1.03, 0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+@keyframes introUnfurl {
+  0% {
+    opacity: 0;
+    transform: scaleX(0.05) scaleY(0.6);
+    filter: blur(12px);
+  }
+  40% {
+    opacity: 1;
+    filter: blur(2px);
+  }
+  62% {
+    transform: scaleX(1.08) scaleY(1.02);
+    filter: blur(0);
+  }
+  82% {
+    transform: scaleX(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+@keyframes introFlash {
+  0% {
+    opacity: 0;
+  }
+  24% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes introRing {
+  0% {
+    opacity: 0;
+    transform: scale(0.25);
+  }
+  6% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.7);
+  }
+}
+@keyframes introHalo {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+}
+@keyframes introBreathe {
+  to {
+    opacity: 0.25;
+  }
+}
+@keyframes introSheen {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(620px);
+  }
+}
+@keyframes introShift {
+  from {
+    transform: translateY(0);
+  }
+}
+@keyframes introRiseText {
+  from {
+    opacity: 0;
+    transform: translateY(0.55em);
+    filter: blur(8px);
+  }
+}
+@keyframes introTrack {
+  from {
+    opacity: 0;
+    letter-spacing: 0.75em;
+    filter: blur(4px);
+  }
+}
+@keyframes introLetter {
+  0% {
+    opacity: 0;
+    transform: translateY(0.5em) scale(1.3);
+    filter: blur(6px);
+    text-shadow: 0 0 14px rgba(170, 215, 255, 1);
+  }
+  55% {
+    opacity: 1;
+    text-shadow: 0 0 10px rgba(170, 215, 255, 0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    text-shadow: none;
+  }
+}
+@keyframes introLogoIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+}
+@keyframes introBar {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}

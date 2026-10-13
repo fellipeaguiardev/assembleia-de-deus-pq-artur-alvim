@@ -1,0 +1,6 @@
+Bíblia Livre (BLIVRE)
+Copyright © 2018 Diego Santos, Mario Sérgio e Marco Teles
+Atualizada a partir da tradução de 1819 de João Ferreira de Almeida (Textus Receptus).
+Licença: Creative Commons Atribuição 4.0 Brasil (CC BY 4.0 BR)
+Fonte usada: https://ebible.org/porbr2018/ (formato VPL), baixado em 10/10/2026.
+Os arquivos JSON desta pasta foram apenas reorganizados por livro; o texto não foi alterado.

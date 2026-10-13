@@ -1,0 +1,1111 @@
+/* ============================================================
+   EBD, PALAVRA DIÁRIA, MODO OUVIR e convite para instalar o app
+   ============================================================ */
+
+/* ---------- Cabeçalho da EBD ---------- */
+.ebd-hero {
+  padding: 64px 0 40px;
+  background:
+    radial-gradient(70% 90% at 100% 0%, color-mix(in srgb, var(--c-accent) 22%, transparent), transparent 70%),
+    var(--c-surface);
+  border-bottom: 1px solid var(--c-line);
+}
+.ebd-hero h1 {
+  margin: 12px 0 10px;
+  font-size: clamp(36px, 6vw, 58px);
+  letter-spacing: -0.03em;
+}
+.ebd-hero .lead {
+  max-width: 600px;
+  font-size: 17px;
+  color: var(--c-text-soft);
+}
+.ebd-schedule {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--c-tint);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--c-primary);
+}
+.ebd-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 20px;
+}
+.ebd-body {
+  padding-top: 36px;
+  padding-bottom: 88px;
+}
+.ebd-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--c-accent);
+  color: var(--c-secondary);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* ---------- Lição da semana ---------- */
+.ebd-current-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+  margin-bottom: 36px;
+}
+.ebd-current {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  padding: 26px;
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(80% 120% at 100% 0%, color-mix(in srgb, var(--c-accent) 35%, transparent), transparent 60%),
+    linear-gradient(160deg, var(--c-primary), var(--c-deep));
+  color: #fff;
+  box-shadow: var(--shadow-md);
+  transition: transform 180ms var(--ease-out), box-shadow 0.2s ease;
+}
+.ebd-current .ebd-chip {
+  justify-self: start;
+}
+.ebd-current-meta {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.72);
+}
+.ebd-current-title {
+  font-family: var(--font-heading);
+  font-size: clamp(22px, 3vw, 28px);
+  font-weight: 600;
+  line-height: 1.2;
+}
+.ebd-current-ref {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.82);
+}
+.ebd-current-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--c-accent);
+}
+.ebd-current:active {
+  transform: scale(0.985);
+}
+@media (hover: hover) and (pointer: fine) {
+  .ebd-current:hover {
+    box-shadow: var(--shadow-lg);
+  }
+  .ebd-current:hover .ebd-current-cta .ic {
+    transform: translateX(3px);
+  }
+}
+.ebd-current-cta .ic {
+  transition: transform 0.25s var(--ease-out);
+}
+
+/* ---------- Lista de lições ---------- */
+.ebd-quarter-block + .ebd-quarter-block {
+  margin-top: 40px;
+}
+.ebd-quarter-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  margin-bottom: 18px;
+}
+.ebd-quarter-head h2 {
+  margin-top: 8px;
+  font-size: clamp(24px, 3.2vw, 32px);
+  letter-spacing: -0.02em;
+}
+.ebd-quarter-head p {
+  margin-top: 4px;
+  font-size: 14px;
+  color: var(--c-text-soft);
+}
+.ebd-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ebd-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-line);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 160ms var(--ease-out);
+}
+a.ebd-row:active {
+  transform: scale(0.99);
+}
+@media (hover: hover) and (pointer: fine) {
+  a.ebd-row:hover {
+    border-color: color-mix(in srgb, var(--c-primary) 35%, transparent);
+    box-shadow: var(--shadow-sm);
+  }
+}
+.ebd-row > .ic {
+  flex: 0 0 auto;
+  color: var(--c-text-faint);
+}
+.ebd-num {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--c-tint);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--c-primary);
+}
+.ebd-row-main {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.ebd-row-main strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15.5px;
+  color: var(--c-secondary);
+}
+.ebd-row-main small {
+  font-size: 12.5px;
+  color: var(--c-text-faint);
+}
+.ebd-row.is-current {
+  border-color: color-mix(in srgb, var(--c-accent) 70%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-accent) 22%, transparent);
+}
+.ebd-row.is-current .ebd-num {
+  background: var(--c-primary);
+  color: #fff;
+}
+.ebd-row.is-soon {
+  padding-top: 7px;
+  padding-bottom: 7px;
+  background: transparent;
+  border-style: dashed;
+}
+.ebd-row.is-soon .ebd-num {
+  width: 28px;
+  height: 28px;
+  font-size: 13px;
+}
+.ebd-row.is-soon strong {
+  color: var(--c-text-faint);
+  font-weight: 600;
+}
+
+/* ---------- Arquivo ---------- */
+.ebd-archive {
+  margin-top: 56px;
+}
+.ebd-archive h2 {
+  font-size: 24px;
+}
+.ebd-archive h3 {
+  margin: 22px 0 10px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--c-text-faint);
+}
+.ebd-archive-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px;
+}
+.ebd-archive-card {
+  display: grid;
+  gap: 4px;
+  padding: 16px;
+  border-radius: 14px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-line);
+  transition: border-color 0.2s ease;
+}
+.ebd-archive-card small {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-accent-ink);
+}
+.ebd-archive-card strong {
+  color: var(--c-secondary);
+}
+@media (hover: hover) and (pointer: fine) {
+  .ebd-archive-card:hover {
+    border-color: color-mix(in srgb, var(--c-primary) 35%, transparent);
+  }
+}
+.ebd-note {
+  margin-top: 40px;
+  padding-top: 18px;
+  border-top: 1px solid var(--c-line);
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--c-text-faint);
+}
+
+/* ---------- Lição ---------- */
+.ebd-lesson-head {
+  padding: 8px 0 32px;
+  background: var(--c-surface);
+  border-bottom: 1px solid var(--c-line);
+}
+.ebd-lesson-head .back-link {
+  margin: 24px 0 18px;
+}
+.ebd-lesson-head .eyebrow {
+  display: flex;
+}
+.ebd-lesson-head h1 {
+  max-width: 820px;
+  margin: 10px 0 8px;
+  font-size: clamp(32px, 5vw, 52px);
+  letter-spacing: -0.03em;
+}
+.ebd-theme {
+  color: var(--c-text-soft);
+}
+.ebd-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 20px;
+}
+.ebd-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #fff4dc;
+  color: #7a4b00;
+  font-size: 14px;
+  font-weight: 600;
+}
+.ebd-lesson-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 24px;
+  align-items: start;
+  padding-top: 28px;
+  padding-bottom: 32px;
+}
+.ebd-lesson-main,
+.ebd-lesson-side {
+  display: grid;
+  gap: 16px;
+}
+.ebd-lesson-side {
+  position: sticky;
+  top: calc(var(--header-h) + 16px);
+}
+.ebd-lesson-side .ebd-note {
+  margin-top: 4px;
+  padding-top: 0;
+  border-top: 0;
+}
+.ebd-card {
+  padding: 24px;
+  border-radius: var(--radius);
+  background: var(--c-surface);
+  border: 1px solid var(--c-line);
+}
+.ebd-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-bottom: 14px;
+}
+.ebd-card-head a {
+  font-weight: 600;
+  color: var(--c-primary);
+}
+.ebd-label {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--c-accent-ink);
+}
+.ebd-card > .ebd-label {
+  margin-bottom: 12px;
+}
+.ebd-golden {
+  background:
+    radial-gradient(90% 120% at 0% 0%, color-mix(in srgb, var(--c-accent) 18%, transparent), transparent 60%),
+    var(--c-surface);
+}
+.ebd-golden blockquote {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: clamp(20px, 2.6vw, 25px);
+  line-height: 1.5;
+  color: var(--c-secondary);
+  text-wrap: pretty;
+}
+.ebd-ref {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-top: 14px;
+}
+.ebd-ref a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  color: var(--c-primary);
+}
+.ebd-sub {
+  margin: 16px 0 8px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 700;
+}
+.ebd-verses {
+  display: grid;
+  gap: 6px;
+  font-family: var(--font-heading);
+  font-size: 18px;
+  line-height: 1.75;
+}
+.ebd-verses sup {
+  margin-right: 4px;
+  font-family: var(--font-body);
+  font-size: 0.6em;
+  font-weight: 700;
+  color: var(--c-accent-ink);
+}
+.ebd-muted {
+  color: var(--c-text-soft);
+}
+.ebd-muted a {
+  color: var(--c-primary);
+  text-decoration: underline;
+}
+.ebd-idea p {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  line-height: 1.5;
+  color: var(--c-secondary);
+}
+.ebd-rich {
+  display: grid;
+  gap: 12px;
+  font-size: 16.5px;
+  line-height: 1.75;
+}
+.ebd-rich ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
+}
+.ebd-summary > .ebd-label,
+.ebd-questions .ebd-label {
+  margin-bottom: 0;
+}
+.ebd-summary > .ebd-label {
+  margin-bottom: 12px;
+}
+.ebd-questions ol {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: q;
+}
+.ebd-questions li {
+  position: relative;
+  padding: 14px 16px 14px 52px;
+  border-radius: 14px;
+  background: var(--c-bg);
+  counter-increment: q;
+}
+.ebd-questions li::before {
+  content: counter(q);
+  position: absolute;
+  left: 14px;
+  top: 13px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--c-primary);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+.ebd-q {
+  font-weight: 600;
+  color: var(--c-secondary);
+}
+.ebd-questions details {
+  margin-top: 8px;
+}
+.ebd-questions summary {
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--c-primary);
+}
+.ebd-questions details div {
+  margin-top: 8px;
+  color: var(--c-text-soft);
+}
+.ebd-daily ul,
+.ebd-links ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ebd-daily li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--c-line);
+}
+.ebd-daily li:last-child {
+  border-bottom: 0;
+}
+.ebd-daily li a {
+  font-weight: 600;
+  color: var(--c-primary);
+  text-align: right;
+}
+.ebd-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ebd-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--c-primary);
+}
+.ebd-check input:checked + span {
+  color: var(--c-text-faint);
+  text-decoration: line-through;
+}
+.ebd-daily-progress {
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--c-text-soft);
+}
+.ebd-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+  font-weight: 600;
+  color: var(--c-primary);
+}
+.ebd-lesson-nav {
+  --r-line: var(--c-line);
+  --r-text: var(--c-secondary);
+  --r-faint: var(--c-text-faint);
+  --r-btn: var(--c-tint);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding-bottom: 88px;
+}
+@media (max-width: 960px) {
+  .ebd-lesson-grid {
+    grid-template-columns: 1fr;
+  }
+  .ebd-lesson-side {
+    position: static;
+  }
+}
+@media (max-width: 600px) {
+  .ebd-card {
+    padding: 20px 18px;
+  }
+  .ebd-lesson-nav {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- EBD na página inicial ---------- */
+.ebd-home-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.ebd-home-head h2 {
+  margin-top: 8px;
+  font-size: clamp(28px, 3.6vw, 38px);
+  letter-spacing: -0.025em;
+}
+.ebd-home .ebd-current-grid {
+  margin-bottom: 0;
+}
+
+/* ---------- Painel (EBD) ---------- */
+.ebd-badge {
+  display: inline-flex;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.st-draft {
+  background: #eef0f4;
+  color: #4b5160;
+}
+.st-review {
+  background: #fff1d6;
+  color: #8a5300;
+}
+.st-live {
+  background: #e3f5ea;
+  color: #1d6b3a;
+}
+.st-scheduled {
+  background: #e4ecff;
+  color: #1f4fbf;
+}
+.ebd-week {
+  border: 1.5px solid color-mix(in srgb, var(--c-accent) 70%, transparent);
+}
+.ebd-week-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.ebd-week-row > div {
+  display: grid;
+  flex: 1;
+  min-width: 200px;
+}
+.ebd-week-row span {
+  color: #6b7080;
+}
+.ebd-lesson-item .meta {
+  display: grid;
+}
+.ebd-lesson-item .meta small {
+  color: #6b7080;
+}
+.ebd-lesson-item.is-week {
+  border-color: color-mix(in srgb, var(--c-accent) 70%, transparent);
+}
+.ebd-qform > summary {
+  cursor: pointer;
+  list-style: none;
+}
+.ebd-qform > summary::-webkit-details-marker {
+  display: none;
+}
+.ebd-qform > summary h3 {
+  display: inline;
+}
+.ebd-qform > summary::after {
+  content: " ▾";
+  color: #6b7080;
+}
+.ebd-qform[open] > summary {
+  margin-bottom: 14px;
+}
+.ebd-editor-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+.ref-hint {
+  display: block;
+  min-height: 18px;
+  margin-top: 4px;
+  font-size: 12.5px;
+}
+.ref-hint span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.ref-ok {
+  color: #1d6b3a;
+}
+.ref-bad,
+.ebd-warn {
+  color: #b42318;
+}
+.ebd-warn {
+  display: block;
+  margin-top: 4px;
+  font-size: 12.5px;
+}
+
+/* ---------- Palavra Diária ---------- */
+.palavra-hero {
+  padding: 72px 0 56px;
+  background:
+    radial-gradient(60% 80% at 50% 0%, color-mix(in srgb, var(--c-accent) 26%, transparent), transparent 70%),
+    var(--c-surface);
+  border-bottom: 1px solid var(--c-line);
+  text-align: center;
+}
+.palavra-hero .eyebrow {
+  justify-content: center;
+}
+.palavra-verse {
+  margin: 26px 0 0;
+}
+.palavra-verse p {
+  font-family: var(--font-heading);
+  font-size: clamp(26px, 4.4vw, 40px);
+  line-height: 1.38;
+  letter-spacing: -0.015em;
+  color: var(--c-secondary);
+  text-wrap: balance;
+}
+.palavra-verse footer {
+  margin-top: 18px;
+  font-size: 15px;
+  color: var(--c-text-faint);
+}
+.palavra-verse footer a {
+  font-weight: 700;
+  color: var(--c-primary);
+}
+.palavra-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 28px;
+}
+.palavra-more {
+  padding-top: 36px;
+  padding-bottom: 88px;
+}
+.palavra-more h2 {
+  margin-bottom: 12px;
+  font-size: 22px;
+}
+.palavra-days {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 28px;
+  padding: 0;
+  list-style: none;
+}
+.palavra-days a {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-line);
+}
+.palavra-days a span {
+  min-width: 56px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text-faint);
+}
+.palavra-days a strong {
+  flex: 1;
+  color: var(--c-secondary);
+}
+.palavra-days a .ic {
+  color: var(--c-text-faint);
+}
+.palavra-home-card {
+  display: grid;
+  gap: 12px;
+  padding-top: 30px;
+  padding-bottom: 30px;
+  border-radius: var(--radius-lg);
+  text-align: center;
+  justify-items: center;
+}
+.palavra-home-text {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  width: 100%;
+  max-width: 760px;
+  font-family: var(--font-heading);
+  font-size: clamp(21px, 3vw, 28px);
+  line-height: 1.45;
+  color: var(--c-secondary);
+  text-wrap: balance;
+}
+.palavra-home-text .bible-skel {
+  width: 80%;
+  height: 20px;
+}
+.palavra-home-text .bible-skel.short {
+  width: 50%;
+}
+.palavra-home-ref {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  color: var(--c-primary);
+}
+.palavra-home-ref .ic {
+  transition: transform 0.25s var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .palavra-home-card:hover .palavra-home-ref .ic {
+    transform: translateX(3px);
+  }
+}
+
+/* ---------- Convite para instalar o app ---------- */
+.install-hint {
+  display: none;
+  align-items: center;
+  gap: 14px;
+  margin: 8px 0 24px;
+  padding: 16px;
+  border-radius: var(--radius);
+  background: var(--c-tint);
+}
+body.can-install .install-hint {
+  display: flex;
+}
+.install-hint-icon img {
+  border-radius: 10px;
+}
+.install-hint > div {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+}
+.install-hint strong {
+  color: var(--c-secondary);
+}
+.install-hint span {
+  font-size: 13.5px;
+  color: var(--c-text-soft);
+}
+@media (max-width: 480px) {
+  .install-hint {
+    flex-wrap: wrap;
+  }
+  .install-hint .btn {
+    width: 100%;
+  }
+}
+
+/* ============================================================
+   MODO OUVIR
+   ============================================================ */
+.is-reading {
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--c-accent) 28%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--c-accent) 28%, transparent);
+  transition:
+    background-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+.bible-reader[data-theme="escuro"] .is-reading {
+  background: rgba(134, 171, 202, 0.3);
+  box-shadow: 0 0 0 3px rgba(134, 171, 202, 0.3);
+}
+.listen-trigger.is-active {
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+  color: var(--c-secondary);
+}
+.listen-bar {
+  --p: 0%;
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  z-index: 905;
+  max-width: 760px;
+  margin: 0 auto;
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--c-deep) 95%, transparent);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  color: #fff;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  transform: translateY(calc(100% + 32px));
+  transition: transform 380ms var(--ease-drawer);
+}
+.listen-bar.open {
+  transform: none;
+}
+.listen-progress {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.12);
+}
+.listen-progress span {
+  display: block;
+  width: var(--p);
+  height: 100%;
+  background: var(--c-accent);
+  transition: width 0.4s ease;
+}
+.listen-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px 8px 14px;
+}
+.listen-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--c-accent);
+}
+.listen-bar.is-playing .listen-icon {
+  animation: listenPulse 1.6s ease-in-out infinite;
+}
+@keyframes listenPulse {
+  50% {
+    background: rgba(134, 171, 202, 0.3);
+  }
+}
+.listen-meta {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.listen-kicker {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--c-accent);
+}
+.listen-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14.5px;
+}
+.listen-controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+/* Tocar/pausar: os dois ícones ficam empilhados e trocam com a mesma
+   transição do player do podcast (a regra de lá só vale dentro de .player). */
+.listen-bar.is-playing .player-main .i-play {
+  opacity: 0;
+  filter: blur(3px);
+  transform: scale(0.7);
+}
+.listen-bar.is-playing .player-main .i-pause {
+  opacity: 1;
+  filter: none;
+  transform: none;
+}
+.listen-rate {
+  min-width: 46px;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #fff;
+}
+.listen-settings {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 14px;
+}
+.listen-settings[hidden] {
+  display: none;
+}
+.listen-field {
+  display: grid;
+  gap: 4px;
+  font-weight: 600;
+}
+.listen-field select {
+  min-height: 38px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font: inherit;
+}
+.listen-field select option {
+  color: #111;
+}
+.listen-settings .check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+}
+.listen-settings .check input {
+  accent-color: var(--c-accent);
+}
+.listen-settings .link-btn {
+  justify-self: start;
+  color: var(--c-accent);
+}
+.listen-note {
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.65);
+}
+body.has-listen .toast {
+  bottom: calc(100px + env(safe-area-inset-bottom));
+}
+body.has-listen .bible-selection {
+  bottom: calc(96px + env(safe-area-inset-bottom));
+}
+body.has-listen main {
+  padding-bottom: 80px;
+}
+@media (max-width: 520px) {
+  .listen-icon,
+  .listen-gear-label {
+    display: none;
+  }
+  .listen-inner {
+    gap: 4px;
+    padding-left: 12px;
+  }
+  .listen-bar .player-btn {
+    width: 36px;
+    height: 36px;
+  }
+  .listen-bar .player-main {
+    width: 42px;
+    height: 42px;
+  }
+}
+
+/* ---------- Painel: importação automática ---------- */
+.ebd-sync .check {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 10px 0;
+  line-height: 1.45;
+}
+.ebd-sync .check input {
+  margin-top: 3px;
+}
+.ebd-sync-mags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 18px;
+  padding-left: 26px;
+}
+.ebd-sync-mags > span {
+  font-size: 13px;
+  font-weight: 700;
+  color: #6b7080;
+}
+.ebd-sync-mags .check {
+  margin: 4px 0;
+}
+.ebd-sync-status {
+  flex: 1;
+  font-size: 13px;
+  color: #6b7080;
+}
+
+/* ---------- Lição que muda de dia (ex.: domingo de Ceia → terça) ---------- */
+.ebd-current-moved {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.9);
+}
+.ebd-current-moved .ic {
+  flex: none;
+  margin-top: 2px;
+}
+.ebd-moved {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: 820px;
+  margin-top: 14px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--c-line-strong);
+  background: var(--c-tint);
+  color: var(--c-text);
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+.ebd-moved .ic {
+  flex: none;
+  margin-top: 3px;
+  color: var(--c-primary);
+}
+

@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+
+Sitemap: https://assembleia-de-deus-pq-artur-alvim.vercel.app/sitemap.xml

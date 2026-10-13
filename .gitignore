@@ -1,0 +1,25 @@
+# ------------------------------------------------------------
+# O que NÃO vai para o GitHub
+# ------------------------------------------------------------
+
+# Segredos e configurações da conta (as chaves ficam só na Vercel)
+.env
+.env.*
+.vercel/
+scripts/vercel-projeto.json
+
+# Cópias de segurança tiradas do banco (dados da igreja)
+supabase/backups/
+supabase/.temp/
+
+# Versão antiga do site no Netlify (substituída pela pasta api/)
+_legado-netlify/
+
+# Editor, sistema e dependências locais
+.vscode/
+.idea/
+node_modules/
+*.log
+.DS_Store
+Thumbs.db
+desktop.ini
