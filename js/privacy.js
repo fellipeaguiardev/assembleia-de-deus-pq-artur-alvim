@@ -168,7 +168,7 @@ function privacyPageHTML() {
         <li><strong>Biblioteca dos Jovens:</strong> nome e WhatsApp, apenas se você pedir um livro pelo site, para a equipe combinar o
         empréstimo. Quem pega livros fica registrado (nome, WhatsApp, datas de retirada e devolução) para controlar devoluções,
         renovações e a fila de espera. Esses dados ficam visíveis só para a equipe; no site aparece apenas se o livro está disponível.</li>
-        <li><strong>Painel administrativo:</strong> e-mail e sessão de login de quem administra o site.</li>
+        <li><strong>Painel administrativo:</strong> e-mail e sessão de login de quem administra o site e, a cada entrada no painel, um registro de segurança (data, navegador, cidade aproximada e endereço IP) usado no e-mail de confirmação de acesso.</li>
       </ul>
 
       <h2>3. Para que usamos</h2>
@@ -193,7 +193,7 @@ function privacyPageHTML() {
         <div role="row"><span role="cell">biblioteca-pedidos, biblioteca-contato</span><span role="cell">Lembra quais livros você pediu neste aparelho e o nome e WhatsApp que você digitou, para não precisar digitar de novo</span><span role="cell">Essencial</span></div>
         <div role="row"><span role="cell">intro-curta</span><span role="cell">Quando o site recarrega sozinho para atualizar, mostra a abertura curta em vez da vinheta (apagado logo em seguida)</span><span role="cell">Essencial</span></div>
         <div role="row"><span role="cell">prayer-last-sent</span><span role="cell">Evita envios repetidos do formulário (guarda só o horário do último envio, até fechar a aba)</span><span role="cell">Essencial</span></div>
-        <div role="row"><span role="cell">sb-*-auth-token</span><span role="cell">Sessão do painel, só para administradores</span><span role="cell">Essencial</span></div>
+        <div role="row"><span role="cell">sb-*-auth-token, admin-email</span><span role="cell">Sessão do painel e o último e-mail usado para entrar, só para administradores</span><span role="cell">Essencial</span></div>
         <div role="row"><span role="cell">YouTube, Spotify, Google Maps</span><span role="cell">Exibir vídeos, o player do podcast e o mapa. Só carregam com a sua permissão</span><span role="cell">Terceiros</span></div>
       </div>
       <p>Os itens essenciais ficam apenas no seu navegador e não identificam você. Você pode mudar sua escolha sobre conteúdos de
@@ -212,7 +212,7 @@ function privacyPageHTML() {
       guarda só pelo tempo necessário para o atendimento (no máximo 12 meses).
       Pedidos de livros concluídos ou cancelados são apagados depois de 6 meses; o histórico de empréstimos da biblioteca fica guardado
       enquanto for útil para controlar o acervo e pode ser apagado a seu pedido.
-      Dados de acesso técnicos seguem os prazos da hospedagem.</p>
+      Os registros de entrada no painel são apagados depois de 30 dias. Dados de acesso técnicos seguem os prazos da hospedagem.</p>
 
       <h2>7. Seus direitos</h2>
       <p>Pela LGPD (art. 18), você pode pedir: confirmação de que tratamos seus dados, acesso, correção, anonimização ou exclusão,

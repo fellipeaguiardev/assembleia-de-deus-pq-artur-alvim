@@ -12,9 +12,6 @@ window.APP_CONFIG = {
   SUPABASE_URL: "https://rtludbkopxbhiwlwycid.supabase.co",
   SUPABASE_KEY: "sb_publishable_eRsl3xo3p7Qe_DanIB4Z7A_5V6Q0p9m",
 
-  // E-mail da conta administradora cadastrada no Supabase Auth.
-  ADMIN_EMAIL: "adparque@gmail.com",
-
   // Bucket do Storage onde ficam imagens, QR codes e áudios do podcast.
   STORAGE_BUCKET: "images",
 

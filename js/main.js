@@ -8,8 +8,8 @@ migrateLegacyHash();
 
 // Se a sessão do admin expirar ou sair em outra aba, volta para a tela de login.
 supabaseClient.auth.onAuthStateChange((event) => {
-  if (event === "SIGNED_OUT" && adminAuthed) {
-    adminAuthed = false;
+  if (event === "SIGNED_OUT" && (adminAuthed || adminGate)) {
+    adminResetAccess();
     if (isAdminOpen()) renderAdmin();
   }
 });

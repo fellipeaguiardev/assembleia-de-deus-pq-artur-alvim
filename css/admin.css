@@ -95,6 +95,41 @@ p.login-error {
   color: #b42318;
 }
 
+/* Esperando a liberação pelo e-mail */
+.gate-box .login-badge {
+  background: color-mix(in srgb, var(--c-accent) 22%, #fff);
+}
+p.gate-wait {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 0 0 8px;
+  padding: 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--c-primary) 8%, #fff);
+  color: var(--c-primary);
+  font-weight: 700;
+}
+.gate-spin {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2.5px solid color-mix(in srgb, var(--c-primary) 25%, transparent);
+  border-top-color: var(--c-primary);
+  animation: spin 0.9s linear infinite;
+}
+p.gate-note {
+  font-size: 13px;
+  color: #5b6478;
+  margin-bottom: 16px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .gate-spin {
+    animation-duration: 2.4s;
+  }
+}
+
 /* ---------- Estrutura ---------- */
 .admin-shell {
   display: flex;

@@ -2,15 +2,15 @@
 // EBD — "Sincronizar agora" (botão do painel)
 // ------------------------------------------------------------
 // POST /api/ebd-sincronizar  { year, quarter, magazine }
-// Só para admin: confere o login no Supabase (e-mail confirmado e na
-// lista). Busca o sumário e até 3 lições por chamada (o painel chama
+// Só para admin: pergunta ao banco (is_site_admin, com o login de quem
+// chamou) — a mesma regra das gravações, que exige a sessão liberada
+// pelo e-mail. Busca o sumário e até 3 lições por chamada (o painel chama
 // de novo enquanto houver lições faltando) e grava pela função
 // ebd_sync_apply com a chave do servidor (EBD_SYNC_TOKEN), que nunca
 // sai daqui.
 // ============================================================
-import { syncQuarter, readSyncConfig, MAGAZINES, SUPABASE_URL, SUPABASE_KEY } from "./_lib/fonte.mjs";
+import { syncQuarter, readSyncConfig, MAGAZINES, rpc } from "./_lib/fonte.mjs";
 
-const ADMINS = ["adparque@gmail.com", "fellipe.aguiar1058@gmail.com"];
 const env = (key) => process.env[key];
 const json = (status, body) =>
   new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" } });
@@ -23,10 +23,9 @@ export async function POST(req) {
 
   const jwt = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "").trim();
   if (!jwt || jwt.length > 4096) return json(401, { error: "Faça login no painel." });
-  const who = await fetch(`${SUPABASE_URL}/auth/v1/user`, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${jwt}` }, signal: AbortSignal.timeout(6000) }).catch(() => null);
-  if (!who?.ok) return json(401, { error: "Sessão expirada. Entre de novo no painel." });
-  const user = await who.json();
-  if (!user.email_confirmed_at || !ADMINS.includes(String(user.email || "").toLowerCase())) return json(403, { error: "Sem permissão." });
+  const isAdmin = await rpc("is_site_admin", {}, jwt).catch((e) => (e.status === 401 ? "expirou" : null));
+  if (isAdmin === "expirou") return json(401, { error: "Sessão expirada. Entre de novo no painel." });
+  if (isAdmin !== true) return json(403, { error: "Sem permissão. Confirme o acesso ao painel pelo e-mail." });
 
   const token = env("EBD_SYNC_TOKEN");
   if (!token) return json(500, { error: "EBD_SYNC_TOKEN não configurado na Vercel." });

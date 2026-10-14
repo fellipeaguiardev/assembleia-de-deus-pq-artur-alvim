@@ -34,12 +34,10 @@ async function openAdmin() {
   root.classList.add("open");
   root.removeAttribute("aria-hidden");
 
-  if (!adminAuthed) {
+  if (!adminAuthed || Date.now() - adminCheckedAt > ADMIN_RECHECK_MS) {
     const { data: s } = await supabaseClient.auth.getSession();
-    if (s?.session?.user?.email === window.APP_CONFIG.ADMIN_EMAIL) {
-      adminAuthed = true;
-      await loadAdminOnlyData();
-    }
+    if (s?.session) await adminCheckAccess();
+    else adminResetAccess();
   }
   renderAdmin();
 }
@@ -56,46 +54,217 @@ function closeAdminPanel({ keepHash = false } = {}) {
   }
 }
 
+/* ---------- Acesso: senha + liberação por e-mail ----------
+   A senha certa não basta: cada login precisa ser liberado no e-mail
+   "Liberar acesso / Não fui eu" (api/admin-acesso.mjs). Quem garante é
+   o banco: toda regra de escrita usa is_site_admin(), que só vale para
+   a sessão liberada (supabase/migrations/20261014_admin_acesso.sql).
+   Esta tela só acompanha o andamento. */
+const ADMIN_RECHECK_MS = 5 * 60 * 1000; // a liberação vence em 12 h; confere de vez em quando
+let adminCheckedAt = 0;
+let adminGate = null; // { state: "pendente" | "expirado" | "vencido" | "negado" | "erro", para, sentAt, msg }
+let adminLoginMsg = "";
+let adminPollTimer = null;
+let adminPollBusy = false;
+
+function adminResetAccess() {
+  adminAuthed = false;
+  adminGate = null;
+  adminCheckedAt = 0;
+  stopAdminPoll();
+}
+
+async function adminSessionStatus() {
+  const { data: st, error } = await supabaseClient.rpc("admin_session_status");
+  if (!error) return st;
+  // Banco ainda sem a migração 20261014: vale a regra antiga (só a senha).
+  if (error.code === "PGRST202") {
+    const { data: ok, error: e2 } = await supabaseClient.rpc("is_site_admin");
+    if (e2) throw e2;
+    return ok === true ? "permitido" : "nao_admin";
+  }
+  throw error;
+}
+
+// Confere a sessão atual. request: manda o e-mail de liberação quando preciso.
+async function adminCheckAccess({ request = true } = {}) {
+  let st;
+  try {
+    st = await adminSessionStatus();
+  } catch (e) {
+    console.error("Erro ao conferir o acesso:", e);
+    if (adminAuthed) return; // falha de rede: o banco continua protegendo as gravações
+    adminGate = { state: "erro", msg: "Não foi possível conferir o acesso. Verifique a internet e tente de novo." };
+    return;
+  }
+  adminCheckedAt = Date.now();
+  if (st === "permitido") {
+    const first = !adminAuthed;
+    adminAuthed = true;
+    adminGate = null;
+    stopAdminPoll();
+    if (first) await loadAdminOnlyData();
+    return;
+  }
+  adminAuthed = false;
+  if (st === "nao_admin") {
+    adminResetAccess();
+    adminLoginMsg = "Esta conta não tem acesso ao painel.";
+    await supabaseClient.auth.signOut({ scope: "local" });
+    return;
+  }
+  if (st === "pendente") {
+    adminGate = { ...adminGate, state: "pendente" };
+    startAdminPoll();
+    return;
+  }
+  stopAdminPoll();
+  if (st === "negado") {
+    adminGate = { state: "negado" };
+    return;
+  }
+  // nenhum, vencido (passou de 12 h) ou expirado (o link de 20 min venceu)
+  if (request && st !== "expirado") await adminRequestAccess(st);
+  else adminGate = { state: st === "vencido" ? "vencido" : "expirado" };
+}
+
+async function adminRequestAccess(prev = "") {
+  const { data: s } = await supabaseClient.auth.getSession();
+  const jwt = s?.session?.access_token;
+  if (!jwt) return adminResetAccess();
+  let res = null;
+  let body = {};
+  try {
+    res = await fetch("/api/admin-acesso", { method: "POST", headers: { Authorization: `Bearer ${jwt}` } });
+    body = await res.json().catch(() => ({}));
+  } catch {}
+  if (res?.ok && body.status === "permitido") return adminCheckAccess({ request: false });
+  if (res?.ok) {
+    adminGate = { state: "pendente", para: body.para || [], sentAt: Date.now(), renovacao: prev === "vencido" };
+    startAdminPoll();
+    return;
+  }
+  if (res?.status === 403) {
+    adminResetAccess();
+    adminLoginMsg = body.error || "Esta conta não tem acesso ao painel.";
+    await supabaseClient.auth.signOut({ scope: "local" });
+    return;
+  }
+  adminGate = { state: "erro", msg: body.error || "Não foi possível enviar o e-mail de liberação agora. Tente de novo." };
+}
+
+function startAdminPoll() {
+  if (adminPollTimer) return;
+  adminPollTimer = setInterval(adminPollTick, 4000);
+}
+
+function stopAdminPoll() {
+  clearInterval(adminPollTimer);
+  adminPollTimer = null;
+}
+
+// Enquanto espera o "Liberar acesso", pergunta ao banco a cada 4 s.
+async function adminPollTick() {
+  if (adminPollBusy || document.hidden || !isAdminOpen() || adminGate?.state !== "pendente") return;
+  adminPollBusy = true;
+  try {
+    await adminCheckAccess({ request: false });
+  } finally {
+    adminPollBusy = false;
+  }
+  if (adminAuthed) {
+    renderAdmin();
+    showToast("Acesso liberado. Bem-vindo ao painel!", "success");
+  } else if (adminGate?.state !== "pendente") {
+    renderAdmin();
+  }
+}
+
+// Voltou do aplicativo de e-mail: confere na hora.
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && adminGate?.state === "pendente") adminPollTick();
+});
+
+// Antes de gravar: se faz tempo que não confere, confere (a liberação vence em 12 h).
+async function adminEnsureAccess() {
+  if (!adminAuthed) return false;
+  if (Date.now() - adminCheckedAt < ADMIN_RECHECK_MS) return true;
+  await adminCheckAccess();
+  if (!adminAuthed) {
+    if (isAdminOpen()) renderAdmin();
+    showToast("A liberação do painel venceu. Confirme de novo pelo e-mail.", "error");
+  }
+  return adminAuthed;
+}
+
+async function adminResendAccess(btn) {
+  if (btn) {
+    btn.disabled = true;
+    btn.classList.add("loading");
+  }
+  await adminRequestAccess();
+  renderAdmin();
+  if (adminGate?.state === "pendente") showToast("E-mail de liberação enviado.", "success");
+}
+
+async function adminRetryAccess(btn) {
+  if (btn) {
+    btn.disabled = true;
+    btn.classList.add("loading");
+  }
+  await adminCheckAccess();
+  renderAdmin();
+}
+
 // Freio contra tentativas repetidas de senha (o Supabase também limita no servidor).
 const LOGIN_MAX_FAILS = 5;
 const LOGIN_LOCK_MS = 60000;
 let loginFails = 0;
 let loginLockedUntil = 0;
 
+// Lembra o último e-mail usado neste aparelho (só para preencher o campo).
+function lastAdminEmail(value) {
+  try {
+    if (value === undefined) return localStorage.getItem("admin-email") || "";
+    localStorage.setItem("admin-email", value);
+  } catch {}
+  return "";
+}
+
 async function adminLogin(e) {
   e?.preventDefault();
+  const emailInput = document.getElementById("adminEmail");
   const input = document.getElementById("adminPassword");
   const btn = document.getElementById("adminLoginBtn");
   const err = document.getElementById("loginError");
+  const email = (emailInput?.value || "").trim().toLowerCase();
   const wait = Math.ceil((loginLockedUntil - Date.now()) / 1000);
+  adminLoginMsg = "";
   if (wait > 0) {
     err.textContent = `Muitas tentativas. Aguarde ${wait} segundos.`;
     err.hidden = false;
     return;
   }
-  if (!input?.value) {
-    err.textContent = "Digite a senha.";
+  if (!email || !input?.value) {
+    err.textContent = "Digite o e-mail e a senha.";
     err.hidden = false;
-    input?.focus();
+    (email ? input : emailInput)?.focus();
     return;
   }
   btn.disabled = true;
   btn.classList.add("loading");
   err.hidden = true;
-  const { error } = await supabaseClient.auth.signInWithPassword({
-    email: window.APP_CONFIG.ADMIN_EMAIL,
-    password: input.value,
-  });
-  btn.disabled = false;
-  btn.classList.remove("loading");
+  const { error } = await supabaseClient.auth.signInWithPassword({ email, password: input.value });
   if (error) {
+    btn.disabled = false;
+    btn.classList.remove("loading");
     console.error("Erro no login:", error.message);
     loginFails++;
     if (loginFails >= LOGIN_MAX_FAILS) {
       loginFails = 0;
       loginLockedUntil = Date.now() + LOGIN_LOCK_MS;
     }
-    err.textContent = loginLockedUntil > Date.now() ? "Muitas tentativas. Aguarde 1 minuto." : "Senha incorreta ou erro de autenticação.";
+    err.textContent = loginLockedUntil > Date.now() ? "Muitas tentativas. Aguarde 1 minuto." : "E-mail ou senha incorretos.";
     err.hidden = false;
     input.select();
     input.closest(".login-box")?.classList.add("shake");
@@ -103,36 +272,96 @@ async function adminLogin(e) {
     return;
   }
   loginFails = 0;
-  adminAuthed = true;
-  await loadAdminOnlyData();
+  lastAdminEmail(email);
+  adminGate = null;
+  await adminCheckAccess();
   renderAdmin();
-  showToast("Bem-vindo ao painel!", "success");
+  if (adminAuthed) showToast("Bem-vindo ao painel!", "success");
 }
 
 async function adminLogout() {
+  adminResetAccess();
   await supabaseClient.auth.signOut();
-  adminAuthed = false;
   await loadData();
   renderAdmin();
+}
+
+function adminLoginHTML() {
+  return `
+    <div class="login-screen">
+      <form class="login-box" onsubmit="adminLogin(event)">
+        <span class="login-badge">${icon("lock", 22)}</span>
+        <h2>Painel administrativo</h2>
+        <p>Entre com o e-mail e a senha de administrador. Depois, confirme o acesso pelo e-mail.</p>
+        <label class="sr-only" for="adminEmail">E-mail</label>
+        <input type="email" id="adminEmail" placeholder="E-mail" autocomplete="username" inputmode="email" value="${esc(lastAdminEmail())}" required>
+        <label class="sr-only" for="adminPassword">Senha</label>
+        <input type="password" id="adminPassword" placeholder="Senha" autocomplete="current-password" required>
+        <p id="loginError" class="login-error" role="alert" ${adminLoginMsg ? "" : "hidden"}>${esc(adminLoginMsg)}</p>
+        <button id="adminLoginBtn" class="btn btn-primary btn-block" type="submit">Entrar</button>
+        <button class="btn btn-ghost btn-sm btn-block" type="button" onclick="closeAdminPanel()">Voltar ao site</button>
+      </form>
+    </div>`;
+}
+
+function adminGateHTML() {
+  const g = adminGate;
+  const sair = `<button class="btn btn-ghost btn-sm btn-block" type="button" onclick="adminLogout()">Sair</button>`;
+  const box = (ic, title, body) => `
+    <div class="login-screen">
+      <div class="login-box gate-box">
+        <span class="login-badge">${icon(ic, 22)}</span>
+        <h2>${title}</h2>
+        ${body}
+      </div>
+    </div>`;
+  if (g.state === "pendente") {
+    const para = g.para?.length ? `para <strong>${g.para.map(esc).join(", ")}</strong>` : "para os administradores";
+    const cooldown = g.sentAt && Date.now() - g.sentAt < 30000;
+    return box(
+      "mail",
+      "Confirme pelo e-mail",
+      `<p>${g.renovacao ? "A liberação anterior venceu (ela dura 12 horas). " : ""}Enviamos um e-mail ${para}. Abra e toque em <strong>Liberar acesso</strong>: esta tela continua sozinha.</p>
+      <p class="gate-wait" role="status"><span class="gate-spin" aria-hidden="true"></span>Aguardando liberação…</p>
+      <p class="gate-note">O link vale por 20 minutos. Não chegou? Veja a caixa de spam.</p>
+      <button id="adminResendBtn" class="btn btn-primary btn-block" type="button" onclick="adminResendAccess(this)" ${cooldown ? "disabled" : ""}>Reenviar e-mail</button>
+      ${sair}`,
+    );
+  }
+  if (g.state === "expirado" || g.state === "vencido") {
+    return box(
+      "mail",
+      g.state === "vencido" ? "A liberação venceu" : "O link venceu",
+      `<p>${g.state === "vencido" ? "O acesso liberado dura 12 horas." : "O link do e-mail vale por 20 minutos."} Peça um novo e-mail para continuar.</p>
+      <button class="btn btn-primary btn-block" type="button" onclick="adminResendAccess(this)">Enviar novo e-mail</button>
+      ${sair}`,
+    );
+  }
+  if (g.state === "negado") {
+    return box(
+      "lock",
+      "Acesso bloqueado",
+      `<p>Este acesso foi recusado no e-mail (<strong>Não fui eu</strong>). Se foi engano, saia e entre de novo para receber outro e-mail.</p>${sair}`,
+    );
+  }
+  return box(
+    "lock",
+    "Não foi possível continuar",
+    `<p role="alert">${esc(g.msg || "Tente de novo em instantes.")}</p>
+    <button class="btn btn-primary btn-block" type="button" onclick="adminRetryAccess(this)">Tentar de novo</button>
+    ${sair}`,
+  );
 }
 
 function renderAdmin() {
   const el = document.getElementById("adminContent");
   if (!adminAuthed) {
-    el.innerHTML = `
-      <div class="login-screen">
-        <form class="login-box" onsubmit="adminLogin(event)">
-          <span class="login-badge">${icon("user", 22)}</span>
-          <h2>Painel administrativo</h2>
-          <p>Entre com a senha de administrador para gerenciar o site.</p>
-          <label class="sr-only" for="adminPassword">Senha</label>
-          <input type="password" id="adminPassword" placeholder="Senha" autocomplete="current-password" required>
-          <p id="loginError" class="login-error" role="alert" hidden></p>
-          <button id="adminLoginBtn" class="btn btn-primary btn-block" type="submit">Entrar</button>
-          <button class="btn btn-ghost btn-sm btn-block" type="button" onclick="closeAdminPanel()">Voltar ao site</button>
-        </form>
-      </div>`;
-    setTimeout(() => document.getElementById("adminPassword")?.focus(), 50);
+    el.innerHTML = adminGate ? adminGateHTML() : adminLoginHTML();
+    if (adminGate?.state === "pendente" && adminGate.sentAt) {
+      const left = 30000 - (Date.now() - adminGate.sentAt);
+      if (left > 0) setTimeout(() => document.getElementById("adminResendBtn")?.removeAttribute("disabled"), left);
+    }
+    if (!adminGate) setTimeout(() => document.getElementById(lastAdminEmail() ? "adminPassword" : "adminEmail")?.focus(), 50);
     return;
   }
 
@@ -202,7 +431,9 @@ function uploadRow(previewUrl, onchange, accept = "image/*", label = "Enviar do 
 }
 
 /* Executa uma escrita no Supabase com feedback padronizado. */
+// O pedido ao Supabase só sai no "await": dá para conferir a liberação antes.
 async function dbWrite(promise, okMsg, errMsg = "Erro ao salvar.") {
+  if (!(await adminEnsureAccess())) return null;
   const { data: result, error } = await promise;
   if (error) {
     console.error(errMsg, error);

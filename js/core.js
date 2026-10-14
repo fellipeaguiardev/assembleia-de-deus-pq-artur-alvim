@@ -495,6 +495,8 @@ function relativeDayLabel(date) {
    ============================================================ */
 const ICONS = {
   clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+  lock: '<rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  mail: '<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-10 6L2 7"/>',
   pin: '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
   phone:
     '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>',
@@ -865,6 +867,7 @@ function persist({ rerenderAdmin = false } = {}) {
 
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => {
+    if (!(await adminEnsureAccess())) return;
     const { error } = await db("settings").upsert({ id: "main", data: settingsPayload() }, { onConflict: "id" });
     if (error) {
       console.error("Erro ao salvar configurações:", error);
@@ -897,6 +900,7 @@ async function uploadFile(file, folder) {
   const ext = (file.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
   const path = `${folder}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
   const bucket = window.APP_CONFIG.STORAGE_BUCKET;
+  if (!(await adminEnsureAccess())) throw uploadError("Confirme o acesso ao painel pelo e-mail e envie de novo.");
   const { error } = await supabaseClient.storage
     .from(bucket)
     .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type || undefined });

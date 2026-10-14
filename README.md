@@ -62,6 +62,7 @@ lições, livros, vídeos, cores) é editado pela equipe num **painel administra
 - **EBD:** trimestres e lições, com importação automática de títulos, datas e referências bíblicas, revisão e publicação.
 - **Biblioteca:** empréstimos com as regras da biblioteca (limite por pessoa, prazo, renovação, suspensão por atraso), fila de espera, mensagens prontas no WhatsApp, acervo com capas, leitores e exportação para planilha.
 - **Ministérios, sobre a igreja, primeira visita, igreja e redes, doações (PIX).**
+- **Entrada protegida:** e-mail e senha **e** confirmação por e-mail (“Liberar acesso” / “Não fui eu”) a cada login.
 
 ## Como é feito
 
@@ -77,7 +78,7 @@ lições, livros, vídeos, cores) é editado pela equipe num **painel administra
 O `.gitignore` deixa de fora tudo o que é segredo ou dado da igreja:
 
 - **Chaves e senhas**: ficam só nas variáveis de ambiente da Vercel (`RESEND_API_KEY`, `NOTIFY_TO`,
-  `EBD_SYNC_TOKEN`, `CRON_SECRET`). A única chave no código é a **publicável** do Supabase, que é
+  `EBD_SYNC_TOKEN`, `CRON_SECRET`, `ADMIN_ACCESS_TOKEN`). A única chave no código é a **publicável** do Supabase, que é
   pública por natureza (veja "Segurança").
 - **Cópias de segurança do banco** (`supabase/backups/`) e os ids do projeto na Vercel (`.vercel/`,
   `scripts/vercel-projeto.json`).
@@ -93,7 +94,8 @@ manifest.webmanifest  app instalável (PWA)
 sw.js                 service worker: site abre sem internet
 robots.txt, sitemap.xml
 api/                  funções do servidor: contato.mjs (e-mail do formulário), ebd-sincronizar.mjs,
-                      ebd-sync-diario.mjs (agendada) e _lib/ (modelo do e-mail, leitor da EBD)
+                      ebd-sync-diario.mjs (agendada), admin-acesso.mjs e admin-aprovar.mjs
+                      (liberação do painel por e-mail) e _lib/ (modelos de e-mail, leitor da EBD)
 scripts/publicar.sh   publica na Vercel (carimba a versão para o app se atualizar)
 assets/img/           brasão em vetor (brasao.svg), ícones do app, imagem de compartilhamento
 data/harpa/           índice da Harpa Cristã (número e título)
@@ -105,7 +107,7 @@ css/
   biblioteca.css admin.css
 js/
   intro.js    vinheta de abertura (partículas, frase letra por letra, “Pular”)
-  config.js   URL e chave pública do Supabase, e-mail do admin, logo padrão
+  config.js   URL e chave pública do Supabase, logo padrão
   core.js     dados padrão, carregamento, cópia offline, helpers, ícones, upload
   site.js     rotas (/cultos, /biblia…), menus, páginas, modais e animações
   podcast.js  páginas do podcast e player fixo
@@ -154,7 +156,7 @@ O CNPJ só aparece se for válido.
 Endereços: `/ebd` (lição da semana e trimestres), `/ebd/atual`, `/ebd/2026/4/adultos` e
 `/ebd/2026/4/adultos/3`. **Para ativar**, rode uma vez no Supabase (SQL Editor) o arquivo
 `supabase/migrations/20261010_ebd.sql` — cria as tabelas `ebd_quarters` e `ebd_lessons` com RLS:
-o visitante só lê lições publicadas; só os e-mails de admin gravam.
+o visitante só lê lições publicadas; só admin (com a entrada liberada) grava.
 
 Como usar (Painel → EBD):
 1. **+ Novo trimestre**: ano, trimestre, revista/faixa, tema e data da 1ª lição. As lições são
@@ -245,8 +247,46 @@ ou "Entrar na fila de espera" (nome + WhatsApp, com consentimento).
 ## Segurança
 
 - `js/config.js` usa a chave **publicável** do Supabase. Ela é pública por natureza;
-  quem protege os dados são as regras RLS (`supabase/seguranca.sql`): só os e-mails
-  de admin conseguem gravar. Nunca coloque a chave `secret`/`service_role` no site.
+  quem protege os dados são as regras RLS (`supabase/seguranca.sql`): só admin com a
+  sessão liberada consegue gravar. Nunca coloque a chave `secret`/`service_role` no site.
+
+### Entrada no painel: senha + liberação por e-mail
+
+Desde `supabase/migrations/20261014_admin_acesso.sql`, a senha certa não basta:
+
+1. A pessoa entra em `/admin` com **e-mail e senha** (o e-mail não fica mais no código).
+2. O painel chama `api/admin-acesso.mjs`, que confere o login e manda um e-mail
+   **“Alguém entrou no painel”** (conta, horário, aparelho, cidade aproximada) com os botões
+   **Liberar acesso** e **Não fui eu**, no mesmo estilo do e-mail de pedido de oração.
+3. O botão abre `api/admin-aprovar.mjs`, que mostra os dados e pede a confirmação (abrir o link não
+   decide nada, então robôs de e-mail que “visitam” links não liberam ninguém).
+4. Liberado, a tela do painel continua sozinha. A liberação vale **12 horas** e só para **aquela
+   sessão** (o `session_id` do login). O link vale 20 minutos e serve uma vez só.
+
+Quem garante é o banco, não a tela: `public.admins` (lista de admins, ninguém lê pela API) e
+`public.is_admin()` = está na lista **e** a sessão foi liberada. `is_site_admin()`, usada em todas as
+regras de gravação e do Storage, passou a chamar `is_admin()`. As funções de pedido e decisão só
+funcionam com a chave do servidor `ADMIN_ACCESS_TOKEN` (variável da Vercel; no banco fica só o
+SHA-256). Limite de 6 e-mails por conta por hora; registros apagados depois de 30 dias.
+
+Quem recebe o e-mail: `ADMIN_APROVADORES` (opcional, e-mails separados por vírgula) ou `NOTIFY_TO`.
+Sem domínio verificado, o Resend só entrega para o e-mail da conta Resend.
+
+Adicionar um admin (a conta precisa existir em *Authentication → Users*, com e-mail confirmado):
+
+```sql
+insert into public.admins (user_id) select id from auth.users where email = 'novo@exemplo.com';
+```
+
+**Emergência** (o e-mail não chega e ninguém consegue liberar): entre em `/admin`, deixe na tela
+“Confirme pelo e-mail” e rode no *SQL Editor* do Supabase:
+
+```sql
+update private.admin_access
+   set status = 'permitido', decided_at = now(), approved_until = now() + interval '12 hours'
+ where id = (select id from private.admin_access where status = 'pendente' order by created_at desc limit 1);
+```
+
 - `vercel.json` define CSP (scripts só do próprio site; conexões só com o Supabase;
   iframes só de YouTube/Spotify/Google Maps), HSTS, anti-clickjacking e outros.
 - Bibliotecas ficam em `vendor/` (sem CDN externa). O QR Code do PIX é gerado no
@@ -256,7 +296,7 @@ ou "Entrar na fila de espera" (nome + WhatsApp, com consentimento).
   dados), cadastro público no Supabase Auth está desligado, sem SQL dinâmico com dados externos,
   textos sempre escapados (XSS), links externos com `rel="noopener"`, `safeUrl` recusa
   `javascript:`, `data:` e `//site.com`. O service worker não guarda respostas de funções nem de
-  pedidos com login. `is_site_admin()` exige e-mail confirmado no Auth (em `20261010_ebd_sync.sql`).
+  pedidos com login.
 - `'unsafe-inline'` no CSP continua necessário por causa dos `onclick` gerados; a proteção contra
   XSS é o escape (`esc`) de todo conteúdo dinâmico.
 - **Pendente (risco baixo):** a função `sync-youtube` pode ser chamada por qualquer um com a chave
@@ -289,7 +329,8 @@ ou "Entrar na fila de espera" (nome + WhatsApp, com consentimento).
 envio rápido demais, limite por endereço), monta o e-mail com o modelo `api/_lib/pedido-oracao.mjs`
 (texto e versículo conforme o assunto, botão de WhatsApp) e envia pelo Resend (resend.com).
 Variáveis na Vercel (*Settings → Environment Variables*): `RESEND_API_KEY`, `NOTIFY_TO`
-(e-mails separados por vírgula), `EBD_SYNC_TOKEN`, `CRON_SECRET` e, opcional, `NOTIFY_FROM`.
+(e-mails separados por vírgula), `EBD_SYNC_TOKEN`, `CRON_SECRET`, `ADMIN_ACCESS_TOKEN` e, opcionais,
+`NOTIFY_FROM` e `ADMIN_APROVADORES`.
 O brasão vai anexado ao e-mail (imagem `cid:`, arquivo
 `assets/img/logo-email.png`) para aparecer mesmo quando o Gmail bloqueia imagens de fora. O assunto
 leva data e hora para o Gmail não juntar pedidos diferentes na mesma conversa.
