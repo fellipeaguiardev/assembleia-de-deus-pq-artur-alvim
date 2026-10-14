@@ -1299,6 +1299,18 @@ body.has-player .site-footer {
 .site-footer a {
   transition: color 0.2s ease;
 }
+/* Área de toque de pelo menos 24 px no celular, sem mudar o espaçamento visível */
+.site-footer ul:not(.footer-schedule) {
+  gap: 0;
+}
+.site-footer ul:not(.footer-schedule) a {
+  display: inline-block;
+  padding: 4px 0;
+}
+.footer-legal a,
+.footer-legal button {
+  padding-block: 4px;
+}
 @media (hover: hover) {
   .site-footer a:hover {
     color: #fff;
