@@ -16,8 +16,9 @@ const findEpisode = (id) => publishedPodcasts().find((p) => String(p.id) === Str
 const epLabel = (p) => (p.episode_number ? `EP. ${p.episode_number}` : "Episódio");
 const epDate = (p) => fmtDateLong(p.published_at ? String(p.published_at).slice(0, 10) : "");
 
-function coverStyle(p) {
-  return bgImage(p?.cover_url);
+// width: tamanho em que a capa aparece (a miniatura vem já reduzida, ver imgThumb).
+function coverStyle(p, width = 320) {
+  return bgImage(imgThumb(p?.cover_url, width));
 }
 
 /* Botão redondo de play que reflete o estado do player global */
@@ -43,7 +44,7 @@ function epPlatformLinks(p) {
 function episodeRowHTML(p) {
   return `
   <article class="ep-row" ${pressable("openPodcastModal", p.id, "Abrir episódio " + p.title)}>
-    <div class="ep-cover" style="${coverStyle(p)}">${safeUrl(p.cover_url) ? "" : icon("mic", 22)}</div>
+    <div class="ep-cover" style="${coverStyle(p, 160)}">${safeUrl(p.cover_url) ? "" : icon("mic", 22)}</div>
     <div class="ep-info">
       <span class="card-kicker">${esc(epLabel(p))}${p.published_at ? " · " + epDate(p) : ""}</span>
       <h3>${esc(p.title)}</h3>
@@ -60,7 +61,7 @@ function featuredEpisodeHTML(p, eyebrow) {
   const hasAudio = !!safeUrl(p.audio_url);
   return `
   <article class="podcast-featured" data-reveal>
-    <div class="podcast-featured-cover" style="${coverStyle(p)}">
+    <div class="podcast-featured-cover" style="${coverStyle(p, 640)}">
       ${safeUrl(p.cover_url) ? "" : `<span class="cover-fallback">${icon("mic", 56)}</span>`}
       <span class="podcast-episode-badge">${esc(epLabel(p))}</span>
     </div>
@@ -95,9 +96,69 @@ function podcastHomeHTML() {
   </section>`;
 }
 
+/* ---------------- Página /podcast: busca e "Mostrar mais" ---------------- */
+const PODCAST_PAGE_SIZE = 12;
+const podcastUI = { q: "", shown: PODCAST_PAGE_SIZE };
+
+// Sem busca: todos menos o destaque. Com busca: todos que combinam (título e descrição).
+function podcastListItems() {
+  const items = publishedPodcasts();
+  const q = normalizeText(podcastUI.q);
+  if (!q) return items.slice(1);
+  const words = q.split(/\s+/);
+  return items.filter((p) => {
+    const text = normalizeText(`${p.title} ${p.description} ${p.episode_number ? "ep " + p.episode_number : ""}`);
+    return words.every((w) => text.includes(w));
+  });
+}
+
+function podcastListHTML() {
+  const list = podcastListItems();
+  const shown = list.slice(0, podcastUI.shown);
+  const q = podcastUI.q.trim();
+  const rows = shown.length
+    ? shown.map(episodeRowHTML).join("")
+    : q
+      ? `<p class="podcast-empty">Nenhum episódio com “${esc(q)}”. Tente o nome do pregador ou outra palavra.</p>`
+      : "";
+  const more = list.length - shown.length;
+  return {
+    rows,
+    count: q && list.length ? `${list.length} ${list.length === 1 ? "episódio encontrado" : "episódios encontrados"}` : "",
+    more: more > 0 ? `<button class="btn btn-ghost podcast-more" type="button" onclick="podcastShowMore()">Mostrar mais episódios <small>(${more})</small></button>` : "",
+  };
+}
+
+function renderPodcastList() {
+  const list = document.getElementById("podcastList");
+  if (!list) return;
+  const r = podcastListHTML();
+  list.innerHTML = r.rows;
+  document.getElementById("podcastCount").textContent = r.count;
+  document.getElementById("podcastMore").innerHTML = r.more;
+}
+
+function podcastSearch(value) {
+  podcastUI.q = value;
+  podcastUI.shown = PODCAST_PAGE_SIZE;
+  renderPodcastList();
+}
+
+function podcastShowMore() {
+  const from = podcastUI.shown;
+  podcastUI.shown += PODCAST_PAGE_SIZE * 2;
+  renderPodcastList();
+  document.querySelectorAll("#podcastList .ep-row")[from]?.focus({ preventScroll: true });
+}
+
 function podcastPageHTML() {
   const items = publishedPodcasts();
-  const [featured, ...rest] = items;
+  const featured = items[0];
+  const feed = data.podcastFeed || {};
+  const follow = safeUrl(feed.spotifyUrl)
+    ? `<a class="btn btn-ghost btn-sm" href="${href(feed.spotifyUrl)}" target="_blank" rel="noopener">${icon("spotify", 16)} Seguir no Spotify</a>`
+    : "";
+  const r = podcastListHTML();
   return (
     pageHeroHTML("Ouça onde estiver", "Podcast", "Mensagens, conversas e conteúdos para fortalecer sua fé e caminhar com a nossa comunidade.") +
     `
@@ -105,9 +166,21 @@ function podcastPageHTML() {
     <div class="container">
       ${
         featured
-          ? featuredEpisodeHTML(featured, "Em destaque") +
-            (rest.length
-              ? `${sectionHead("Biblioteca", "Todos os episódios")}<div class="ep-list" data-stagger>${rest.map(episodeRowHTML).join("")}</div>`
+          ? featuredEpisodeHTML(featured, "Episódio mais recente") +
+            (items.length > 1
+              ? `${sectionHead("Biblioteca", `Todos os episódios (${items.length})`, follow)}
+              ${
+                items.length > PODCAST_PAGE_SIZE
+                  ? `<form class="bible-search podcast-search" role="search" onsubmit="event.preventDefault();this.querySelector('input').blur()">
+                      ${icon("search", 18)}
+                      <label class="sr-only" for="podcastQuery">Buscar episódio</label>
+                      <input id="podcastQuery" type="search" autocomplete="off" enterkeyhint="search" placeholder="Título, pregador ou assunto" value="${esc(podcastUI.q)}" oninput="podcastSearch(this.value)">
+                    </form>`
+                  : ""
+              }
+              <p class="podcast-count" id="podcastCount" aria-live="polite">${esc(r.count)}</p>
+              <div class="ep-list" id="podcastList">${r.rows}</div>
+              <div class="podcast-more-wrap" id="podcastMore">${r.more}</div>`
               : "")
           : emptyState("mic", "O primeiro episódio está chegando", "Volte em breve para ouvir nossas mensagens e conversas.")
       }
@@ -315,7 +388,7 @@ function loadEpisodeIntoPlayer(p) {
   player.id = String(p.id);
   player.audio.src = safeUrl(p.audio_url);
   player.audio.playbackRate = player.speeds[player.speedIndex];
-  el.querySelector(".player-cover").setAttribute("style", coverStyle(p));
+  el.querySelector(".player-cover").setAttribute("style", coverStyle(p, 160));
   el.querySelector(".player-ep").textContent = epLabel(p);
   el.querySelector(".player-title").textContent = p.title;
   el.querySelector(".t-cur").textContent = "0:00";
@@ -336,12 +409,12 @@ function loadEpisodeIntoPlayer(p) {
   player.audio.addEventListener("loadedmetadata", player.resumeHandler, { once: true });
 
   if ("mediaSession" in navigator) {
-    const art = safeUrl(p.cover_url);
+    const art = imgThumb(p.cover_url, 640);
     navigator.mediaSession.metadata = new MediaMetadata({
       title: p.title,
       artist: data.church.name,
       album: "Podcast",
-      artwork: art ? [{ src: art, sizes: "512x512" }] : [],
+      artwork: art ? [{ src: new URL(art, location.href).href, sizes: "640x640" }] : [],
     });
     navigator.mediaSession.setActionHandler("play", () => player.audio.play());
     navigator.mediaSession.setActionHandler("pause", () => player.audio.pause());

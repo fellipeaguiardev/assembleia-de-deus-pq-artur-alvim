@@ -44,6 +44,7 @@ const SHELL = [
   "/js/admin.js",
   "/js/admin-ebd.js",
   "/js/admin-biblioteca.js",
+  "/js/admin-podcast.js",
   "/js/main.js",
   "/data/bible/blivre/index.json",
   "/data/harpa/indice.json",

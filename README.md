@@ -121,6 +121,7 @@ js/
   admin.js    painel (abra /admin)
   admin-ebd.js  aba EBD do painel (trimestres e lições)
   admin-biblioteca.js  aba Biblioteca do painel (empréstimos, fila, acervo)
+  admin-podcast.js  importação dos episódios do Spotify (feed RSS) na aba Podcast
   main.js     inicialização
 supabase/     SQL das tabelas e regras de acesso (NÃO é publicado no site)
 docs/telas/   imagens usadas neste README

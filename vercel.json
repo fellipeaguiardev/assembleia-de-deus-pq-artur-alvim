@@ -20,10 +20,36 @@
   ],
   "rewrites": [
     {
-      "source": "/((?!api/|assets/|css/|js/|data/|vendor/).*)",
+      "source": "/((?!api/|assets/|css/|js/|data/|vendor/|_vercel/).*)",
       "destination": "/index.html"
     }
   ],
+  "images": {
+    "sizes": [
+      160,
+      320,
+      640
+    ],
+    "qualities": [
+      70
+    ],
+    "formats": [
+      "image/webp"
+    ],
+    "minimumCacheTTL": 2678400,
+    "remotePatterns": [
+      {
+        "protocol": "https",
+        "hostname": "d3t3ozftmdmh3i.cloudfront.net",
+        "pathname": "/*/*/7941613/**"
+      },
+      {
+        "protocol": "https",
+        "hostname": "rtludbkopxbhiwlwycid.supabase.co",
+        "pathname": "/storage/v1/object/public/images/**"
+      }
+    ]
+  },
   "headers": [
     {
       "source": "/(.*)",

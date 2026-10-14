@@ -608,3 +608,38 @@
     display: none;
   }
 }
+
+/* Página /podcast: busca e "Mostrar mais" */
+.podcast-search {
+  margin: 0 0 14px;
+}
+.podcast-count {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--c-text-soft);
+}
+.podcast-count:empty {
+  display: none;
+}
+.podcast-search + .podcast-count:empty + .ep-list,
+.podcast-search + .podcast-count + .ep-list {
+  margin-top: 0;
+}
+.podcast-empty {
+  padding: 24px 0;
+  color: var(--c-text-soft);
+}
+.podcast-more-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 22px;
+}
+.podcast-more-wrap:empty {
+  display: none;
+}
+.podcast-more small {
+  margin-left: 4px;
+  font-weight: 500;
+  opacity: 0.75;
+}

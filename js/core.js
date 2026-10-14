@@ -119,6 +119,12 @@ const defaultData = {
       { t: "Reserva de livros", d: "Se um livro estiver emprestado, é possível entrar na fila de espera para o próximo empréstimo." },
     ],
   },
+  // Podcast "Parque Cast" (Spotify for Creators). O feed RSS é público e é de onde
+  // o painel importa os episódios (Painel → Podcast → Importar do Spotify).
+  podcastFeed: {
+    rssUrl: "https://anchor.fm/s/2fee8714/podcast/rss",
+    spotifyUrl: "https://open.spotify.com/show/4rorZwpZxBQuAg2jRd4w5v",
+  },
   socials: {
     instagram: { enabled: true },
     youtube: { enabled: true },
@@ -200,6 +206,7 @@ const SETTINGS_KEYS = [
   "firstVisit",
   "ebdSync",
   "library",
+  "podcastFeed",
 ];
 
 let data = structuredClone(defaultData);
@@ -236,6 +243,25 @@ function bgImage(url) {
   if (!u) return "";
   const clean = u.replace(/["'()\\\s<>]/g, (c) => "%" + c.charCodeAt(0).toString(16).padStart(2, "0"));
   return `background-image:url(&quot;${esc(clean)}&quot;)`;
+}
+
+// Capas grandes (as do podcast têm 1–2 MB) passam pelo redimensionador da
+// Vercel (vercel.json → "images"; grátis até 5 mil por mês, cada capa é
+// redimensionada uma vez e fica em cache). Fora da Vercel usa o original.
+const THUMB_HOSTS = { "d3t3ozftmdmh3i.cloudfront.net": "/7941613/", "rtludbkopxbhiwlwycid.supabase.co": "/storage/v1/object/public/images/" };
+const THUMB_WIDTHS = [160, 320, 640];
+function imgThumb(url, width = 320) {
+  const u = safeUrl(url);
+  if (!u || !location.hostname.endsWith(".vercel.app")) return u;
+  try {
+    const x = new URL(u);
+    const path = THUMB_HOSTS[x.hostname];
+    if (x.protocol !== "https:" || !path || !x.pathname.includes(path) || /\.(svg|gif)$/i.test(x.pathname)) return u;
+  } catch {
+    return u;
+  }
+  const w = THUMB_WIDTHS.find((n) => n >= width) || 640;
+  return `/_vercel/image?url=${encodeURIComponent(u)}&w=${w}&q=70`;
 }
 
 function slugify(v) {

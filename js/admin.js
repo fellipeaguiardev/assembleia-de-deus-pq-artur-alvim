@@ -874,6 +874,7 @@ function tabPodcast() {
   }
   return `
     ${topbar("Podcast", `<button class="btn btn-primary btn-sm" type="button" onclick="startNewPodcast()">+ Novo episódio</button>`)}
+    ${podcastImportCardHTML()}
     <div class="admin-card podcast-admin-table-wrap">
       ${
         items.length
@@ -883,7 +884,7 @@ function tabPodcast() {
             .map(
               (p) => `
             <div class="podcast-admin-row">
-              <div class="podcast-admin-thumb" style="${bgImage(p.cover_url)}"></div>
+              <div class="podcast-admin-thumb" style="${bgImage(imgThumb(p.cover_url, 160))}"></div>
               <strong>EP. ${esc(p.episode_number || "—")}</strong>
               <div class="podcast-admin-title">${esc(p.title)}</div>
               <span>${fmtDate(p.published_at ? String(p.published_at).slice(0, 10) : "") || "—"}</span>
