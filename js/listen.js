@@ -27,6 +27,8 @@ const listen = {
   token: 0, // invalida os avisos de falas que já foram canceladas
   bar: null,
   voices: [],
+  utter: null, // fala atual: guardada para o Chrome não descartá-la antes do fim
+  badVoices: new Set(), // vozes que não responderam nesta visita (ex.: voz online sem internet)
 };
 
 function listenPrefs() {
@@ -153,7 +155,7 @@ if (LISTEN_OK) {
 }
 
 function listenVoice() {
-  const all = listen.voices;
+  const all = listen.voices.filter((v) => !listen.badVoices.has(v.voiceURI));
   if (!all.length) return null;
   const pref = listenPrefs().voice;
   const br = all.filter((v) => /^pt[-_]BR/i.test(v.lang));
@@ -222,21 +224,46 @@ function listenSpeak() {
     const voice = listenVoice();
     if (voice) u.voice = voice;
   } catch {} // voz indisponível: usa a padrão do aparelho
-  u.onend = () => {
-    if (token !== listen.token || !listen.playing) return;
+  const alive = () => token === listen.token && listen.playing;
+  const advance = () => {
     listen.i++;
     listenSavePos();
     if (listen.i < listen.segs.length) listenSpeak();
     else listenFinished();
   };
+  let started = false;
+  // Não começou em 6 s: a voz não respondeu (comum na voz online, no computador).
+  setTimeout(() => alive() && !started && listenVoiceFailed(u.voice, "não começou"), 6000);
+  u.onstart = () => {
+    started = true;
+    // Começou e "congelou" (o Chrome às vezes corta a fala e não avisa o fim): segue.
+    const maxMs = Math.max(12000, ((seg.text.length / (11 * u.rate)) * 1000) * 2.5);
+    setTimeout(() => {
+      if (!alive()) return;
+      console.warn("Modo ouvir: o trecho não terminou; seguindo para o próximo");
+      listen.token++;
+      speechSynthesis.cancel();
+      advance();
+    }, maxMs);
+  };
+  u.onend = () => {
+    if (!alive()) return;
+    advance();
+  };
   u.onerror = (e) => {
     if (token !== listen.token || e.error === "interrupted" || e.error === "canceled") return;
     console.warn("Modo ouvir:", e.error);
-    listenPause();
-    showToast("A leitura foi interrompida. Toque em ouvir para continuar.", "error");
+    if (e.error === "not-allowed") {
+      listenPause();
+      showToast("Toque em “Ouvir” para começar a leitura.");
+      return;
+    }
+    listenVoiceFailed(u.voice, e.error);
   };
+  listen.utter = u;
   listenHighlight(seg);
   listenPaintBar();
+  if (speechSynthesis.paused) speechSynthesis.resume(); // o Chrome pode ficar "pausado" e engolir as falas
   // Se algo ainda estiver falando, cancela e espera um instante (o Chrome às vezes
   // ignora uma fala logo depois do cancel). Senão fala na hora — no iPhone a 1ª
   // fala precisa acontecer dentro do toque no botão.
@@ -246,6 +273,24 @@ function listenSpeak() {
   } else {
     speechSynthesis.speak(u);
   }
+}
+
+// A voz falhou: troca uma voz online pela voz do próprio aparelho e repete o
+// trecho; se a voz do aparelho também falhar, para e explica.
+function listenVoiceFailed(voice, why) {
+  console.warn("Modo ouvir: a voz não respondeu", voice?.name || "padrão", why);
+  listen.token++;
+  speechSynthesis.cancel();
+  if (voice && !voice.localService && !listen.badVoices.has(voice.voiceURI)) {
+    // Se uma voz online não respondeu, as outras online também não vão (em geral é a internet).
+    listen.voices.filter((v) => !v.localService).forEach((v) => listen.badVoices.add(v.voiceURI));
+    listenPaintVoices();
+    showToast("A voz online não respondeu. Continuando com a voz do aparelho.");
+    setTimeout(() => listen.playing && listenSpeak(), 120);
+    return;
+  }
+  listenPause();
+  showToast("A leitura não começou. Confira se o som está ligado ou escolha outra voz em Opções.", "error");
 }
 
 function listenStep(delta) {
