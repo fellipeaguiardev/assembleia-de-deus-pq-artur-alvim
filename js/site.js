@@ -314,8 +314,11 @@ function churchLogoSrc() {
   return safeUrl(data.church.logoUrl) || window.APP_CONFIG.DEFAULT_LOGO;
 }
 
+// "AD Belém - Pq. Artur Alvim": no celular vira duas linhas (o nome inteiro não cabe em uma).
 function brandHTML() {
-  return `<img class="brand-logo" src="${esc(churchLogoSrc())}" alt="" width="30" height="37" decoding="async"><span>${esc(data.church.name)}</span>`;
+  const [main, ...rest] = String(data.church.name || "").split(" - ");
+  const sub = rest.join(" - ");
+  return `<img class="brand-logo" src="${esc(churchLogoSrc())}" alt="" width="30" height="37" decoding="async"><span class="brand-name">${esc(main)}${sub ? `<span class="brand-sub">${esc(sub)}</span>` : ""}</span>`;
 }
 
 /* ---------------- HEADER / FOOTER ---------------- */
