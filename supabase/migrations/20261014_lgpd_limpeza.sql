@@ -8,8 +8,8 @@
 -- ou entrava no painel. Agora o pg_cron (já usado pela sincronização do YouTube)
 -- faz isso todo dia às 04:30 (horário de Brasília = 07:30 UTC).
 --
--- Também fixa o search_path de 3 funções de gatilho (aviso do verificador de
--- segurança do Supabase: "Function Search Path Mutable").
+-- Também: fixa o search_path de 3 funções de gatilho (aviso do verificador de
+-- segurança do Supabase) e tira a listagem pública dos arquivos do Storage (fim do arquivo).
 -- Pode rodar mais de uma vez.
 -- ============================================================
 
@@ -30,3 +30,14 @@ select cron.schedule(
      where created_at < now() - interval '30 days';
   $$
 );
+
+-- ---------- Storage: visitante não lista mais os arquivos ----------
+-- As imagens continuam abrindo pelo endereço público (/storage/v1/object/public/…),
+-- que não passa por estas regras. O que deixa de funcionar é só a LISTAGEM de
+-- todos os nomes de arquivo por qualquer pessoa (expunha arquivos antigos e de teste).
+-- Depois de rodar, abra o site e confira que as fotos aparecem normalmente.
+drop policy if exists "public read church images" on storage.objects;
+drop policy if exists "Site admin lista imagens" on storage.objects;
+create policy "Site admin lista imagens" on storage.objects
+  for select to authenticated
+  using (bucket_id = 'images' and public.is_site_admin());
