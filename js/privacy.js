@@ -8,7 +8,7 @@
    carregam depois que a pessoa permite.
    ============================================================ */
 const CONSENT_KEY = "cookie-consent-v1";
-const PRIVACY_UPDATED = "2026-10-11";
+const PRIVACY_UPDATED = "2026-10-14";
 
 let consent = readConsent();
 
@@ -156,19 +156,28 @@ function privacyPageHTML() {
 
       <h2>1. Quem somos</h2>
       <p>Este site pertence à <strong>${esc(c.name)}</strong>, com endereço em ${esc(c.address)}, que é a controladora dos dados
-      tratados aqui. Para qualquer assunto sobre privacidade, fale conosco por ${privacyContactHTML()}.</p>
+      tratados aqui. Para qualquer assunto sobre privacidade, fale conosco por ${privacyContactHTML()}. Esse é também o canal do
+      <strong>encarregado</strong> pelo tratamento de dados pessoais (art. 41 da LGPD).</p>
 
       <h2>2. Quais dados coletamos</h2>
       <ul>
         <li><strong>Navegação:</strong> o site não usa cookies de rastreamento, publicidade ou estatísticas. A empresa de hospedagem
-        (Vercel) registra dados técnicos de acesso, como endereço IP e navegador, por segurança e para manter o site no ar.</li>
+        (Vercel) registra dados técnicos de acesso, como endereço IP e navegador, por segurança e para manter o site no ar.
+        <em>Base legal: legítimo interesse (art. 7º, IX).</em></li>
         <li><strong>Formulário de pedido de oração e contato:</strong> nome, forma de contato e mensagem, apenas se você escolher enviar.
         Um pedido de oração pode revelar informações sobre a sua fé, que a LGPD considera <em>dado sensível</em>. Por isso só tratamos
-        esses dados com o seu consentimento específico, marcado no próprio formulário.</li>
+        esses dados com o seu consentimento específico, marcado no próprio formulário. <em>Base legal: consentimento (art. 7º, I, e
+        art. 11, I).</em></li>
         <li><strong>Biblioteca dos Jovens:</strong> nome e WhatsApp, apenas se você pedir um livro pelo site, para a equipe combinar o
         empréstimo. Quem pega livros fica registrado (nome, WhatsApp, datas de retirada e devolução) para controlar devoluções,
-        renovações e a fila de espera. Esses dados ficam visíveis só para a equipe; no site aparece apenas se o livro está disponível.</li>
-        <li><strong>Painel administrativo:</strong> e-mail e sessão de login de quem administra o site e, a cada entrada no painel, um registro de segurança (data, navegador, cidade aproximada e endereço IP) usado no e-mail de confirmação de acesso.</li>
+        renovações e a fila de espera. Esses dados ficam visíveis só para a equipe; no site aparece apenas se o livro está disponível.
+        <em>Base legal: procedimentos para o empréstimo que você pediu (art. 7º, V) e legítimo interesse em cuidar do acervo (art. 7º, IX).</em></li>
+        <li><strong>Painel administrativo:</strong> e-mail e sessão de login de quem administra o site e, a cada entrada no painel, um
+        registro de segurança (data, navegador, cidade aproximada e endereço IP) usado no e-mail de confirmação de acesso.
+        <em>Base legal: legítimo interesse em proteger o site (art. 7º, IX).</em></li>
+        <li><strong>Podcast:</strong> o site não registra o que você ouve. Ao tocar um episódio, o áudio vem dos servidores do
+        Spotify for Creators (anchor.fm), que recebem o seu endereço IP e o navegador, como em qualquer player de podcast.
+        Onde você parou fica só no seu aparelho.</li>
       </ul>
 
       <h2>3. Para que usamos</h2>
@@ -187,22 +196,25 @@ function privacyPageHTML() {
         <div role="row"><span role="cell">site-theme</span><span role="cell">Mostra as cores da igreja já na abertura do site</span><span role="cell">Essencial</span></div>
         <div role="row"><span role="cell">site-data-cache</span><span role="cell">Cópia das informações públicas (cultos, eventos) para o site abrir sem internet</span><span role="cell">Essencial</span></div>
         <div role="row"><span role="cell">podcast-pos-*</span><span role="cell">Lembra onde você parou em cada episódio</span><span role="cell">Essencial</span></div>
+        <div role="row"><span role="cell">harpa-favoritos</span><span role="cell">Os hinos da Harpa que você marcou como favoritos</span><span role="cell">Essencial</span></div>
         <div role="row"><span role="cell">bible-prefs, bible-last</span><span role="cell">Tamanho da letra, tema escuro e o último capítulo lido na Bíblia</span><span role="cell">Essencial</span></div>
         <div role="row"><span role="cell">listen-prefs, listen-pos</span><span role="cell">Velocidade, voz e onde você parou no modo ouvir (o texto é lido pela voz do próprio aparelho, nada é enviado)</span><span role="cell">Essencial</span></div>
         <div role="row"><span role="cell">ebd-cache-v1, ebd-daily</span><span role="cell">Cópia das lições da EBD já abertas, para ler sem internet, e as leituras diárias que você marcou</span><span role="cell">Essencial</span></div>
         <div role="row"><span role="cell">biblioteca-pedidos, biblioteca-contato</span><span role="cell">Lembra quais livros você pediu neste aparelho e o nome e WhatsApp que você digitou, para não precisar digitar de novo</span><span role="cell">Essencial</span></div>
         <div role="row"><span role="cell">intro-curta</span><span role="cell">Quando o site recarrega sozinho para atualizar, mostra a abertura curta em vez da vinheta (apagado logo em seguida)</span><span role="cell">Essencial</span></div>
         <div role="row"><span role="cell">prayer-last-sent</span><span role="cell">Evita envios repetidos do formulário (guarda só o horário do último envio, até fechar a aba)</span><span role="cell">Essencial</span></div>
+        <div role="row"><span role="cell">Cópia do app (service worker)</span><span role="cell">Guarda as páginas, imagens e textos públicos já abertos para o site funcionar sem internet e abrir mais rápido</span><span role="cell">Essencial</span></div>
         <div role="row"><span role="cell">sb-*-auth-token, admin-email</span><span role="cell">Sessão do painel e o último e-mail usado para entrar, só para administradores</span><span role="cell">Essencial</span></div>
-        <div role="row"><span role="cell">YouTube, Spotify, Google Maps</span><span role="cell">Exibir vídeos, o player do podcast e o mapa. Só carregam com a sua permissão</span><span role="cell">Terceiros</span></div>
+        <div role="row"><span role="cell">YouTube, Spotify, Google Maps</span><span role="cell">Exibir vídeos, o player do Spotify e o mapa dentro do site. Só carregam com a sua permissão</span><span role="cell">Terceiros</span></div>
       </div>
       <p>Os itens essenciais ficam apenas no seu navegador e não identificam você. Você pode mudar sua escolha sobre conteúdos de
       terceiros a qualquer momento: <button type="button" class="link-btn" onclick="openCookiePreferences()">abrir preferências de cookies</button>.</p>
 
       <h2>5. Com quem compartilhamos</h2>
       <p>Usamos serviços de terceiros para o site funcionar: <strong>Supabase</strong> (banco de dados e arquivos, servidores em São Paulo),
-      <strong>Vercel</strong> (hospedagem do site e envio do formulário), <strong>Resend</strong> (entrega do e-mail do formulário à equipe)
-      e, quando você permite, <strong>YouTube/Google</strong> e <strong>Spotify</strong>.
+      <strong>Vercel</strong> (hospedagem do site, envio do formulário e redução das imagens das capas), <strong>Resend</strong>
+      (entrega do e-mail do formulário à equipe, nos Estados Unidos), <strong>Spotify for Creators</strong> (áudio dos episódios do
+      podcast, quando você aperta play) e, quando você permite, <strong>YouTube/Google</strong> e <strong>Spotify</strong>.
       As miniaturas (imagens) dos vídeos vêm dos servidores do YouTube, que recebem o endereço IP e o navegador de quem abre a página, sem cookies.
       As fontes de texto ficam no próprio site.
       Alguns desses serviços podem processar dados fora do Brasil, com as garantias previstas no art. 33 da LGPD.</p>
@@ -217,6 +229,7 @@ function privacyPageHTML() {
       <h2>7. Seus direitos</h2>
       <p>Pela LGPD (art. 18), você pode pedir: confirmação de que tratamos seus dados, acesso, correção, anonimização ou exclusão,
       portabilidade, informações sobre compartilhamento e a revogação do consentimento. Basta falar conosco por ${privacyContactHTML()}.
+      Respondemos na hora quando for uma confirmação simples ou em até 15 dias com a resposta completa (art. 19).
       Você também pode reclamar à Autoridade Nacional de Proteção de Dados (ANPD).</p>
 
       <h2>8. Segurança</h2>
@@ -224,7 +237,8 @@ function privacyPageHTML() {
       autorizada e políticas de segurança que bloqueiam scripts e conexões não autorizadas.</p>
 
       <h2>9. Crianças e adolescentes</h2>
-      <p>O formulário não deve ser usado por menores de 12 anos sem o acompanhamento de um responsável.</p>
+      <p>O formulário e o pedido de livros da biblioteca não devem ser usados por menores de 12 anos sem o acompanhamento de um
+      responsável. Dados de crianças e adolescentes são tratados sempre no melhor interesse deles (art. 14).</p>
 
       <h2>10. Mudanças nesta política</h2>
       <p>Podemos atualizar esta política. A data da última atualização fica sempre no topo desta página.</p>

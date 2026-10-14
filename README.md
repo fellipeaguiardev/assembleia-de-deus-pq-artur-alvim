@@ -311,6 +311,9 @@ update private.admin_access
   (aviso de cookies; dá para mudar depois em “Preferências de cookies”, no rodapé).
 - A política fica em `/privacidade`. Preencha em **Painel → Igreja & redes** o
   “E-mail para assuntos de privacidade”, que aparece na política.
+- **Prazos de guarda automáticos:** `supabase/migrations/20261014_lgpd_limpeza.sql` agenda no pg_cron uma
+  limpeza diária (pedidos de livros encerrados há 6 meses; registros de entrada no painel com mais de 30 dias).
+  Rode no *SQL Editor* do Supabase; sem ele a limpeza só acontece quando o painel é aberto.
 - **Pedidos de oração não ficam guardados no site:** `api/contato.mjs` só valida e manda o
   e-mail para a equipe (nada em banco ou em painel de formulários).
 
