@@ -11,10 +11,9 @@
 //   NOTIFY_TO       e-mail(s) que recebem, separados por vírgula
 //   NOTIFY_FROM     remetente (opcional). Padrão: "AD Belém - Site <onboarding@resend.dev>"
 // ============================================================
-import { buildPrayerEmail, LOGO_CID, LOGO_URL } from "./_lib/pedido-oracao.mjs";
+import { buildPrayerEmail, FORM_TYPES as TYPES, LOGO_CID, LOGO_URL } from "./_lib/pedido-oracao.mjs";
 
 const json = (status, body) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" } });
-const TYPES = ["Pedido de oração", "Quero receber uma visita", "Conversar com um pastor", "Outro assunto"];
 
 // Freio simples por endereço (vale por instância da função; o Resend e o
 // campo-isca seguram o resto).

@@ -60,6 +60,9 @@ const TOPICS = {
   },
 };
 
+// Assuntos aceitos pelo formulário (os mesmos de js/extras.js → PRAYER_TYPES).
+export const FORM_TYPES = [...Object.keys(TOPICS).filter((k) => k !== "default"), "Outro assunto"];
+
 const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
