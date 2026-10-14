@@ -697,6 +697,7 @@ async function initPalavraView(param) {
     root.innerHTML = `
       <div class="palavra-hero">
         <div class="container narrow" data-listen-root data-listen-title="Palavra Diária">
+          <h1 class="sr-only">Palavra Diária${isToday ? "" : ` de ${esc(fmtDateLong(iso))}`}</h1>
           <span class="eyebrow">${icon("sunrise", 15)} Palavra Diária · ${esc(fmtDateFull(iso))}</span>
           <blockquote class="palavra-verse" data-listen data-listen-text="${esc(`${refSpoken(p.ref)}. ${p.text}`)}">
             <p>${esc(p.text)}</p>

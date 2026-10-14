@@ -301,7 +301,7 @@ function pageHTML(route) {
 }
 
 function notFoundPageHTML() {
-  return `<section class="block"><div class="container">${emptyState(
+  return `<section class="block"><div class="container"><h1 class="sr-only">Erro 404</h1>${emptyState(
     "search",
     "Página não encontrada",
     "O endereço pode ter mudado ou sido digitado errado.",
