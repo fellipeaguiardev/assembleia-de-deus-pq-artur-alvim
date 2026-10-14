@@ -416,11 +416,11 @@ function renderBibleChapter(root, book, chapter, verses, verseSpec) {
         </div>
         <p class="bible-verses" onclick="toggleVerse(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleVerse(event)}">
           ${verses
-            .map((t, i) =>
-              t == null
-                ? ""
-                : `<span class="v${highlight.has(i + 1) ? " hl" : ""}" id="v${i + 1}" data-v="${i + 1}" data-listen role="button" tabindex="0" aria-pressed="false"><sup>${i + 1}</sup>${esc(t)}</span> `,
-            )
+            .map((t, i) => {
+              if (t == null) return "";
+              const { heading, text } = splitVerseHeading(t);
+              return `${heading ? `<span class="bible-ps-letter" role="heading" aria-level="2">${esc(heading)}</span>` : ""}<span class="v${highlight.has(i + 1) ? " hl" : ""}" id="v${i + 1}" data-v="${i + 1}" data-listen role="button" tabindex="0" aria-pressed="false"><sup>${i + 1}</sup>${esc(text)}</span> `;
+            })
             .join("")}
         </p>
         <nav class="bible-nav" aria-label="Capítulos">${navLink(prev, "prev")}${navLink(next, "next")}</nav>
@@ -617,7 +617,18 @@ async function refVerses(r) {
   const data = await bibleBook(r.book.code);
   const chapter = data.chapters[r.chapter - 1] || [];
   const wanted = r.verses ? parseVerseSpec(r.verses, chapter.length) : null;
-  return chapter.map((text, i) => ({ n: i + 1, text })).filter((v) => v.text != null && (!wanted || wanted.has(v.n)));
+  return chapter
+    .map((text, i) => ({ n: i + 1, text: text == null ? null : splitVerseHeading(text).text }))
+    .filter((v) => v.text != null && (!wanted || wanted.has(v.n)));
+}
+
+// Salmo 119: cada bloco de 8 versículos começa com uma letra hebraica, que a
+// Bíblia Livre traz no próprio versículo ("[Nun] :Tua palavra…"). É um título,
+// não parte do texto. Só estas 22 letras ([Ela]:, [Dizendo]: etc. são texto).
+const HEBREW_HEADING = /^\s*\[(Álefe|Bete|Guímel|Dálete|Hê|Vau|Záin|Hete|Tete|Iode|Cafe|Lâmede|Mem|Nun|Sâmeque|Áin|Pê|Tsadê|Cofe|Rexe|Xin|Tau)\]\s*:\s*/;
+function splitVerseHeading(text) {
+  const m = HEBREW_HEADING.exec(text || "");
+  return m ? { heading: m[1], text: text.slice(m[0].length) } : { heading: "", text };
 }
 
 /* ============================================================
