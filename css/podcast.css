@@ -47,7 +47,7 @@
   min-width: 0;
 }
 .podcast-featured-info .eyebrow {
-  color: var(--c-accent);
+  color: var(--c-accent-on-dark);
 }
 .podcast-featured-info h3 {
   color: #fff;

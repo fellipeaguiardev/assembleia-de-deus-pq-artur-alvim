@@ -288,7 +288,7 @@ body.mobile-menu-open {
 }
 .hero .eyebrow,
 .page-hero .eyebrow {
-  color: var(--c-accent);
+  color: var(--c-accent-on-dark);
 }
 .hero h1 {
   color: #fff;
@@ -601,7 +601,7 @@ section.block.announce-block {
   color: #fff;
 }
 .latest-video .info .eyebrow {
-  color: var(--c-accent);
+  color: var(--c-accent-on-dark);
 }
 .latest-video .info h3 {
   color: #fff;
@@ -1159,7 +1159,7 @@ section.block.announce-block {
   color: #fff;
 }
 .location-info .eyebrow {
-  color: var(--c-accent);
+  color: var(--c-accent-on-dark);
 }
 .location-info h3 {
   color: #fff;
@@ -1402,7 +1402,7 @@ body.has-player .site-footer {
   color: #fff;
 }
 .news-featured-overlay .eyebrow {
-  color: var(--c-accent);
+  color: var(--c-accent-on-dark);
 }
 .news-featured-overlay h2 {
   color: #fff;
@@ -1560,7 +1560,7 @@ body.has-player .site-footer {
   align-items: start;
 }
 .donations-copy .eyebrow {
-  color: var(--c-accent);
+  color: var(--c-accent-on-dark);
 }
 .donations-copy h1,
 .donations-copy h2 {
@@ -2040,7 +2040,7 @@ body.modal-open {
   color: rgba(255, 255, 255, 0.8);
 }
 .ministry-modal-info .eyebrow {
-  color: var(--c-accent);
+  color: var(--c-accent-on-dark);
 }
 .ministry-modal-info h2 {
   color: #fff;

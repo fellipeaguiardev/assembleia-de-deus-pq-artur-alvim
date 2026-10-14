@@ -17,6 +17,7 @@
   --c-line-strong: color-mix(in srgb, var(--c-secondary) 20%, transparent);
   --c-tint: color-mix(in srgb, var(--c-primary) 6%, var(--c-surface));
   --c-accent-ink: color-mix(in srgb, var(--c-accent) 42%, var(--c-secondary)); /* texto de destaque legível sobre fundo claro */
+  --c-accent-on-dark: color-mix(in srgb, var(--c-accent) 70%, #fff); /* texto pequeno de destaque sobre o azul (contraste ≥ 4,5) */
   --c-deep: color-mix(in srgb, var(--c-secondary) 82%, #000);
 
   --radius: 18px;
