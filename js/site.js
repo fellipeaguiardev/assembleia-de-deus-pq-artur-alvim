@@ -21,14 +21,14 @@ const NAV_MORE = [
   ["biblioteca", "Biblioteca dos Jovens"],
   ["primeira-visita", "Primeira visita"],
   ["noticias", "Notícias"],
-  ["ministerios", "Ministérios"],
+  ["departamentos", "Departamentos"],
   ["podcast", "Podcast"],
   ["doacoes", "Doações"],
   ["oracao", "Pedido de oração"],
 ];
 // Menu do celular, em grupos.
 const NAV_GROUPS = [
-  ["A igreja", [["home", "Início"], ["sobre", "Sobre nós"], ["primeira-visita", "Primeira visita"], ["ministerios", "Ministérios"], ["doacoes", "Doações"]]],
+  ["A igreja", [["home", "Início"], ["sobre", "Sobre nós"], ["primeira-visita", "Primeira visita"], ["departamentos", "Departamentos"], ["doacoes", "Doações"]]],
   ["Palavra", [["palavra", "Palavra Diária"], ["biblia", "Bíblia"], ["harpa", "Harpa Cristã"], ["ebd", "Escola Bíblica (EBD)"], ["biblioteca", "Biblioteca dos Jovens"], ["videos", "Vídeos"], ["podcast", "Podcast"]]],
   ["Agenda", [["cultos", "Cultos"], ["eventos", "Eventos"], ["noticias", "Notícias"]]],
 ];
@@ -65,6 +65,16 @@ function currentRoute() {
 }
 
 const routeBase = (route) => route.split("/")[0];
+
+// Páginas que mudaram de nome: o endereço antigo continua abrindo a nova
+// (a Vercel também redireciona; isto cobre o app aberto sem internet).
+const ROUTE_RENAMES = { ministerios: "departamentos" };
+function migrateRenamedRoute() {
+  const [base, ...rest] = currentRoute().split("/");
+  if (!ROUTE_RENAMES[base]) return false;
+  history.replaceState(null, "", routePath([ROUTE_RENAMES[base], ...rest].join("/")) + location.search);
+  return true;
+}
 const routeParam = (route) => route.split("/").slice(1).join("/");
 
 // Converte links antigos (/#eventos, /#noticias/slug, /#admin) para o formato novo.
@@ -107,6 +117,7 @@ window.addEventListener("hashchange", () => migrateLegacyHash() && onRouteChange
 function onRouteChange() {
   if (appUpdateOnNavigate()) return; // versão nova: carrega a página já atualizada
   listenRouteChanged();
+  migrateRenamedRoute(); // ex.: um link antigo para /ministerios gravado em algum aviso
   const route = currentRoute();
   if (route === "admin") {
     openAdmin();
@@ -166,7 +177,7 @@ function afterRoute(route) {
    TÍTULO, DESCRIÇÃO E ENDEREÇO OFICIAL DE CADA PÁGINA
    ============================================================ */
 const ROUTE_META = {
-  home: ["", "Assembleia de Deus Belém - Parque Artur Alvim, São Paulo: horários dos cultos, Bíblia online, eventos, vídeos, ministérios e localização."],
+  home: ["", "Assembleia de Deus Belém - Parque Artur Alvim, São Paulo: horários dos cultos, Bíblia online, eventos, vídeos, departamentos e localização."],
   cultos: ["Horários dos cultos", "Dias e horários dos cultos e da Escola Bíblica Dominical da AD Belém - Parque Artur Alvim."],
   biblia: ["Bíblia", "Leia a Bíblia Sagrada completa no site, gratuitamente, na tradução Bíblia Livre, e abra a mesma passagem na ARC, ARA, NVI, NTLH ou BKJ."],
   biblioteca: ["Biblioteca dos Jovens", "Livros de teologia, história, filosofia e literatura para emprestar: veja o acervo, a situação de cada livro e peça o seu. Aberta a todos."],
@@ -178,7 +189,7 @@ const ROUTE_META = {
   noticias: ["Notícias", "Novidades, acontecimentos e informações da AD Belém - Parque Artur Alvim."],
   sobre: ["Quem somos", "História, missão, valores e liderança da Assembleia de Deus Belém - Parque Artur Alvim."],
   "primeira-visita": ["Sua primeira visita", "Horários, endereço e como chegar para visitar a AD Belém - Parque Artur Alvim pela primeira vez."],
-  ministerios: ["Ministérios", "Conheça os ministérios e departamentos da AD Belém - Parque Artur Alvim."],
+  departamentos: ["Departamentos", "Conheça os departamentos da AD Belém - Parque Artur Alvim."],
   podcast: ["Podcast", "Mensagens e conversas para fortalecer a sua fé, do podcast da AD Belém - Parque Artur Alvim."],
   doacoes: ["Ofertas e doações", "Contribua com ofertas, dízimos e projetos da AD Belém - Parque Artur Alvim via PIX."],
   oracao: ["Pedido de oração", "Envie seu pedido de oração ou fale com a equipe pastoral da AD Belém - Parque Artur Alvim."],
@@ -261,7 +272,7 @@ function pageHTML(route) {
       return schedulePageHTML();
     case "podcast":
       return podcastPageHTML();
-    case "ministerios":
+    case "departamentos":
       return ministriesPageHTML();
     case "doacoes":
       return donationsPageHTML();
@@ -730,14 +741,14 @@ function aboutHomeHTML() {
   </section>`;
 }
 
-/* ---------------- Ministérios ---------------- */
+/* ---------------- Departamentos (no banco: tabela "ministries") ---------------- */
 function ministriesHomeHTML() {
   const items = data.ministries || [];
   return `
   <section class="block">
     <div class="container">
-      ${sectionHead("Comunidade", "Nossos ministérios", items.length ? carouselArrows("ministryCarousel", "ministério") + `<a class="btn btn-ghost btn-sm" href="/ministerios">Ver todos</a>` : "")}
-      ${items.length ? carouselHTML("ministryCarousel", items.map((m) => ministryCardHTML(m, true)).join("")) : emptyState("user", "Nenhum ministério cadastrado")}
+      ${sectionHead("Comunidade", "Nossos departamentos", items.length ? carouselArrows("ministryCarousel", "departamento") + `<a class="btn btn-ghost btn-sm" href="/departamentos">Ver todos</a>` : "")}
+      ${items.length ? carouselHTML("ministryCarousel", items.map((m) => ministryCardHTML(m, true)).join("")) : emptyState("user", "Nenhum departamento cadastrado")}
     </div>
   </section>`;
 }
@@ -746,10 +757,10 @@ function ministryCardHTML(m, slide = false) {
   return `
   <article class="card ministry-card ${slide ? "carousel-slide" : ""}" ${pressable("openMinistryModal", m.id, "Ver " + m.name)}>
     <div class="card-media" style="${bgImage(m.image)}">
-      <span class="card-hint">Ver ministério ${icon("external", 13)}</span>
+      <span class="card-hint">Ver departamento ${icon("external", 13)}</span>
     </div>
     <div class="card-body">
-      <span class="card-kicker">Ministério</span>
+      <span class="card-kicker">Departamento</span>
       <h4>${esc(m.name)}</h4>
       ${m.responsible ? `<div class="who">${esc(m.responsible)}</div>` : ""}
       <p class="clamp-3">${esc(m.description)}</p>
@@ -760,11 +771,11 @@ function ministryCardHTML(m, slide = false) {
 function ministriesPageHTML() {
   const items = data.ministries || [];
   return (
-    pageHeroHTML("Comunidade", "Ministérios", "Há um lugar para você servir e crescer junto com a nossa família.") +
+    pageHeroHTML("Comunidade", "Departamentos", "Há um lugar para você servir e crescer junto com a nossa família.") +
     `
   <section class="block">
     <div class="container">
-      ${items.length ? `<div class="card-grid" data-stagger>${items.map((m) => ministryCardHTML(m)).join("")}</div>` : emptyState("user", "Nenhum ministério cadastrado")}
+      ${items.length ? `<div class="card-grid" data-stagger>${items.map((m) => ministryCardHTML(m)).join("")}</div>` : emptyState("user", "Nenhum departamento cadastrado")}
     </div>
   </section>`
   );
@@ -1171,7 +1182,7 @@ function aboutPageHTML() {
           : ""
       }
       <div class="about-links">
-        <a class="btn btn-ghost btn-sm" href="/ministerios">Conheça os ministérios ${icon("arrow", 15)}</a>
+        <a class="btn btn-ghost btn-sm" href="/departamentos">Conheça os departamentos ${icon("arrow", 15)}</a>
         <a class="btn btn-ghost btn-sm" href="/primeira-visita">Planeje sua visita ${icon("arrow", 15)}</a>
       </div>
     </div>
@@ -1638,7 +1649,7 @@ async function openMinistryModal(ministryId) {
     <div class="ministry-modal-hero">
       <div class="ministry-modal-logo" style="${bgImage(m.image)}">${safeUrl(m.image) ? "" : icon("user", 48)}</div>
       <div class="ministry-modal-info">
-        <span class="eyebrow">Ministério</span>
+        <span class="eyebrow">Departamento</span>
         <h2>${esc(m.name)}</h2>
         ${m.responsible ? `<div class="modal-responsible">Responsável · ${esc(m.responsible)}</div>` : ""}
         <p>${esc(m.description)}</p>
@@ -1649,7 +1660,7 @@ async function openMinistryModal(ministryId) {
       </div>
     </div>
     <div class="ministry-gallery-section">
-      <div class="gallery-head"><div><span class="eyebrow">Momentos</span><h3>Fotos do ministério</h3></div><span id="ministryGalleryCount" class="gallery-count"></span></div>
+      <div class="gallery-head"><div><span class="eyebrow">Momentos</span><h3>Fotos do departamento</h3></div><span id="ministryGalleryCount" class="gallery-count"></span></div>
       <div id="ministryGalleryRoot"><div class="photo-skeleton"><span></span><span></span><span></span></div></div>
     </div>`,
     { className: "modal-wide", label: m.name },
@@ -1671,7 +1682,7 @@ async function loadMinistryGallery(ministryId) {
     const list = (photos || []).filter((p) => safeUrl(p.image_url || p.url));
     if (count) count.textContent = list.length ? `${list.length} ${list.length === 1 ? "foto" : "fotos"}` : "";
     if (!list.length) {
-      target.innerHTML = `<div class="gallery-empty">${icon("camera", 26)}<strong>Em breve</strong><p>As fotos deste ministério serão adicionadas aqui.</p></div>`;
+      target.innerHTML = `<div class="gallery-empty">${icon("camera", 26)}<strong>Em breve</strong><p>As fotos deste departamento serão adicionadas aqui.</p></div>`;
       return;
     }
     window.currentMinistryPhotos = list;
@@ -1681,13 +1692,13 @@ async function loadMinistryGallery(ministryId) {
           ${list
             .map(
               (p, i) =>
-                `<button class="ministry-photo" type="button" onclick="openPhotoLightbox(${i})" aria-label="Ampliar foto ${i + 1}"><img src="${esc(safeUrl(p.image_url || p.url))}" alt="${esc(p.caption || "Foto do ministério")}" loading="lazy" onload="this.classList.add('loaded')">${p.caption ? `<span>${esc(p.caption)}</span>` : ""}</button>`,
+                `<button class="ministry-photo" type="button" onclick="openPhotoLightbox(${i})" aria-label="Ampliar foto ${i + 1}"><img src="${esc(safeUrl(p.image_url || p.url))}" alt="${esc(p.caption || "Foto do departamento")}" loading="lazy" onload="this.classList.add('loaded')">${p.caption ? `<span>${esc(p.caption)}</span>` : ""}</button>`,
             )
             .join("")}
         </div>
       </div>`;
   } catch (err) {
-    console.error("Erro ao carregar fotos do ministério:", err);
+    console.error("Erro ao carregar fotos do departamento:", err);
     target.innerHTML = `<div class="gallery-empty">${icon("camera", 26)}<strong>Não foi possível carregar as fotos</strong><p>Tente novamente em instantes.</p></div>`;
   }
 }

@@ -18,6 +18,18 @@
       "schedule": "0 9 * * *"
     }
   ],
+  "redirects": [
+    {
+      "source": "/ministerios",
+      "destination": "/departamentos",
+      "permanent": true
+    },
+    {
+      "source": "/ministerios/:path*",
+      "destination": "/departamentos/:path*",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/((?!api/|assets/|css/|js/|data/|vendor/|_vercel/).*)",

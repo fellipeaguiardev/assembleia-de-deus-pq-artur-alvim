@@ -16,7 +16,7 @@ const ADMIN_TABS = [
   { id: "ebd", label: "EBD", icon: "school" },
   { id: "biblioteca", label: "Biblioteca", icon: "book" },
   { id: "announcements", label: "Avisos", icon: "megaphone" },
-  { id: "ministries", label: "Ministérios", icon: "user" },
+  { id: "ministries", label: "Departamentos", icon: "user" },
   { id: "about", label: "Sobre a igreja", icon: "heart" },
   { id: "firstVisit", label: "Primeira visita", icon: "user" },
   { id: "church", label: "Igreja & redes", icon: "pin" },
@@ -1195,7 +1195,7 @@ async function updateAnnouncement(i, key, val) {
 /* ---- MINISTÉRIOS ---- */
 function tabMinistries() {
   return `
-    ${topbar("Ministérios", `<button class="btn btn-primary btn-sm" type="button" onclick="addMinistry()">+ Novo ministério</button>`)}
+    ${topbar("Departamentos", `<button class="btn btn-primary btn-sm" type="button" onclick="addMinistry()">+ Novo departamento</button>`)}
     ${
       (data.ministries || []).length
         ? data.ministries
@@ -1212,16 +1212,16 @@ function tabMinistries() {
         </div>
         <div class="ministry-admin-gallery">
           <div class="gallery-admin-head">
-            <strong>Fotos do ministério</strong>
+            <strong>Fotos do departamento</strong>
             <label class="btn btn-ghost btn-sm upload-label">+ Adicionar fotos<input type="file" accept="image/png,image/jpeg,image/webp" multiple hidden onchange="uploadMinistryPhotos(${i},this)"></label>
           </div>
           <div id="ministry-admin-photos-${esc(m.id)}" class="admin-photo-grid"><span class="admin-muted">Carregando fotos…</span></div>
         </div>
-        <div class="admin-card-foot end"><button class="btn btn-danger btn-sm" type="button" onclick="removeMinistry(${i})">Excluir ministério</button></div>
+        <div class="admin-card-foot end"><button class="btn btn-danger btn-sm" type="button" onclick="removeMinistry(${i})">Excluir departamento</button></div>
       </div>`,
             )
             .join("")
-        : adminEmpty("Nenhum ministério cadastrado.")
+        : adminEmpty("Nenhum departamento cadastrado.")
     }`;
 }
 
@@ -1243,7 +1243,7 @@ async function refreshMinistryAdminPhotos(onlyId) {
       ? photos
           .map(
             (p) => `<div class="admin-photo-item">
-              <img src="${esc(safeUrl(p.image_url))}" alt="${esc(p.caption || "Foto do ministério")}" loading="lazy">
+              <img src="${esc(safeUrl(p.image_url))}" alt="${esc(p.caption || "Foto do departamento")}" loading="lazy">
               <button type="button" title="Excluir foto" data-id="${esc(p.id)}" data-ministry="${esc(m.id)}" onclick="deleteMinistryPhoto(this.dataset.id, this.dataset.ministry)">×</button>
             </div>`,
           )
@@ -1275,7 +1275,7 @@ async function uploadMinistryPhotos(index, input) {
 }
 
 async function deleteMinistryPhoto(id, ministryId) {
-  if (!confirm("Excluir esta foto do ministério?")) return;
+  if (!confirm("Excluir esta foto do departamento?")) return;
   if (await dbWrite(db("ministry_images").delete().eq("id", id), "Foto excluída!", "Erro ao excluir foto.")) {
     refreshMinistryAdminPhotos(ministryId);
   }
@@ -1296,9 +1296,9 @@ async function uploadMinistryCover(input, i) {
 
 async function addMinistry() {
   const created = await dbWrite(
-    db("ministries").insert({ name: "Novo ministério", description: "", image: "", responsible: "", instagram: "", whatsapp: "" }).select().single(),
-    "Ministério criado!",
-    "Erro ao criar ministério.",
+    db("ministries").insert({ name: "Novo departamento", description: "", image: "", responsible: "", instagram: "", whatsapp: "" }).select().single(),
+    "Departamento criado!",
+    "Erro ao criar departamento.",
   );
   if (!created) return;
   data.ministries.unshift(mapMinistry(created));
@@ -1308,8 +1308,8 @@ async function addMinistry() {
 
 async function removeMinistry(i) {
   const m = data.ministries[i];
-  if (!m || !confirm(`Deseja excluir o ministério "${m.name}"?`)) return;
-  if (!(await dbWrite(db("ministries").delete().eq("id", m.id), "Ministério excluído!", "Erro ao excluir."))) return;
+  if (!m || !confirm(`Deseja excluir o departamento "${m.name}"?`)) return;
+  if (!(await dbWrite(db("ministries").delete().eq("id", m.id), "Departamento excluído!", "Erro ao excluir."))) return;
   data.ministries.splice(i, 1);
   renderAdmin();
   renderSite();

@@ -2003,7 +2003,7 @@ body.modal-open {
   color: var(--c-text-soft);
 }
 
-/* Ministério */
+/* Departamento */
 .ministry-modal-hero {
   display: grid;
   grid-template-columns: 240px minmax(0, 1fr);

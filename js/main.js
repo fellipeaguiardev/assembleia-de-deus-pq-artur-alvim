@@ -5,6 +5,7 @@ if ("scrollRestoration" in history) history.scrollRestoration = "manual";
 
 // Links antigos com "#" (ex.: /#eventos) viram endereços normais antes de tudo.
 migrateLegacyHash();
+migrateRenamedRoute();
 
 // Se a sessão do admin expirar ou sair em outra aba, volta para a tela de login.
 supabaseClient.auth.onAuthStateChange((event) => {

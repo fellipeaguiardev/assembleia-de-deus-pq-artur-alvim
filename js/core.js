@@ -58,7 +58,7 @@ const defaultData = {
     { id: "firstVisit", name: "Primeira visita", enabled: false },
     { id: "news", name: "Notícias", enabled: false },
     { id: "about", name: "Sobre a igreja", enabled: false },
-    { id: "ministries", name: "Ministérios", enabled: false },
+    { id: "ministries", name: "Departamentos", enabled: false },
     { id: "podcast", name: "Podcast", enabled: false },
     { id: "social", name: "Redes sociais", enabled: false },
     { id: "prayer", name: "Pedido de oração", enabled: false },

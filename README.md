@@ -40,7 +40,7 @@ lições, livros, vídeos, cores) é editado pela equipe num **painel administra
 | **Harpa Cristã** | Índice dos 640 hinos com busca por número ou nome, "Meus hinos" no aparelho e atalhos para ouvir e ver a letra. |
 | **Biblioteca dos Jovens** | Acervo com busca e categorias, situação de cada livro (disponível, emprestado com data de volta, reservado), sinopse e pedido "Quero este livro" ou "Entrar na fila de espera". |
 | **Vídeos e podcast** | Cultos e lives do YouTube atualizados sozinhos, busca e filtros, botão "Ao vivo" e player de podcast que continua tocando enquanto se navega. |
-| **Comunidade** | Pedido de oração e contato (chega por e-mail à equipe), primeira visita (horários, endereço, como chegar), ministérios, história e liderança da igreja e ofertas por PIX com QR Code. |
+| **Comunidade** | Pedido de oração e contato (chega por e-mail à equipe), primeira visita (horários, endereço, como chegar), departamentos, história e liderança da igreja e ofertas por PIX com QR Code. |
 | **App e privacidade** | App instalável (PWA) com atalhos, abertura animada com o brasão montado em formas geométricas, aviso de versão nova, política de privacidade (LGPD) e conteúdos de terceiros (YouTube, Spotify, Maps) só com permissão. |
 
 <p align="center">
@@ -61,7 +61,7 @@ lições, livros, vídeos, cores) é editado pela equipe num **painel administra
 - **Eventos, avisos, notícias, vídeos e podcast:** com publicação agendada e fotos enviadas pelo celular.
 - **EBD:** trimestres e lições, com importação automática de títulos, datas e referências bíblicas, revisão e publicação.
 - **Biblioteca:** empréstimos com as regras da biblioteca (limite por pessoa, prazo, renovação, suspensão por atraso), fila de espera, mensagens prontas no WhatsApp, acervo com capas, leitores e exportação para planilha.
-- **Ministérios, sobre a igreja, primeira visita, igreja e redes, doações (PIX).**
+- **Departamentos, sobre a igreja, primeira visita, igreja e redes, doações (PIX).**
 - **Entrada protegida:** e-mail e senha **e** confirmação por e-mail (“Liberar acesso” / “Não fui eu”) a cada login.
 
 ## Como é feito
