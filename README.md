@@ -78,7 +78,8 @@ lições, livros, vídeos, cores) é editado pela equipe num **painel administra
 O `.gitignore` deixa de fora tudo o que é segredo ou dado da igreja:
 
 - **Chaves e senhas**: ficam só nas variáveis de ambiente da Vercel (`RESEND_API_KEY`, `NOTIFY_TO`,
-  `EBD_SYNC_TOKEN`, `CRON_SECRET`, `ADMIN_ACCESS_TOKEN`). A única chave no código é a **publicável** do Supabase, que é
+  `EBD_SYNC_TOKEN`, `CRON_SECRET`, `ADMIN_ACCESS_TOKEN`, `LIB_SHEET_ID`, `LIB_SYNC_TOKEN`,
+  `LIB_TRIGGER_KEY`). A única chave no código é a **publicável** do Supabase, que é
   pública por natureza (veja "Segurança").
 - **Cópias de segurança do banco** (`supabase/backups/`) e os ids do projeto na Vercel (`.vercel/`,
   `scripts/vercel-projeto.json`).
@@ -231,6 +232,19 @@ ou "Entrar na fila de espera" (nome + WhatsApp, com consentimento).
   visitante lê só o acervo (sem o dono do exemplar nem observações) e a situação pela função
   `library_status()`; nomes e telefones de quem pegou ou pediu ficam só para o admin (RLS).
   Pedidos passam por `library_request()`, que valida, evita repetição e limita abusos.
+- **Planilha → site (automático)**: a equipe continua cadastrando os livros na planilha do Google.
+  `api/biblioteca-sync.mjs` confere a planilha todo dia às 06:30 (Vercel Cron), pelo botão
+  **Atualizar agora** do painel ou pelo link da equipe (`/api/biblioteca-sync?chave=…`, mostrado no
+  painel). Descobre as abas sozinho (aba nova = categoria nova), cadastra os exemplares novos e guarda
+  a capa colada na coluna "Capa" (o Google entrega reduzida, ~25 KB; fica no banco, tabela
+  `library_covers`, servida em `/api/capa-livro/<id>-<versão>.jpg`). Livro novo sem imagem na
+  planilha ganha capa da internet só quando título e autor batem (Open Library; Google Books se houver
+  `GOOGLE_BOOKS_KEY`). Só adiciona: não apaga nem muda o que foi editado no painel; cada livro guarda
+  de qual linha veio (`sheet_key`), então corrigir o título no painel não duplica. Livro apagado no
+  painel volta se ainda estiver na planilha. Banco: `supabase/migrations/20261015_biblioteca_planilha.sql`.
+  Variáveis na Vercel: `LIB_SHEET_ID`, `LIB_SYNC_TOKEN`, `LIB_TRIGGER_KEY` (e `CRON_SECRET`).
+- **Capas leves**: todas as capas passam pelo redutor de imagens da Vercel (`imgThumb`, ~6 KB na
+  lista em vez de ~30 KB), com `srcset` para telas comuns e de alta resolução.
 - **Painel → Biblioteca**: resumo (atrasos, vencimentos, pedidos novos), empréstimos com as
   regras da biblioteca (até 2 livros por pessoa, 14 dias, renovação de 7 dias até 2× só sem
   atraso e sem fila, suspensão igual aos dias de atraso), fila de espera, mensagens prontas no

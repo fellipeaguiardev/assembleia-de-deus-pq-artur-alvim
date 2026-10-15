@@ -10,12 +10,22 @@
     },
     "api/ebd-sync-diario.mjs": {
       "maxDuration": 60
+    },
+    "api/biblioteca-sync.mjs": {
+      "maxDuration": 60
+    },
+    "api/capa-livro/[arquivo].mjs": {
+      "maxDuration": 10
     }
   },
   "crons": [
     {
       "path": "/api/ebd-sync-diario",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/biblioteca-sync",
+      "schedule": "30 9 * * *"
     }
   ],
   "redirects": [
@@ -59,6 +69,22 @@
         "protocol": "https",
         "hostname": "rtludbkopxbhiwlwycid.supabase.co",
         "pathname": "/storage/v1/object/public/images/**"
+      },
+      {
+        "protocol": "https",
+        "hostname": "covers.openlibrary.org",
+        "pathname": "/b/id/**"
+      },
+      {
+        "protocol": "https",
+        "hostname": "books.google.com",
+        "pathname": "/books/content"
+      }
+    ],
+    "localPatterns": [
+      {
+        "pathname": "/api/capa-livro/**",
+        "search": ""
       }
     ]
   },

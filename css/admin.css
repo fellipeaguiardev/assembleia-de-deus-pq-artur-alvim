@@ -850,3 +850,14 @@ p.gate-note {
   height: 18px;
   accent-color: var(--c-primary);
 }
+
+/* Biblioteca: link da planilha para a equipe */
+.lib-link-row {
+  display: flex;
+  gap: 8px;
+}
+.lib-link-row input {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+}

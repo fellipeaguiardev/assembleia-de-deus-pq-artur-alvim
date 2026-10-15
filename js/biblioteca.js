@@ -69,11 +69,16 @@ function libState(id) {
   return { key: "livre", label: "Disponível", waiting: 0 };
 }
 
+// A capa vem reduzida para o tamanho em que aparece (imgThumb): ~6 KB na lista em vez de ~30 KB.
 function libCoverHTML(b, size = "") {
   const url = safeUrl(b.cover_url);
+  const [small, big, sizes] = size === "lg" ? [320, 640, "(max-width: 700px) 60vw, 300px"] : [160, 320, "(max-width: 700px) 72px, 190px"];
+  const t1 = imgThumb(url, small);
+  const t2 = imgThumb(url, big);
+  const img = !url ? "" : t1 === t2 ? `<img src="${esc(t1)}"` : `<img src="${esc(t2)}" srcset="${esc(t1)} ${small}w, ${esc(t2)} ${big}w" sizes="${sizes}"`;
   return `<span class="lib-cover ${size}" style="--lib-c:${libColor(b.category)}" aria-hidden="true">
     <span class="lib-cover-art"><small>${esc(b.category || "Livro")}</small><b>${esc(truncate(b.title, 70))}</b><i>${esc(truncate(b.author || "", 40))}</i></span>
-    ${url ? `<img src="${esc(url)}" alt="" loading="lazy" decoding="async" onerror="this.remove()">` : ""}
+    ${img ? `${img} alt="" loading="lazy" decoding="async" onerror="this.remove()">` : ""}
   </span>`;
 }
 

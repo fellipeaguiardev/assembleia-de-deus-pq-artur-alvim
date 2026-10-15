@@ -252,6 +252,7 @@ function libViewResumo() {
       ${kpi(late.length, "em atraso", late.length ? "bad" : "")}
       ${kpi(fresh.length, "pedidos novos", fresh.length ? "warn" : "")}
     </div>
+    ${libSheetSyncCardHTML()}
     ${!libAdmin.books.length ? libImportCardHTML() : ""}
     <div class="admin-card">
       <div class="lib-card-head"><h3>Novo empréstimo</h3><button class="btn btn-primary btn-sm" type="button" onclick="libStartLend()">${icon("book", 14)} Emprestar um livro</button></div>
@@ -714,7 +715,7 @@ async function libSaveBook() {
   if (!b || libAdmin.saving) return;
   if (!b.title.trim()) return showToast("Escreva o título.", "error");
   const cover = b.cover_url.trim();
-  if (cover && !safeUrl(cover).startsWith("https://")) return showToast("O endereço da capa precisa começar com https://", "error");
+  if (cover && !safeUrl(cover).startsWith("https://") && !THUMB_LOCAL.test(cover)) return showToast("O endereço da capa precisa começar com https://", "error");
   const row = { title: b.title.trim(), author: b.author.trim(), category: b.category.trim(), synopsis: b.synopsis.trim(), cover_url: cover, owner: b.owner.trim(), notes: b.notes.trim(), visible: !!b.visible };
   libAdmin.saving = true;
   const q = b.id ? db("library_books").update(row).eq("id", b.id).select().single() : db("library_books").insert(row).select().single();
@@ -735,7 +736,7 @@ async function libDeleteBook(id) {
   const b = libBook(id);
   if (!b) return;
   if (libOpenLoan(id)) return showToast("Este livro está emprestado. Registre a devolução antes de excluir.", "error");
-  if (!confirm(`Excluir “${b.title}” do acervo? O histórico de empréstimos deste livro também será apagado.\n\nSe for só para tirar do site, desmarque “Mostrar no site”.`)) return;
+  if (!confirm(`Excluir “${b.title}” do acervo? O histórico de empréstimos deste livro também será apagado.\n\nSe ele ainda estiver na planilha, volta na próxima atualização: apague também da planilha. Se for só para tirar do site, desmarque “Mostrar no site”.`)) return;
   const ok = await dbWrite(db("library_books").delete().eq("id", id), "Livro excluído");
   if (!ok) return;
   libAdmin.books = libAdmin.books.filter((x) => x.id !== id);
@@ -1018,6 +1019,55 @@ function libBRDate(v) {
   const y = m[3].length === 2 ? 2000 + Number(m[3]) : Number(m[3]);
   const iso = `${y}-${String(m[2]).padStart(2, "0")}-${String(m[1]).padStart(2, "0")}`;
   return parseISODate(iso) ? iso : "";
+}
+
+/* ---------- Planilha → site (api/biblioteca-sync.mjs) ----------
+   A equipe continua cadastrando na planilha; o site confere sozinho todo dia
+   e traz os livros novos com a capa colada na coluna "Capa". */
+function libSheetSyncCardHTML() {
+  const s = libAdmin.sync || {};
+  const r = s.result;
+  const msg = s.error
+    ? `<p class="admin-note admin-warn" role="alert">${esc(s.error)}</p>`
+    : r
+      ? `<p class="admin-note admin-ok" role="status">${r.novos.length ? `${r.novos.length} ${r.novos.length === 1 ? "livro novo" : "livros novos"}: ${esc(r.novos.slice(0, 5).join(", "))}${r.novos.length > 5 ? "…" : ""}.` : "Nenhum livro novo na planilha."}${r.capasPlanilha + r.capasInternet ? ` ${r.capasPlanilha + r.capasInternet} capa(s) adicionada(s)${r.capasInternet ? ` (${r.capasInternet} da internet — confira a edição)` : ""}.` : ""}${r.semCapa.length ? ` Sem capa: ${esc(r.semCapa.join(", "))}.` : ""}${r.pendentes ? ` Faltam ${r.pendentes} capa(s): atualize de novo.` : ""}</p>`
+      : "";
+  return `<div class="admin-card lib-sync">
+    <div class="lib-card-head"><h3>${icon("book", 16)} Planilha da biblioteca</h3>
+      <button class="btn btn-primary btn-sm ${s.busy ? "loading" : ""}" type="button" onclick="libSyncNow()" ${s.busy ? "disabled" : ""}>Atualizar agora</button></div>
+    <p class="admin-note">Continue cadastrando os livros na planilha. O site confere sozinho todo dia às 6h30 e traz os livros novos, com a capa colada na coluna “Capa” (sem capa na planilha, tenta achar na internet).</p>
+    ${msg}
+    ${
+      s.link
+        ? `<div class="field"><label for="libTeamLink">Link para a equipe atualizar sem entrar no painel</label>
+           <div class="lib-link-row"><input id="libTeamLink" type="text" readonly value="${esc(s.link)}" onclick="this.select()"><button class="btn btn-ghost btn-sm" type="button" onclick="copyText(document.getElementById('libTeamLink').value).then(() => showToast('Link copiado', 'success'))">Copiar</button></div>
+           <p class="admin-muted">Quem tiver este link só consegue mandar o site conferir a planilha. Mande para quem cuida da biblioteca.</p></div>`
+        : ""
+    }
+  </div>`;
+}
+
+async function libSyncNow() {
+  const s = (libAdmin.sync = { ...(libAdmin.sync || {}), busy: true, error: "" });
+  renderAdmin();
+  try {
+    if (!(await adminEnsureAccess())) throw new Error("Confirme o acesso ao painel pelo e-mail e tente de novo.");
+    const { data: sess } = await supabaseClient.auth.getSession();
+    const res = await fetch("/api/biblioteca-sync", { method: "POST", headers: { Authorization: `Bearer ${sess?.session?.access_token || ""}` } });
+    const body = await res.json().catch(() => ({}));
+    if (body.linkEquipe) s.link = body.linkEquipe;
+    if (!res.ok || !body.ok) throw new Error(body.error || `Erro ${res.status}`);
+    s.result = body;
+    if (body.novos.length || body.capasPlanilha || body.capasInternet) {
+      showToast(body.novos.length ? `${body.novos.length} livro(s) novo(s) da planilha` : "Capas atualizadas", "success");
+      await loadLibAdmin();
+    } else showToast("Tudo em dia com a planilha.");
+  } catch (e) {
+    s.error = e.message || String(e);
+  } finally {
+    s.busy = false;
+    if (adminTab === "biblioteca") renderAdmin();
+  }
 }
 
 function libImportCardHTML() {
