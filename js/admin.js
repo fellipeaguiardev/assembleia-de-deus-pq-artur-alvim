@@ -1439,7 +1439,7 @@ function tabAbout() {
     </div>
     <div class="admin-card">
       <h3>Declaração de fé</h3>
-      <p class="admin-note">Cole o texto oficial aprovado pela igreja. Se ficar vazio, a seção não aparece no site.</p>
+      <p class="admin-note">Cole o texto oficial aprovado pela igreja, <strong>um artigo por linha</strong>. As referências bíblicas entre parênteses no fim de cada linha viram links para a Bíblia do site. Se ficar vazio, a seção não aparece.</p>
       ${field("Texto", `<textarea rows="8" onchange="updateAbout('faith',this.value)">${esc(a.faith)}</textarea>`, true)}
     </div>
     <div class="admin-card">

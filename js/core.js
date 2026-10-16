@@ -688,6 +688,12 @@ const mapVideo = (v) => ({
   source: v.source || "manual",
 });
 const mapService = (s) => ({ id: s.id, day: s.day || "", items: s.items || [] });
+// Segunda → Domingo; o que não é dia da semana (ex.: "Novo dia") vai para o fim.
+const serviceOrder = (d) => {
+  const i = weekdayIndex(d.day);
+  return i < 0 ? 99 : (i + 6) % 7;
+};
+const byWeekday = (a, b) => serviceOrder(a) - serviceOrder(b);
 const mapAnnouncement = (a) => ({
   id: a.id,
   text: a.text || "",
@@ -816,7 +822,7 @@ async function loadData() {
     // Vídeos ocultados no painel não aparecem (e não voltam na sincronização).
     if (videos.data) data.videos = videos.data.filter((v) => !v.hidden).map(mapVideo);
     else data.videos = (data.videos || []).map(mapVideo);
-    if (services.data) data.services = services.data.map(mapService);
+    if (services.data) data.services = services.data.map(mapService).sort(byWeekday);
     if (announcements.data) data.announcements = announcements.data.map(mapAnnouncement);
     if (ministries.data) data.ministries = ministries.data.map(mapMinistry);
     if (news.data) data.news = news.data.map(mapNews);

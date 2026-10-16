@@ -250,6 +250,7 @@ function renderSite() {
   if (base === "palavra") initPalavraView(routeParam(route));
   if (base === "harpa") initHarpaView(routeParam(route));
   if (base === "biblioteca") initBibliotecaView(routeParam(route));
+  if (base === "sobre") initCreedLinks();
   if (base === "home" || base === "admin") {
     initPalavraHome();
     initEbdHome();
@@ -401,7 +402,7 @@ function footerHTML() {
     ["facebook", "Facebook", c.facebookUrl],
     ["whatsapp", "WhatsApp", c.whatsapp],
   ].filter(([k, , url]) => s[k]?.enabled && url);
-  const services = (data.services || []).slice(0, 4);
+  const services = data.services || [];
   return `
   <footer class="site-footer">
     <div class="container footer-grid">
@@ -1161,17 +1162,7 @@ function aboutPageHTML() {
       ${a.vision ? `<div class="mv-card"><span class="eyebrow">Visão</span><p>${esc(a.vision)}</p></div>` : ""}
     </div>
   </section>
-  ${
-    a.faith
-      ? `<section class="block tight">
-    <div class="container narrow" data-reveal>
-      <span class="eyebrow">No que cremos</span>
-      <h2 class="section-title">Declaração de fé</h2>
-      <div class="faith-text pre-line">${esc(a.faith)}</div>
-    </div>
-  </section>`
-      : ""
-  }
+  ${creedSectionHTML(a)}
   <section class="block tight">
     <div class="container" data-reveal>
       ${(a.values || []).length ? `<span class="eyebrow">Nossos valores</span><div class="values-row">${a.values.map((v) => `<span class="value-pill">${esc(v)}</span>`).join("")}</div>` : ""}
@@ -1191,6 +1182,87 @@ function aboutPageHTML() {
     </div>
   </section>`
   );
+}
+
+/* ---------------- Nosso credo (página Sobre) ----------------
+   Texto em Painel → Sobre a igreja → Declaração de fé, um artigo por linha.
+   As referências entre parênteses no fim de cada linha viram links para a
+   Bíblia do site (depois que o índice da Bíblia carrega: initCreedLinks). */
+function creedArticles(text) {
+  return String(text || "")
+    .split(/\n+/)
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const m = /\s*\(([^()]*\d[^()]*)\)\s*[.;,]?\s*$/.exec(line);
+      return m ? { text: line.slice(0, m.index).replace(/[;,]\s*$/, ""), refs: m[1] } : { text: line.replace(/;\s*$/, ""), refs: "" };
+    });
+}
+
+// "II Cor.13:13; Rm.8:2 e Jo.16:13" → etiquetas; "2:7" logo depois de "Gn1:1" é Gênesis 2:7.
+function creedRefsHTML(raw) {
+  let book = "";
+  return raw
+    .split(/;|\s+e\s+/)
+    .map((part) => {
+      part = part.trim();
+      if (!part) return "";
+      let q = part
+        .replace(/^(III|II|I)\s+(?=\p{L})/u, (_, r) => ({ I: "1", II: "2", III: "3" })[r] + " ")
+        .replace(/(\p{L})\.\s*/gu, "$1 ")
+        .replace(/(\p{L})(\d)/u, "$1 $2")
+        .trim();
+      if (/^\d+:/.test(q) && book) q = `${book} ${q}`;
+      else book = (/^(\d\s)?\p{L}+/u.exec(q) || [""])[0];
+      return `<span class="creed-ref" data-ref="${esc(q)}">${esc(part)}</span>`;
+    })
+    .join("");
+}
+
+function creedSectionHTML(a) {
+  const items = creedArticles(a.faith);
+  if (!items.length) return "";
+  const source = a.faithSource
+    ? `<p class="creed-source">Credo da ${safeUrl(a.faithSourceUrl) ? `<a href="${href(a.faithSourceUrl)}" target="_blank" rel="noopener">${esc(a.faithSource)}</a>` : esc(a.faithSource)}, ministério do qual fazemos parte.</p>`
+    : "";
+  return `<section class="block tight creed">
+    <div class="container narrow">
+      <div class="creed-head" data-reveal>
+        <span class="eyebrow">No que cremos</span>
+        <h2 class="section-title">Nosso credo</h2>
+        <p class="creed-motto">Assim cremos, assim vivemos.</p>
+      </div>
+      ${
+        items.length > 1
+          ? `<ol class="creed-list" data-stagger>${items.map((it) => `<li><p>${esc(it.text)}</p>${it.refs ? `<p class="creed-refs">${creedRefsHTML(it.refs)}</p>` : ""}</li>`).join("")}</ol>`
+          : `<div class="faith-text pre-line" data-reveal>${esc(a.faith)}</div>`
+      }
+      ${source}
+    </div>
+  </section>`;
+}
+
+async function initCreedLinks() {
+  const refs = document.querySelectorAll(".creed-ref[data-ref]");
+  if (!refs.length) return;
+  try {
+    await bibleIndex();
+  } catch {
+    return; // sem o índice, as referências ficam como texto
+  }
+  refs.forEach((el) => {
+    let ref = null;
+    try {
+      ref = parseRefList(el.dataset.ref)[0];
+    } catch {}
+    if (!ref || !el.isConnected) return;
+    const link = document.createElement("a");
+    link.className = "creed-ref";
+    link.href = refPath(ref);
+    link.title = refLabel(ref);
+    link.textContent = el.textContent;
+    el.replaceWith(link);
+  });
 }
 
 /* ---------------- Acesso rápido (página inicial) ----------------

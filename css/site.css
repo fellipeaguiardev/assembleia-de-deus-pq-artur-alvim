@@ -2840,3 +2840,100 @@ body.modal-open {
   opacity: 0.75;
 }
 
+
+/* Nosso credo (página Sobre) */
+.creed-head {
+  text-align: center;
+  margin-bottom: 28px;
+}
+.creed-head .section-title {
+  margin: 6px 0;
+}
+.creed-motto {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-style: italic;
+  font-size: 19px;
+  color: var(--c-text-soft);
+}
+.creed-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: creed;
+}
+.creed-list li {
+  counter-increment: creed;
+  position: relative;
+  padding: 18px 20px 18px 66px;
+  border: 1px solid var(--c-line);
+  border-radius: var(--radius);
+  background: var(--c-surface);
+}
+.creed-list li::before {
+  content: counter(creed, decimal-leading-zero);
+  position: absolute;
+  left: 20px;
+  top: 17px;
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--c-primary);
+}
+.creed-list p {
+  margin: 0;
+  font-size: 16.5px;
+  line-height: 1.65;
+  color: color-mix(in srgb, var(--c-text) 90%, var(--c-bg));
+}
+.creed-list .creed-refs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.creed-ref {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--c-tint);
+  color: var(--c-accent-ink);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+a.creed-ref {
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+@media (hover: hover) {
+  a.creed-ref:hover {
+    background: color-mix(in srgb, var(--c-primary) 12%, var(--c-surface));
+    color: var(--c-primary);
+  }
+}
+.creed-source {
+  margin-top: 18px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--c-text-soft);
+}
+.creed-source a {
+  color: var(--c-primary);
+  font-weight: 600;
+}
+@media (max-width: 560px) {
+  .creed-list li {
+    padding: 16px 16px 16px 54px;
+  }
+  .creed-list li::before {
+    left: 14px;
+    font-size: 19px;
+  }
+}

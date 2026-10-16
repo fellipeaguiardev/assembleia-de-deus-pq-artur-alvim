@@ -101,7 +101,7 @@ function bibleIndex() {
         [b.slug, b.name, b.abbr, b.code].forEach((k) => BIBLE.aliases.set(plainKey(k), b));
       });
       // Apelidos comuns. "Jo" é João; Jó só com acento ("Jó") ou "job".
-      const extra = { salmo: "PSA", sal: "PSA", cantares: "SOL", canticosdoscanticos: "SOL", cantico: "SOL", job: "JOB", atosdosapostolos: "ACT", apoc: "REV", fil: "PHI", filip: "PHI", fl: "PHI", jud: "JUD", rom: "ROM", mr: "MAR", "1pd": "1PE", "2pd": "2PE", ex: "EXO" };
+      const extra = { salmo: "PSA", sal: "PSA", cantares: "SOL", canticosdoscanticos: "SOL", cantico: "SOL", job: "JOB", atosdosapostolos: "ACT", apoc: "REV", fil: "PHI", filip: "PHI", fl: "PHI", jud: "JUD", rom: "ROM", mr: "MAR", "1pd": "1PE", "2pd": "2PE", ex: "EXO", "1cor": "1CO", "2cor": "2CO", "1tim": "1TI", "2tim": "2TI" };
       Object.entries(extra).forEach(([k, code]) => BIBLE.aliases.set(k, BIBLE.byCode.get(code)));
       BIBLE.aliases.set("jo", BIBLE.byCode.get("JOH"));
       return idx;
