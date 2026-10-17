@@ -28,7 +28,14 @@ const KNOWN_TABS = {
 
 async function get(url, as = "text") {
   const res = await fetch(url, { headers: { "User-Agent": UA }, redirect: "follow", signal: AbortSignal.timeout(15000) });
-  if (!res.ok) throw new Error(`HTTP ${res.status} em ${url.split("?")[0]}`);
+  if (!res.ok) {
+    // O endereço tem o id da planilha (que dá acesso aos nomes): vai só para o
+    // registro interno, nunca para a mensagem mostrada a quem usa o site.
+    const err = new Error(`HTTP ${res.status}`);
+    err.url = url.split("?")[0];
+    err.status = res.status;
+    throw err;
+  }
   return as === "bytes" ? { bytes: Buffer.from(await res.arrayBuffer()), type: res.headers.get("content-type") || "" } : res.text();
 }
 

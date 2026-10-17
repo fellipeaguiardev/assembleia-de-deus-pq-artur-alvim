@@ -43,8 +43,9 @@ export async function runLibrarySync() {
   try {
     sheet = await readSheet(sheetId);
   } catch (e) {
-    console.error("biblioteca-sync: planilha", e.message);
-    return { ok: false, status: 502, error: `Não consegui ler a planilha: ${e.message}` };
+    console.error("biblioteca-sync: planilha", e.message, e.url || "");
+    const why = e.status ? ` (o Google respondeu ${e.status})` : /aba/.test(e.message) ? `: ${e.message}` : "";
+    return { ok: false, status: 502, error: `Não consegui ler a planilha agora${why}. Tente de novo em alguns minutos.` };
   }
 
   let res;
