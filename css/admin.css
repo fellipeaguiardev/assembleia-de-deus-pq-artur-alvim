@@ -932,3 +932,138 @@ p.gate-note {
   min-width: 0;
   font-size: 13px;
 }
+
+/* ============================================================
+   CELULAR — componentes compartilhados de todas as abas
+   (só abaixo de 900 px: o computador não muda)
+   ============================================================ */
+@media (max-width: 900px) {
+  /* Alvos de toque de pelo menos 44 px */
+  #adminRoot .btn-sm,
+  #adminRoot .upload-label,
+  #adminRoot .check,
+  #adminRoot .inline-title {
+    min-height: 44px;
+  }
+  #adminRoot .icon-btn {
+    width: 44px;
+    height: 44px;
+  }
+  /* Janela (modal) aberta pelo painel: botão de fechar com 44 px (só no painel) */
+  body.admin-open .modal-close {
+    width: 44px;
+    height: 44px;
+  }
+  /* "×" das fotos dos departamentos: área de toque de 44 px, círculo visível igual */
+  #adminRoot .admin-photo-item button {
+    top: 0;
+    right: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 0;
+    background: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.6) 15px, transparent 16px);
+  }
+  /* Botão com texto longo quebra a linha em vez de sair da tela */
+  #adminRoot .admin-content .btn {
+    max-width: 100%;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.2;
+  }
+  /* Campos com 16 px: o iPhone não dá zoom ao tocar */
+  #adminRoot input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]):not([type="file"]),
+  #adminRoot select,
+  #adminRoot textarea {
+    font-size: 16px;
+  }
+  #adminRoot .field input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
+  #adminRoot .field select,
+  #adminRoot .field-inline input,
+  #adminRoot .lib-search,
+  #adminRoot .lib-toolbar select,
+  #adminRoot .lib-rule-head input {
+    min-height: 44px;
+  }
+  /* Linhas de ação quebram em vez de cortar */
+  #adminRoot .item-actions {
+    flex-wrap: wrap;
+    flex-shrink: 1;
+    min-width: 0;
+    max-width: 100%;
+  }
+  #adminRoot .admin-list-item {
+    flex-wrap: wrap;
+  }
+  #adminRoot .admin-list-item > *,
+  #adminRoot .admin-card-foot > *,
+  #adminRoot .admin-topbar > * {
+    min-width: 0;
+  }
+  /* Textos longos (títulos, nomes, links, mensagens) quebram em vez de empurrar */
+  #adminRoot .admin-content {
+    overflow-wrap: anywhere;
+  }
+  /* …mas etiquetas curtas ("Publicado", "Rascunho") nunca quebram letra a letra */
+  #adminRoot .badge-inline {
+    max-width: 100%;
+    overflow-wrap: normal;
+  }
+  /* Formulários longos: barra de salvar presa no rodapé da tela */
+  #adminRoot .sticky-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    padding-top: 12px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+    background: #fff;
+    box-shadow: 0 -12px 16px -14px rgba(15, 23, 42, 0.35);
+  }
+  /* Podcast: a tabela vira lista de cartões (sem rolagem lateral) */
+  #adminRoot .podcast-admin-table-wrap {
+    overflow-x: visible;
+    padding: 4px 14px;
+  }
+  #adminRoot .podcast-admin-table {
+    min-width: 0;
+  }
+  #adminRoot .podcast-admin-head {
+    display: none;
+  }
+  #adminRoot .podcast-admin-row {
+    grid-template-columns: 48px auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "thumb title title title"
+      "thumb ep date date"
+      "thumb status status actions";
+    gap: 4px 10px;
+  }
+  #adminRoot .podcast-admin-row > .podcast-admin-thumb {
+    grid-area: thumb;
+    align-self: start;
+  }
+  #adminRoot .podcast-admin-row > strong {
+    grid-area: ep;
+    font-size: 12.5px;
+  }
+  #adminRoot .podcast-admin-row > .podcast-admin-title {
+    grid-area: title;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+  #adminRoot .podcast-admin-row > span:not(.badge-inline) {
+    grid-area: date;
+    font-size: 12.5px;
+    color: #6b7080;
+  }
+  #adminRoot .podcast-admin-row > .badge-inline {
+    grid-area: status;
+    justify-self: start;
+    align-self: center;
+  }
+  #adminRoot .podcast-admin-row > .item-actions {
+    grid-area: actions;
+    flex-wrap: nowrap;
+  }
+}

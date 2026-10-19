@@ -982,7 +982,7 @@ function podcastFormHTML(p) {
         )}
       </div>
       <p class="admin-note">O episódio aparece no site quando estiver “Publicado” e tiver ao menos um áudio, link do Spotify ou do YouTube. <strong>Para agendar</strong>, publique com uma data futura: ele aparece sozinho no dia.</p>
-      <div class="podcast-form-actions">
+      <div class="podcast-form-actions sticky-actions">
         <button class="btn btn-ghost" type="button" onclick="cancelPodcastEdit()">Cancelar</button>
         <button class="btn btn-ghost" type="button" onclick="savePodcastForm(false)">${isNew ? "Salvar" : "Salvar alterações"}</button>
         <button class="btn btn-primary" type="button" onclick="savePodcastForm(true)">Publicar</button>

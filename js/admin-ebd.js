@@ -169,7 +169,7 @@ function ebdQuarterFormHTML(q) {
     </div>
     <label class="check"><input type="checkbox" data-k="visible" ${q.visible ? "checked" : ""}> Mostrar este trimestre no site</label>
     <datalist id="ebdMagazines">${EBD_MAGAZINES.map((m) => `<option value="${esc(m)}">`).join("")}</datalist>
-    <div class="admin-card-foot">
+    <div class="admin-card-foot sticky-actions">
       <button class="btn btn-danger btn-sm" type="button" onclick="ebdDeleteQuarter()">Apagar trimestre</button>
       <button class="btn btn-primary btn-sm" type="button" onclick="ebdSaveQuarter(this)">Salvar trimestre</button>
     </div>
@@ -409,7 +409,7 @@ function ebdLessonEditorHTML() {
         ${field("Revisado por", `<input type="text" value="${esc(l.reviewed_by)}" oninput="ebdDraftSet('reviewed_by', this.value)" placeholder="Nome de quem revisou">`)}
       </div>
       <p class="admin-note">Só aparece no site quando a situação é “Publicada”. Com data de publicação, ela entra sozinha no dia e hora marcados.</p>
-      <div class="admin-card-foot">
+      <div class="admin-card-foot sticky-actions">
         <a class="btn btn-ghost btn-sm" href="${q ? ebdLessonPath(q, l.number) : "/ebd"}" target="_blank" rel="noopener">${icon("external", 14)} Pré-visualizar</a>
         <div class="inline-fields">
           <button class="btn btn-ghost btn-sm" type="button" onclick="ebdSaveLesson()">Salvar</button>

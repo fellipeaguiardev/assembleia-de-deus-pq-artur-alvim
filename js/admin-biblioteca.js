@@ -380,7 +380,7 @@ function libLendFormHTML() {
       ${field("Devolução prevista", `<input type="date" id="libLendDue" value="${esc(d.due_on)}" onchange="libLendSet('due_on', this.value)">`)}
     </div>
     <div id="libLendChecks">${libLendChecksHTML()}</div>
-    <div class="lib-form-actions">
+    <div class="lib-form-actions sticky-actions">
       <button class="btn btn-primary" type="button" id="libLendSave" onclick="libSaveLend()">Registrar empréstimo</button>
       <button class="btn btn-ghost" type="button" onclick="libAdmin.lend=null;renderAdmin()">Cancelar</button>
     </div>
@@ -691,7 +691,7 @@ function libBookFormHTML() {
       </div>
     </div>
     ${libAdmin.covers ? libCoverResultsHTML() : ""}
-    <div class="lib-form-actions">
+    <div class="lib-form-actions sticky-actions">
       <button class="btn btn-primary" type="button" onclick="libSaveBook()">Salvar livro</button>
       ${b.id ? `<button class="btn btn-ghost lib-danger" type="button" onclick="libDeleteBook('${b.id}')">Excluir</button>` : ""}
     </div>
@@ -828,7 +828,7 @@ function libViewReaders() {
         ${field("WhatsApp", `<input type="text" inputmode="tel" value="${esc(e.phone)}" maxlength="40" oninput="libAdmin.editingReader.phone=this.value">`)}
       </div>
       ${field("Observações", `<input type="text" value="${esc(e.notes)}" maxlength="1000" oninput="libAdmin.editingReader.notes=this.value">`, true)}
-      <div class="lib-form-actions"><button class="btn btn-primary" type="button" onclick="libSaveReader()">Salvar</button>
+      <div class="lib-form-actions sticky-actions"><button class="btn btn-primary" type="button" onclick="libSaveReader()">Salvar</button>
       ${e.id && !hist.length ? `<button class="btn btn-ghost lib-danger" type="button" onclick="libDeleteReader('${e.id}')">Excluir</button>` : ""}</div>
       ${hist.length ? `<h3 class="mt-12">Histórico</h3>${hist.map((l) => `<div class="admin-list-item lib-row"><div class="meta">${libBookLine(libBook(l.book_id))}<span class="lib-sub">${libDayMonth(l.loaned_on)}${l.returned_on ? ` → ${libDayMonth(l.returned_on)}` : ""}</span>${libDueChip(l)}</div></div>`).join("")}` : ""}
     </div>`;
