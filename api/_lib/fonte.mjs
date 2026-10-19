@@ -14,8 +14,10 @@
 // ainda faltam dados dela no banco e nunca segue para outros domínios.
 // ============================================================
 
+import { SITE_URL } from "./site.mjs";
+
 export const SOURCE_HOST = "https://www.estudantesdabiblia.com.br";
-const UA = "AD-Belem-Pq-Artur-Alvim-EBD/1.0 (+https://assembleia-de-deus-pq-artur-alvim.vercel.app; fellipe.aguiar1058@gmail.com)";
+const UA = `AD-Belem-Pq-Artur-Alvim-EBD/1.0 (+${SITE_URL})`;
 const MAX_BYTES = 600_000;
 
 export const MAGAZINES = {

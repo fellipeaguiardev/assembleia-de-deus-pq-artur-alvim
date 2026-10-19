@@ -108,7 +108,7 @@ css/
   biblioteca.css admin.css
 js/
   intro.js    vinheta de abertura (partículas, frase letra por letra, “Pular”)
-  config.js   URL e chave pública do Supabase, logo padrão
+  config.js   endereço do site (SITE_URL), URL e chave pública do Supabase, logo padrão
   core.js     dados padrão, carregamento, cópia offline, helpers, ícones, upload
   site.js     rotas (/cultos, /biblia…), menus, páginas, modais e animações
   podcast.js  páginas do podcast e player fixo
@@ -372,6 +372,8 @@ O formulário de oração e a sincronização da EBD usam as funções de `api/`
 ```bash
 bash scripts/publicar.sh          # produção
 bash scripts/publicar.sh teste    # endereço de teste, sem mexer no site no ar
+bash scripts/publicar.sh montar   # só monta a pasta e mostra onde (não publica nada)
+SITE_URL=https://xxx.org.br bash scripts/publicar.sh   # produção com o domínio próprio
 ```
 
 O script monta uma pasta só com o que é público (`index.html`, `css`, `js`, `vendor`, `assets`,
@@ -380,6 +382,42 @@ de `api/`, carimba a versão (data e hora) em `js/config.js`, `sw.js` e `version
 pela Vercel CLI. Não é preciso mexer em `CACHE_VERSION` à mão.
 
 O site antigo no Netlify ficou só redirecionando para o endereço novo.
+
+## Trocar o domínio
+
+O endereço do site fica em um lugar só:
+
+| Onde | De onde vem |
+| --- | --- |
+| Front (links de compartilhar, canonical, SEO) | `SITE_URL` em `js/config.js` |
+| Funções de `api/` (links do e-mail "Liberar acesso", logo dos e-mails, User-Agent) | variável `SITE_URL`, lida em `api/_lib/site.mjs` (sem ela, o endereço da Vercel) |
+| `index.html`, `sitemap.xml`, `robots.txt` (arquivos estáticos) | trocados pelo `scripts/publicar.sh` na hora de publicar |
+
+Sem a variável `SITE_URL`, tudo continua com `assembleia-de-deus-pq-artur-alvim.vercel.app`. As
+imagens passam pelo redutor da Vercel em qualquer domínio publicado lá (só no `localhost` não).
+
+Passo a passo (troque `xxx.org.br` pelo domínio escolhido):
+
+1. **Vercel → projeto → Settings → Domains → Add**: adicione `xxx.org.br` e `www.xxx.org.br`
+   (deixe o `www` redirecionando para o domínio sem `www`). No painel do registro.br (DNS do
+   domínio), crie **exatamente** os registros que a Vercel mostrar e espere a Vercel marcar o
+   domínio como válido, com o certificado HTTPS emitido.
+2. **Vercel → Settings → Environment Variables**: crie `SITE_URL` = `https://xxx.org.br`
+   (ambiente *Production*). Assim as funções usam o domínio novo mesmo numa publicação feita sem a
+   variável.
+3. **Supabase → Authentication → URL Configuration**: em *Site URL* coloque `https://xxx.org.br`
+   e em *Redirect URLs* adicione `https://xxx.org.br/**` (mantenha o endereço da Vercel enquanto
+   ele estiver em uso). É o endereço dos e-mails que o próprio Supabase manda (convite de novo
+   admin, redefinir senha): sem isso, esses links levam para o endereço antigo ou são recusados.
+4. **Publique com a variável**: `SITE_URL=https://xxx.org.br bash scripts/publicar.sh`. Use a
+   variável **em toda publicação** daqui em diante (ou deixe `export SITE_URL=https://xxx.org.br`
+   no `~/.bashrc`); o script mostra no começo qual domínio está usando.
+5. **Confira**: abra o site no domínio novo, veja o código-fonte (`canonical` e `og:url` com o
+   domínio novo), abra `/robots.txt` e `/sitemap.xml`, entre no `/admin` e confira se o botão
+   **Liberar acesso** do e-mail aponta para o domínio novo.
+6. **Depois**: cadastre o domínio novo no Google Search Console e envie o `sitemap.xml`; se quiser
+   e-mails saindo do domínio da igreja, verifique o domínio no Resend e ajuste `NOTIFY_FROM`; e
+   troque o link no topo deste README.
 
 ## Créditos e licenças
 

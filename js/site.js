@@ -2,7 +2,7 @@
    SITE PÚBLICO — rotas, layout, seções e páginas
    ============================================================ */
 
-const SITE_URL = "https://assembleia-de-deus-pq-artur-alvim.vercel.app";
+const SITE_URL = window.APP_CONFIG.SITE_URL; // definido em js/config.js
 const SITE_NAME = "AD Belém - Parque Artur Alvim";
 
 // Menu principal (computador) + menu "Mais".

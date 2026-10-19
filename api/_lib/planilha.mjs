@@ -10,8 +10,10 @@
 //        pareadas conferindo o título.
 // O Google entrega a imagem já reduzida (JPEG ~300x470, ~25 KB).
 // ============================================================
+import { SITE_URL } from "./site.mjs";
+
 const GDOCS = "https://docs.google.com/spreadsheets/d/";
-const UA = "AD-Belem-Biblioteca/1.0 (+https://assembleia-de-deus-pq-artur-alvim.vercel.app)";
+const UA = `AD-Belem-Biblioteca/1.0 (+${SITE_URL})`;
 
 // Abas que já existiam (gid → nome da categoria no site).
 const KNOWN_TABS = {

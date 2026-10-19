@@ -9,6 +9,11 @@
    NUNCA coloque aqui a chave "secret" / "service_role".
    ============================================================ */
 window.APP_CONFIG = {
+  // Endereço público do site (links de compartilhar, canonical, SEO). É o único
+  // lugar dele no front: o scripts/publicar.sh troca pelo valor de SITE_URL
+  // quando a variável é passada (veja "Trocar o domínio" no README).
+  SITE_URL: "https://assembleia-de-deus-pq-artur-alvim.vercel.app",
+
   SUPABASE_URL: "https://rtludbkopxbhiwlwycid.supabase.co",
   SUPABASE_KEY: "sb_publishable_eRsl3xo3p7Qe_DanIB4Z7A_5V6Q0p9m",
 

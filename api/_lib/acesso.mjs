@@ -5,8 +5,8 @@
 import { createHash } from "node:crypto";
 export { rpc } from "./fonte.mjs";
 import { LOGO_CID, LOGO_URL, LOGO_ATTACHMENT } from "./pedido-oracao.mjs";
-
-export const SITE_URL = "https://assembleia-de-deus-pq-artur-alvim.vercel.app";
+import { SITE_URL } from "./site.mjs";
+export { SITE_URL };
 export const sha256 = (t) => createHash("sha256").update(String(t), "utf8").digest("hex");
 const C = { navy: "#032154", primary: "#003399", bg: "#f2f4f9", text: "#1c2333", soft: "#5b6478", line: "#e3e7ef", ok: "#1f7a46", bad: "#b42318" };
 export const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);

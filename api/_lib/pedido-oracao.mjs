@@ -5,7 +5,7 @@
 // Outlook e celulares.
 // ============================================================
 
-const SITE_URL = "https://assembleia-de-deus-pq-artur-alvim.vercel.app";
+import { SITE_URL, SITE_HOST } from "./site.mjs";
 
 // Brasão anexado ao próprio e-mail (imagem "inline", cid:). Muitos apps — o
 // Gmail no spam, por exemplo — bloqueiam imagens de fora; anexada, ela aparece.
@@ -196,7 +196,7 @@ export function buildPrayerEmail(data, createdAt) {
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;">
       <tr><td style="padding:18px 12px;text-align:center;font-size:12px;line-height:1.6;color:#8a93a6;">
         Enviado automaticamente pelo formulário do site<br>
-        <a href="${SITE_URL}" style="color:#8a93a6;">assembleia-de-deus-pq-artur-alvim.vercel.app</a>
+        <a href="${SITE_URL}" style="color:#8a93a6;">${SITE_HOST}</a>
       </td></tr>
     </table>
   </td></tr>

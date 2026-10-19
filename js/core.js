@@ -247,7 +247,9 @@ function bgImage(url) {
 
 // Capas grandes (as do podcast têm 1–2 MB) passam pelo redimensionador da
 // Vercel (vercel.json → "images"; grátis até 5 mil por mês, cada capa é
-// redimensionada uma vez e fica em cache). Fora da Vercel usa o original.
+// redimensionada uma vez e fica em cache). Vale em qualquer domínio publicado
+// na Vercel (vercel.app ou o domínio próprio); só no computador (localhost),
+// onde o redutor não existe, usa o original.
 const THUMB_HOSTS = {
   "d3t3ozftmdmh3i.cloudfront.net": "/7941613/", // capas do podcast
   "rtludbkopxbhiwlwycid.supabase.co": "/storage/v1/object/public/images/",
@@ -256,9 +258,10 @@ const THUMB_HOSTS = {
 };
 const THUMB_LOCAL = /^\/api\/capa-livro\/[\w-]+\.jpg$/; // capas de livros que vieram da planilha
 const THUMB_WIDTHS = [160, 320, 640];
+const THUMB_OFF = /^(localhost|127\.0\.0\.1|\[::1\])?$/; // rodando no computador (ou arquivo aberto direto)
 function imgThumb(url, width = 320) {
   const u = safeUrl(url);
-  if (!u || !location.hostname.endsWith(".vercel.app")) return u;
+  if (!u || THUMB_OFF.test(location.hostname)) return u;
   if (u.startsWith("/")) {
     if (!THUMB_LOCAL.test(u)) return u;
     const w = THUMB_WIDTHS.find((n) => n >= width) || 640;
