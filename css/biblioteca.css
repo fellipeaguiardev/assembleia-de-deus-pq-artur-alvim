@@ -885,3 +885,109 @@
 .lib-import {
   border: 1.5px dashed var(--c-primary);
 }
+
+/* ============================================================
+   PAINEL NO CELULAR
+   ============================================================ */
+/* Cabeçalho do grupo (Pedidos e fila): título e autor em linhas separadas */
+.lib-card-head > div:first-child {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.lib-card-head > div:first-child > small {
+  color: #5b6475;
+}
+.lib-row .meta,
+.lib-card-head {
+  overflow-wrap: anywhere;
+}
+/* Regras: o título da regra encolhe junto com a tela */
+.lib-rule-edit {
+  grid-template-columns: minmax(0, 1fr);
+}
+.lib-rule-head input {
+  min-width: 0;
+}
+
+/* Faixa de sub-abas com rolagem lateral (marcada por setupScrollStrip em admin.js) */
+.scroll-strip {
+  --fade-l: 0px;
+  --fade-r: 0px;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent 100%);
+}
+.scroll-strip[data-more-left] {
+  --fade-l: 28px;
+}
+.scroll-strip[data-more-right] {
+  --fade-r: 28px;
+}
+
+@media (max-width: 900px) {
+  .segmented.lib-seg {
+    position: relative;
+    display: flex;
+    flex-wrap: nowrap;
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+  .segmented.lib-seg::-webkit-scrollbar {
+    display: none;
+  }
+  .segmented.lib-seg button {
+    flex: 0 0 auto;
+    min-height: 44px;
+    padding: 0 14px;
+    white-space: nowrap;
+    scroll-snap-align: start;
+  }
+}
+
+/* Botões de cada pedido/empréstimo: grade abaixo das informações, nada cortado */
+@media (max-width: 700px) {
+  .lib-row .item-actions {
+    flex: 1 1 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    min-width: 0;
+  }
+  .lib-row .item-actions > .btn {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    padding: 0 10px;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.15;
+  }
+  /* ação principal (Emprestar, Devolver, Confirmar) destacada e em largura total */
+  .lib-row .item-actions > .btn-primary {
+    grid-column: 1 / -1;
+  }
+  /* Cancelar: secundária, discreta */
+  .lib-row .item-actions > .lib-cancel {
+    grid-column: 1 / -1;
+    border-color: transparent;
+    background: transparent;
+    color: #9a2a1d;
+    font-weight: 600;
+  }
+  .lib-row .item-actions > .lib-inline-date {
+    grid-column: 1 / -1;
+    justify-content: space-between;
+  }
+  .lib-row .item-actions > .lib-inline-date input {
+    flex: 1;
+    max-width: 60%;
+    min-height: 44px;
+    font-size: 16px;
+  }
+  .lib-why {
+    text-align: left;
+  }
+}

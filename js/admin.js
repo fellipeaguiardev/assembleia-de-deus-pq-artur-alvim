@@ -388,7 +388,23 @@ function renderAdmin() {
 
   const newMain = el.querySelector(".admin-main");
   newMain.scrollTop = keepScroll;
+  el.querySelectorAll(".scroll-strip").forEach(setupScrollStrip);
   if (adminTab === "ministries") refreshMinistryAdminPhotos();
+}
+
+// Faixa com rolagem lateral (sub-abas no celular): traz o item ativo para a vista e
+// marca as bordas que ainda têm itens escondidos (o CSS desenha um degradê ali).
+function setupScrollStrip(strip) {
+  const active = strip.querySelector(".active");
+  if (active && strip.scrollWidth > strip.clientWidth) {
+    strip.scrollLeft = Math.max(0, active.offsetLeft - (strip.clientWidth - active.offsetWidth) / 2);
+  }
+  const paint = () => {
+    strip.toggleAttribute("data-more-left", strip.scrollLeft > 4);
+    strip.toggleAttribute("data-more-right", strip.scrollLeft + strip.clientWidth < strip.scrollWidth - 4);
+  };
+  paint();
+  strip.addEventListener("scroll", paint, { passive: true });
 }
 
 function setAdminTab(id) {

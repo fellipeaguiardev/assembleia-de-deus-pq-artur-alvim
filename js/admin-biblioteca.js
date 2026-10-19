@@ -199,7 +199,7 @@ function tabBiblioteca() {
   const body = { resumo: libViewResumo, emprestimos: libViewLoans, pedidos: libViewRequests, livros: libViewBooks, leitores: libViewReaders, regras: libViewRules }[libAdmin.view] || libViewResumo;
   return (
     head +
-    `<div class="segmented lib-seg" role="tablist">${views
+    `<div class="segmented lib-seg scroll-strip" role="tablist">${views
       .map(([id, label, n]) => `<button type="button" role="tab" class="${libAdmin.view === id ? "active" : ""}" aria-selected="${libAdmin.view === id}" onclick="libSetView('${id}')">${label}${n ? `<span class="lib-count-badge${id === "resumo" ? " hot" : ""}">${n}</span>` : ""}</button>`)
       .join("")}</div>` +
     body()
@@ -295,7 +295,7 @@ function libLoanRowHTML(l, msgKind = "") {
         returning
           ? `<label class="lib-inline-date">Devolvido em <input type="date" id="libReturnDate" value="${spToday()}" max="${spToday()}"></label>
              <button class="btn btn-primary btn-sm" type="button" onclick="libConfirmReturn('${l.id}')">Confirmar</button>
-             <button class="btn btn-ghost btn-sm" type="button" onclick="libAdmin.returning=null;renderAdmin()">Cancelar</button>`
+             <button class="btn btn-ghost btn-sm lib-cancel" type="button" onclick="libAdmin.returning=null;renderAdmin()">Cancelar</button>`
           : `${r ? libWaBtn(r.phone, libMsg(kind, r.name, b, l.due_on), kind === "atraso" ? "Cobrar" : "Lembrar") : ""}
              <button class="btn btn-ghost btn-sm" type="button" ${renew.ok ? "" : "disabled"} title="${esc(renew.why)}" onclick="libRenew('${l.id}')">Renovar</button>
              <button class="btn btn-primary btn-sm" type="button" onclick="libAdmin.returning='${l.id}';renderAdmin()">Devolver</button>`
@@ -325,7 +325,7 @@ function libRequestRowHTML(x, pos = 0) {
       ${x.status === "novo" ? `<button class="btn btn-ghost btn-sm" type="button" onclick="libSetRequest('${x.id}','fila')">${free && first ? "Reservar" : "Confirmar na fila"}</button>` : ""}
       ${free && first && x.status === "fila" ? `<button class="btn btn-ghost btn-sm" type="button" onclick="libSetRequest('${x.id}','avisado')">Marcar avisado</button>` : ""}
       ${free && first ? `<button class="btn btn-primary btn-sm" type="button" onclick="libStartLend('${x.book_id}','${x.id}')">Emprestar</button>` : ""}
-      <button class="btn btn-ghost btn-sm" type="button" onclick="libSetRequest('${x.id}','cancelado')">Cancelar</button>
+      <button class="btn btn-ghost btn-sm lib-cancel" type="button" onclick="libSetRequest('${x.id}','cancelado')">Cancelar</button>
     </div>`
         : ""
     }
