@@ -369,16 +369,22 @@ function renderAdmin() {
   const main = el.querySelector(".admin-main");
   const keepScroll = main && main.dataset.tab === adminTab ? main.scrollTop : 0;
 
+  const cur = ADMIN_TABS.find((t) => t.id === adminTab) || ADMIN_TABS[0];
   el.innerHTML = `
     <div class="admin-shell">
       <aside class="admin-sidebar">
         <div class="admin-brand">${esc(data.church.name)}<small>Painel</small></div>
-        <nav class="admin-nav">
-          ${ADMIN_TABS.map((t) => `<button type="button" class="admin-nav-item ${adminTab === t.id ? "active" : ""}" onclick="setAdminTab('${t.id}')">${icon(t.icon, 16)}<span>${t.label}</span></button>`).join("")}
-        </nav>
-        <div class="admin-sidebar-foot">
-          <button class="btn btn-sm btn-sidebar" type="button" onclick="closeAdminPanel()">${icon("arrowBack", 15)} Ver site</button>
-          <button class="btn btn-sm btn-sidebar" type="button" onclick="adminLogout()">Sair</button>
+        <button class="admin-menu-btn" type="button" aria-expanded="false" aria-controls="adminMenuPanel" onclick="toggleAdminMenu()">
+          ${icon(cur.icon, 18)}<span class="admin-menu-label"><small>Seção</small><span>${cur.label}</span></span>${icon("down", 18)}
+        </button>
+        <div class="admin-menu-panel" id="adminMenuPanel">
+          <nav class="admin-nav" aria-label="Seções do painel">
+            ${ADMIN_TABS.map((t) => `<button type="button" class="admin-nav-item ${adminTab === t.id ? "active" : ""}" ${adminTab === t.id ? 'aria-current="page"' : ""} onclick="setAdminTab('${t.id}')">${icon(t.icon, 16)}<span>${t.label}</span></button>`).join("")}
+          </nav>
+          <div class="admin-sidebar-foot">
+            <button class="btn btn-sm btn-sidebar" type="button" onclick="closeAdminPanel()">${icon("arrowBack", 15)} Ver site</button>
+            <button class="btn btn-sm btn-sidebar" type="button" onclick="adminLogout()">Sair</button>
+          </div>
         </div>
       </aside>
       <div class="admin-main" data-tab="${adminTab}">
@@ -391,6 +397,23 @@ function renderAdmin() {
   el.querySelectorAll(".scroll-strip").forEach(setupScrollStrip);
   if (adminTab === "ministries") refreshMinistryAdminPhotos();
 }
+
+// Celular: as seções ficam num menu ("Seção: Biblioteca ▾") em vez da faixa lateral.
+function toggleAdminMenu(force) {
+  const aside = document.querySelector("#adminContent .admin-sidebar");
+  if (!aside) return;
+  const open = typeof force === "boolean" ? force : !aside.classList.contains("menu-open");
+  aside.classList.toggle("menu-open", open);
+  aside.querySelector(".admin-menu-btn")?.setAttribute("aria-expanded", String(open));
+  if (open) aside.querySelector(".admin-nav-item.active")?.focus({ preventScroll: true });
+}
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && document.querySelector("#adminContent .admin-sidebar.menu-open")) toggleAdminMenu(false);
+});
+document.addEventListener("click", (e) => {
+  const aside = document.querySelector("#adminContent .admin-sidebar.menu-open");
+  if (aside && !aside.contains(e.target)) toggleAdminMenu(false);
+});
 
 // Faixa com rolagem lateral (sub-abas no celular): traz o item ativo para a vista e
 // marca as bordas que ainda têm itens escondidos (o CSS desenha um degradê ali).

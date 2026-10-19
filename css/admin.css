@@ -208,6 +208,14 @@ p.gate-note {
   margin-top: auto;
   padding: 18px 4px 0;
 }
+/* Botão "Seção ▾" e painel do menu: só no celular (no computador o painel é
+   transparente para o layout e a barra lateral fica como sempre foi) */
+.admin-menu-btn {
+  display: none;
+}
+.admin-menu-panel {
+  display: contents;
+}
 .btn-sidebar {
   color: rgba(255, 255, 255, 0.85);
   border-color: rgba(255, 255, 255, 0.18);
@@ -721,33 +729,96 @@ p.gate-note {
     flex-direction: column;
   }
   .admin-sidebar {
+    position: relative;
+    z-index: 30;
     flex: 0 0 auto;
     flex-direction: row;
     align-items: center;
-    gap: 8px;
     height: auto;
-    padding: 8px;
-    overflow-x: auto;
-    overflow-y: hidden;
+    padding: 8px 12px;
+    overflow: visible;
   }
   .admin-brand {
     display: none;
   }
+  .admin-menu-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 48px;
+    padding: 0 14px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    text-align: left;
+  }
+  .admin-menu-btn > .ic:first-child {
+    color: var(--c-accent);
+  }
+  .admin-menu-btn > .ic:last-child {
+    margin-left: auto;
+    transition: transform 0.2s ease;
+  }
+  .menu-open .admin-menu-btn > .ic:last-child {
+    transform: rotate(180deg);
+  }
+  .admin-menu-label {
+    display: grid;
+    min-width: 0;
+    line-height: 1.2;
+  }
+  .admin-menu-label small {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--c-accent-on-dark);
+  }
+  .admin-menu-label span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .admin-menu-panel {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: calc(100dvh - 64px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 10px 12px calc(14px + env(safe-area-inset-bottom));
+    background: var(--c-deep);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 24px 40px -16px rgba(0, 0, 0, 0.55);
+  }
+  .admin-sidebar.menu-open .admin-menu-panel {
+    display: block;
+    animation: fadeIn 160ms ease-out;
+  }
   .admin-nav {
-    flex-direction: row;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
   }
   .admin-nav-item {
-    width: auto;
-    white-space: nowrap;
+    min-height: 48px;
+    padding: 6px 12px;
+    line-height: 1.2;
+    background: rgba(255, 255, 255, 0.04);
   }
   .admin-sidebar-foot {
-    display: flex;
-    margin: 0;
-    padding: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 12px;
+    padding: 12px 0 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
   }
   .btn-sidebar {
-    width: auto;
-    white-space: nowrap;
+    min-height: 44px;
   }
   .admin-content {
     padding: 22px 16px 80px;
