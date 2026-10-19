@@ -124,7 +124,8 @@ js/
   admin-biblioteca.js  aba Biblioteca do painel (empréstimos, fila, acervo)
   admin-podcast.js  importação dos episódios do Spotify (feed RSS) na aba Podcast
   main.js     inicialização
-supabase/     SQL das tabelas e regras de acesso (NÃO é publicado no site)
+supabase/     SQL do banco (NÃO é publicado no site): migrations/00000000000000_baseline.sql é a
+              estrutura completa; os outros arquivos de migrations/ são o histórico
 docs/telas/   imagens usadas neste README
 ```
 
@@ -385,6 +386,42 @@ O brasão vai anexado ao e-mail (imagem `cid:`, arquivo
 leva data e hora para o Gmail não juntar pedidos diferentes na mesma conversa.
 Sem domínio próprio verificado no Resend, ele só entrega para o e-mail da conta Resend;
 para avisar outras pessoas, verifique um domínio da igreja no Resend e mude `NOTIFY_FROM`.
+
+## Recriar o banco do zero
+
+`supabase/migrations/00000000000000_baseline.sql` tem a **estrutura completa** do banco, sem nenhum
+dado: as 24 tabelas, chaves e índices, as 23 funções, triggers, RLS e políticas, permissões por
+tabela, coluna e função, o bucket `images` com as regras dele e os agendamentos do pg_cron. Foi
+tirado do banco de produção em 19/10/2026 e conferido: aplicado num Postgres do Supabase vazio,
+ficou **idêntico à produção** em colunas, restrições, índices, funções, triggers, RLS e
+permissões. A única diferença é proposital: as regras de `podcasts`, que já vêm corrigidas (veja
+`20261019_podcasts_admin.sql`).
+
+Os arquivos com data (`20261002_…` em diante) são o histórico de como o banco chegou até aqui; num
+banco novo, basta o baseline. O histórico de migrations do próprio Supabase (*Database →
+Migrations*) não reflete este repositório: ele só registra duas mudanças antigas feitas pelo painel.
+
+Passo a passo (ex.: um projeto de teste):
+
+1. Em supabase.com, **New project** (região São Paulo). Guarde a URL e as chaves em *Settings →
+   API Keys*.
+2. **SQL Editor**: cole o `00000000000000_baseline.sql` inteiro e clique em **Run**. Ele roda numa
+   transação só; se der erro, nada fica pela metade. Os blocos 10 (chaves do servidor) e 11
+   (agendamento do YouTube) só avisam enquanto os `<...>` não forem trocados; dá para rodá-los
+   depois, só aquele trecho.
+3. **Authentication → Sign In / Providers**: desligue *Allow new users to sign up*.
+   **Authentication → URL Configuration**: *Site URL* e *Redirect URLs* do endereço do site.
+4. **Admins**: crie as contas em *Authentication → Users* e coloque-as em `public.admins` (veja
+   "Adicionar ou remover um admin").
+5. **YouTube**: `supabase functions deploy sync-youtube --project-ref <ref>` e
+   `supabase secrets set CRON_SECRET=<segredo> --project-ref <ref>`; depois rode o bloco 11 do
+   baseline com a URL do projeto, a chave anon e o segredo.
+6. **Apontar o site**: localmente, pelo `js/config.local.js` (veja "Rodar localmente"). As funções
+   de `api/` usam o projeto fixo em `api/_lib/fonte.mjs` (`SUPABASE_URL` e `SUPABASE_KEY`).
+
+Não entram no baseline (refaça à mão num projeto novo): dados, contas, arquivos do Storage,
+segredos e as configurações do painel do Supabase dos passos 3 e 5. **Nunca rode o baseline no
+projeto de produção**: o primeiro comando (`create schema private`) falha lá e nada é aplicado.
 
 ## Rodar localmente
 
