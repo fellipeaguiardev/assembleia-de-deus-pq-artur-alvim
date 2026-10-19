@@ -5,6 +5,8 @@
 # Segredos e configurações da conta (as chaves ficam só na Vercel)
 .env
 .env.*
+# Projeto do Supabase de teste usado no computador (modelo: js/config.local.example.json)
+js/config.local.json
 .vercel/
 scripts/vercel-projeto.json
 

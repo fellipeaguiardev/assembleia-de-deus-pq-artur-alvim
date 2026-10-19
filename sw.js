@@ -81,6 +81,8 @@ self.addEventListener("fetch", (event) => {
   const sameOrigin = url.origin === self.location.origin;
   // Funções do servidor e pedidos com login nunca passam pelo cache.
   if (url.pathname.startsWith("/api/") || url.pathname === "/version.json" || req.headers.has("authorization")) return;
+  // Configuração local (só no computador) nunca fica guardada.
+  if (url.pathname.startsWith("/js/config.local")) return;
 
   if (sameOrigin && (req.destination === "image" || req.destination === "font" || url.pathname.startsWith("/data/"))) {
     event.respondWith(cacheFirst(req));

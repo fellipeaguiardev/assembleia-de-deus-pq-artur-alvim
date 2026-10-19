@@ -108,7 +108,8 @@ css/
   biblioteca.css admin.css
 js/
   intro.js    vinheta de abertura (partículas, frase letra por letra, “Pular”)
-  config.js   endereço do site (SITE_URL), URL e chave pública do Supabase, logo padrão
+  config.js   endereço do site (SITE_URL), URL e chave pública do Supabase, logo padrão,
+              config.local.json no computador e a faixa "AMBIENTE DE TESTE"
   core.js     dados padrão, carregamento, cópia offline, helpers, ícones, upload
   site.js     rotas (/cultos, /biblia…), menus, páginas, modais e animações
   podcast.js  páginas do podcast e player fixo
@@ -424,6 +425,25 @@ segredos e as configurações do painel do Supabase dos passos 3 e 5. **Nunca ro
 projeto de produção**: o primeiro comando (`create schema private`) falha lá e nada é aplicado.
 
 ## Rodar localmente
+
+> ⚠️ **Por padrão, o site rodando no computador usa o banco de PRODUÇÃO.** Tudo o que for salvo
+> pelo painel em `localhost` (cultos, eventos, livros, empréstimos…) muda o site no ar. Uma faixa
+> vermelha **"COMPUTADOR LIGADO AO BANCO DE PRODUÇÃO"** aparece no topo para lembrar disso.
+
+Para testar sem mexer na produção, aponte para um projeto de teste do Supabase (crie com o
+baseline, veja "Recriar o banco do zero"):
+
+1. Copie `js/config.local.example.json` para `js/config.local.json` (esse arquivo fica fora do
+   git e nunca é publicado).
+2. Preencha `SUPABASE_URL` e `SUPABASE_KEY` (a chave **publicável**, `sb_publishable_…`) do projeto
+   de teste.
+3. Recarregue a página: a faixa fica amarela, **"AMBIENTE DE TESTE · banco <projeto>"**.
+
+O arquivo só é lido em `localhost`/`127.0.0.1`; no site publicado ele é ignorado mesmo se existir.
+Para voltar à produção, apague o `js/config.local.json`. Se o arquivo tiver erro, ele é ignorado (a
+faixa volta a ficar vermelha). As funções de `api/` (formulário, EBD, liberação do painel) continuam
+no projeto fixo em `api/_lib/fonte.mjs`; o CSP do `vercel.json` também só libera o projeto de
+produção, então use o `npx serve` abaixo (sem esses cabeçalhos) para o banco de teste.
 
 ```bash
 npx serve -s . -l 5500

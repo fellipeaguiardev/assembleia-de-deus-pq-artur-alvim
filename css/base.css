@@ -450,3 +450,25 @@ main.page-enter {
 main:focus {
   outline: none;
 }
+
+/* Faixa "AMBIENTE DE TESTE" (js/config.js): só fora da produção */
+.env-banner {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  z-index: 2147483647;
+  transform: translateX(-50%);
+  padding: 3px 12px;
+  border-radius: 0 0 8px 8px;
+  background: #f5b400;
+  color: #1c1c1c;
+  font: 700 11px/1.4 system-ui, sans-serif;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+.env-banner.is-prod {
+  background: #c62828;
+  color: #fff;
+}

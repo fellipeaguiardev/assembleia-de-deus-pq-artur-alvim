@@ -35,6 +35,8 @@ mkdir -p "$DIST"
 cd "$SRC"
 cp index.html manifest.webmanifest sw.js robots.txt sitemap.xml vercel.json "$DIST/"
 cp -r css js vendor assets data api "$DIST/"
+# A configuração local (outro projeto do Supabase, só para o computador) nunca vai para o ar.
+rm -f "$DIST/js/config.local.json" "$DIST/js/config.local.example.json"
 sed -i "s|VERSION: \"dev\"|VERSION: \"$BUILD\"|" "$DIST/js/config.js"
 sed -i "s|const CACHE_VERSION = \"[^\"]*\";|const CACHE_VERSION = \"adbelem-$BUILD\";|" "$DIST/sw.js"
 printf '{"v":"%s"}\n' "$BUILD" > "$DIST/version.json"
