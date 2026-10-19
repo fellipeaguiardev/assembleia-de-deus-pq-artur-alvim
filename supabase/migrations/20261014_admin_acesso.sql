@@ -37,6 +37,9 @@ revoke all on public.admins from anon, authenticated;
 -- (sem políticas: ninguém lê nem grava pela API; só as funções abaixo)
 
 -- Os dois administradores de hoje (contas com e-mail confirmado).
+-- AVISO (19/10/2026): esta lista serviu só para preencher a tabela na
+-- primeira vez. A fonte oficial agora é a própria public.admins; para
+-- adicionar ou remover um admin, veja o README (não edite este arquivo).
 insert into public.admins (user_id)
 select u.id from auth.users u
  where lower(u.email) in ('adparque@gmail.com', 'fellipe.aguiar1058@gmail.com')

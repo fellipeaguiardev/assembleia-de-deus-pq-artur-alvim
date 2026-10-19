@@ -287,11 +287,39 @@ SHA-256). Limite de 6 e-mails por conta por hora; registros apagados depois de 3
 Quem recebe o e-mail: `ADMIN_APROVADORES` (opcional, e-mails separados por vírgula) ou `NOTIFY_TO`.
 Sem domínio verificado, o Resend só entrega para o e-mail da conta Resend.
 
-Adicionar um admin (a conta precisa existir em *Authentication → Users*, com e-mail confirmado):
+### Adicionar ou remover um admin
+
+A lista de admins é **só a tabela `public.admins`** (nenhum e-mail fica no código; os e-mails que
+aparecem em migrations antigas são histórico). Tudo pelo *SQL Editor* do Supabase:
+
+1. A pessoa precisa ter conta em *Authentication → Users*, com e-mail confirmado (*Add user →
+   Create new user* com "Auto Confirm User", ou *Invite user*).
+2. Rode o comando trocando o e-mail:
 
 ```sql
-insert into public.admins (user_id) select id from auth.users where email = 'novo@exemplo.com';
+-- adicionar
+insert into public.admins (user_id)
+select id from auth.users
+ where lower(email) = lower('pessoa@exemplo.com') and email_confirmed_at is not null
+on conflict (user_id) do nothing;
+
+-- remover (perde o poder de gravar na hora, mesmo com o painel aberto)
+delete from public.admins
+ where user_id = (select id from auth.users where lower(email) = lower('pessoa@exemplo.com'));
+
+-- conferir quem é admin hoje
+select u.email, a.created_at
+  from public.admins a join auth.users u on u.id = a.user_id
+ order by u.email;
 ```
+
+**Pendente:** na produção, a tabela `podcasts` ainda grava pela conta de um e-mail fixo, sem a
+liberação por e-mail (políticas criadas pelo painel do Supabase). A correção, que põe podcasts na
+mesma regra das outras tabelas, está em `supabase/migrations/20261019_podcasts_admin.sql`.
+
+Tirar alguém de `public.admins` não apaga a conta: para impedir também o login, use *Authentication
+→ Users → … → Delete user* (ou *Ban*). Quem **recebe** o e-mail de liberação é outra lista: a
+variável `ADMIN_APROVADORES` (ou `NOTIFY_TO`) na Vercel.
 
 **Emergência** (o e-mail não chega e ninguém consegue liberar): entre em `/admin`, deixe na tela
 “Confirme pelo e-mail” e rode no *SQL Editor* do Supabase:

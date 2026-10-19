@@ -7,17 +7,26 @@
 --  2. Nas demais tabelas, qualquer usuário logado (não só o
 --     admin) pode escrever. Existem 2 contas no Auth hoje.
 --
--- Este script deixa a escrita só para o e-mail do admin.
+-- Este script deixa a escrita só para admin com a entrada liberada.
 -- A leitura pública continua igual. Pode rodar mais de uma vez.
+--
+-- Quem é admin: a tabela public.admins (a única fonte; veja "Adicionar ou
+-- remover um admin" no README). A conferência é public.is_admin(): está na
+-- tabela E a sessão foi liberada por e-mail (12 h). Precisa do
+-- 20261014_admin_acesso.sql (ou do 00000000000000_baseline.sql) aplicado antes.
+-- (Até 14/10/2026 esta função comparava uma lista de e-mails escrita aqui.)
 -- ============================================================
 
--- Quem é admin: a conta do painel (js/config.js → ADMIN_EMAIL) e a do desenvolvedor
+-- Todas as políticas de escrita (tabelas e Storage) chamam is_site_admin(),
+-- que só repassa para is_admin().
 create or replace function public.is_site_admin()
 returns boolean
 language sql
 stable
+security definer
+set search_path = ''
 as $$
-  select coalesce(auth.jwt() ->> 'email', '') in ('adparque@gmail.com', 'fellipe.aguiar1058@gmail.com')
+  select public.is_admin()
 $$;
 
 -- 1) Remove as políticas que liberam escrita para visitantes
@@ -47,6 +56,11 @@ drop policy if exists "Authenticated can manage site settings"  on public.site_s
 drop policy if exists "Admin write site_settings"               on public.site_settings;
 drop policy if exists "Authenticated can manage videos"         on public.videos;
 drop policy if exists "Admin write videos"                      on public.videos;
+-- podcasts: políticas antigas presas a um e-mail fixo (veja 20261019_podcasts_admin.sql)
+drop policy if exists "Admin can read all podcasts"              on public.podcasts;
+drop policy if exists "Authenticated admins can delete podcasts" on public.podcasts;
+drop policy if exists "Authenticated admins can insert podcasts" on public.podcasts;
+drop policy if exists "Authenticated admins can update podcasts" on public.podcasts;
 
 -- 3) Cria uma política única de escrita para o admin em cada tabela
 do $$

@@ -1,4 +1,10 @@
 -- ============================================================
+-- AVISO (19/10/2026): a lista de e-mails de admin abaixo foi substituída
+-- pela tabela public.admins e pela função public.is_admin()
+-- (20261014_admin_acesso.sql). Não rode o passo 1 de novo: ele trocaria a
+-- is_site_admin() de volta para a lista e desligaria a liberação por e-mail.
+-- Mantido como estava, só como histórico.
+-- ============================================================
 -- EBD — importação automática do sumário + reforço de segurança
 -- ------------------------------------------------------------
 -- Como aplicar: Supabase → SQL Editor → New query → cole este
