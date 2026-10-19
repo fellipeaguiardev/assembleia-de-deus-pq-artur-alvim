@@ -1,0 +1,24 @@
+# Checagem automática a cada push (e em pull requests): sintaxe do JS,
+# arquivos citados pelo site e procura de segredos. A lógica fica em
+# scripts/verificar.mjs, que também roda no computador:
+#   node scripts/verificar.mjs
+name: Checagem
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Sintaxe, arquivos citados e segredos
+        run: node scripts/verificar.mjs

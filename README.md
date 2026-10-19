@@ -98,6 +98,8 @@ api/                  funções do servidor: contato.mjs (e-mail do formulário)
                       ebd-sync-diario.mjs (agendada), admin-acesso.mjs e admin-aprovar.mjs
                       (liberação do painel por e-mail) e _lib/ (modelos de e-mail, leitor da EBD)
 scripts/publicar.sh   publica na Vercel (carimba a versão para o app se atualizar)
+scripts/verificar.mjs checagem automática (sintaxe, arquivos citados, segredos)
+.github/workflows/    roda a checagem a cada push
 assets/img/           brasão em vetor (brasao.svg), ícones do app, imagem de compartilhamento
 data/harpa/           índice da Harpa Cristã (número e título)
 assets/fonts/         Fraunces e Inter (hospedadas aqui, sem Google Fonts)
@@ -470,6 +472,19 @@ de `api/`, carimba a versão (data e hora) em `js/config.js`, `sw.js` e `version
 pela Vercel CLI. Não é preciso mexer em `CACHE_VERSION` à mão.
 
 O site antigo no Netlify ficou só redirecionando para o endereço novo.
+
+## Checagem automática
+
+A cada push, o GitHub Actions (`.github/workflows/check.yml`) roda `scripts/verificar.mjs`, que:
+
+- confere a sintaxe de `js/*.js`, `sw.js` e `api/**/*.mjs` (`node --check`);
+- confere se todo arquivo citado no `index.html`, na lista do `sw.js` e no `manifest.webmanifest`
+  existe (o `version.json` fica de fora: é gerado na publicação);
+- procura segredos nos arquivos do git: chave secreta do Supabase (`sb_secret_…`), JWT com papel
+  `service_role`, `service_role` com valor, blocos `-----BEGIN …` e arquivos `.env`.
+
+Se algo falhar, o push aparece com ❌ no GitHub e a lista do que corrigir fica no log. Para rodar
+antes de publicar: `node scripts/verificar.mjs` (só precisa de Node e git, sem instalar nada).
 
 ## Trocar o domínio
 
