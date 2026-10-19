@@ -594,7 +594,7 @@ function announcementsHTML() {
 }
 
 function latestVideoHTML() {
-  const v = data.videos[0];
+  const v = publicVideos()[0];
   if (!v) return "";
   return `
   <section class="block">
@@ -938,6 +938,30 @@ let activeVideoFilter = "Todos";
 let videoQuery = "";
 let videoSearchTimer = null;
 
+/* Transmissões agendadas: a igreja cria a live no YouTube antes do culto e ela
+   chega pela sincronização com a data no título. Até o culto começar, o player
+   só mostraria "Transmissão ao vivo off-line", então o site esconde o vídeo:
+   - data futura: escondido;
+   - no dia: escondido até 10 min antes do horário do culto de mesmo nome
+     (aba Cultos do painel); sem horário conhecido, aparece desde cedo.
+   No painel a equipe continua vendo todos os vídeos. */
+function videoAgendado(v, agora = new Date()) {
+  if (!v.date) return false;
+  const hoje = localISO(agora);
+  if (v.date !== hoje) return v.date > hoje;
+  const titulo = normalizeText(v.title);
+  const dia = (data.services || []).find((s) => weekdayIndex(s.day) === agora.getDay());
+  const culto = (dia?.items || []).find((i) => [i.name, i.monthly?.name].some((n) => n && titulo.includes(normalizeText(n))));
+  const hm = String(culto?.time || "").match(/^(\d{1,2}):(\d{2})/);
+  if (!hm) return false;
+  return agora.getHours() * 60 + agora.getMinutes() < Number(hm[1]) * 60 + Number(hm[2]) - 10;
+}
+
+// Vídeos que o visitante vê (sem as transmissões que ainda não começaram).
+function publicVideos() {
+  return data.videos.filter((v) => !videoAgendado(v));
+}
+
 function videoMatches(v, words) {
   if (!words.length) return true;
   const hay = normalizeText(`${v.title} ${v.description || ""} ${v.category || ""}`);
@@ -945,7 +969,7 @@ function videoMatches(v, words) {
 }
 
 function videosPageHTML() {
-  const cats = ["Todos", ...new Set(data.videos.map((v) => v.category).filter(Boolean))];
+  const cats = ["Todos", ...new Set(publicVideos().map((v) => v.category).filter(Boolean))];
   if (!cats.includes(activeVideoFilter)) activeVideoFilter = "Todos";
   videoQuery = (new URLSearchParams(location.search).get("q") || "").slice(0, 80);
   return (
@@ -954,7 +978,7 @@ function videosPageHTML() {
   <section class="block">
     <div class="container">
       ${
-        data.videos.length
+        publicVideos().length
           ? `<form class="video-search" role="search" onsubmit="event.preventDefault(); this.querySelector('input').blur()" data-reveal>
         ${icon("search", 18)}
         <label class="sr-only" for="videoSearch">Buscar vídeos</label>
@@ -973,11 +997,11 @@ function videosPageHTML() {
 const videoWords = () => normalizeText(videoQuery).split(/\s+/).filter(Boolean);
 const filteredVideos = () => {
   const words = videoWords();
-  return data.videos.filter((v) => (activeVideoFilter === "Todos" || v.category === activeVideoFilter) && videoMatches(v, words));
+  return publicVideos().filter((v) => (activeVideoFilter === "Todos" || v.category === activeVideoFilter) && videoMatches(v, words));
 };
 
 function videoCountText() {
-  if (!data.videos.length) return "";
+  if (!publicVideos().length) return "";
   const n = filteredVideos().length;
   const q = videoQuery.trim();
   if (!q) return n === 1 ? "1 vídeo" : `${n} vídeos`;
@@ -1011,7 +1035,7 @@ function refreshVideoList() {
 }
 
 function videosListHTML() {
-  if (!data.videos.length) return emptyState("youtube", "Nenhum vídeo publicado ainda");
+  if (!publicVideos().length) return emptyState("youtube", "Nenhum vídeo publicado ainda");
   const list = filteredVideos();
   if (!list.length) {
     return emptyState(
