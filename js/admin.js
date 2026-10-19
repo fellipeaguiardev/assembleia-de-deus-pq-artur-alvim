@@ -1095,23 +1095,28 @@ async function removePodcast(id) {
 
 /* ---- NOTÍCIAS ---- */
 function tabNews() {
-  const items = data.news || [];
+  const all = (data.news || []).map((n, i) => ({ n, i }));
+  // Sugestões = trazidas da sede e ainda não publicadas (descartadas somem).
+  const sugestoes = all.filter(({ n }) => n.sourceId && !n.published && !n.dismissed);
+  const items = all.filter(({ n }) => !n.dismissed && !(n.sourceId && !n.published));
   return `
     ${topbar("Notícias", `<button class="btn btn-primary btn-sm" type="button" onclick="addNews()">+ Nova notícia</button>`)}
+    ${sedeSuggestionsHTML(sugestoes)}
     <p class="admin-note"><strong>Publicação agendada:</strong> marque “Publicada” e escolha uma data futura. A notícia aparece no site automaticamente nesse dia.</p>
     ${
       items.length
         ? items
             .map(
-              (n, i) => `
+              ({ n, i }) => `
       <div class="admin-card">
+        ${n.sourceUrl ? `<p class="admin-note sede-note">Notícia da <strong>${esc(n.sourceName || "AD Belém – Sede")}</strong>: no site aparecem o título, a data, o resumo e o link para <a href="${esc(safeUrl(n.sourceUrl))}" target="_blank" rel="noopener">ler no site da sede</a>.</p>` : ""}
         <div class="field-row">
           ${field("Título", `<input type="text" value="${esc(n.title)}" onchange="updateNews(${i},'title',this.value)">`, true)}
           ${field("Slug (endereço)", `<input type="text" value="${esc(n.slug)}" onchange="this.value=slugify(this.value); updateNews(${i},'slug',this.value)">`)}
           ${field("Autor", `<input type="text" value="${esc(n.author)}" onchange="updateNews(${i},'author',this.value)">`)}
           ${field("Resumo", `<textarea onchange="updateNews(${i},'summary',this.value)">${esc(n.summary)}</textarea>`, true)}
-          ${field("Conteúdo", `<textarea rows="8" onchange="updateNews(${i},'content',this.value)">${esc(n.content)}</textarea>`, true)}
-          ${field("Imagem de capa", `<input type="url" value="${esc(n.cover_image)}" onchange="updateNews(${i},'cover_image',this.value)" placeholder="Cole o link ou envie abaixo">${uploadRow(n.cover_image, `handleNewsImageUpload(this, ${i})`)}`, true)}
+          ${n.sourceUrl ? "" : field("Conteúdo", `<textarea rows="8" onchange="updateNews(${i},'content',this.value)">${esc(n.content)}</textarea>`, true)}
+          ${n.sourceUrl ? "" : field("Imagem de capa", `<input type="url" value="${esc(n.cover_image)}" onchange="updateNews(${i},'cover_image',this.value)" placeholder="Cole o link ou envie abaixo">${uploadRow(n.cover_image, `handleNewsImageUpload(this, ${i})`)}`, true)}
           ${field("Data", `<input type="date" value="${esc(n.published_at ? String(n.published_at).slice(0, 10) : "")}" onchange="updateNews(${i},'published_at',this.value)">`)}
           ${field(
             "Publicação",
@@ -1119,12 +1124,90 @@ function tabNews() {
              <label class="check"><input type="checkbox" ${n.featured ? "checked" : ""} onchange="updateNews(${i},'featured',this.checked)"> Destaque</label>`,
           )}
         </div>
-        <div class="admin-card-foot end"><button class="btn btn-danger btn-sm" type="button" onclick="removeNews(${i})">Excluir</button></div>
+        <div class="admin-card-foot end"><button class="btn btn-danger btn-sm" type="button" onclick="removeNews(${i})">${n.sourceId ? "Tirar do site" : "Excluir"}</button></div>
       </div>`,
             )
             .join("")
         : adminEmpty("Nenhuma notícia cadastrada.")
     }`;
+}
+
+// Notícias da sede (ad.org.br) separadas todo dia por api/noticias-sede.mjs:
+// sem aniversários, homenagens nem boletins repetidos. Nada vai ao ar sozinho.
+function sedeSuggestionsHTML(list) {
+  return `
+    <div class="admin-card sede-card">
+      <div class="sede-card-head">
+        <div>
+          <h3>Sugestões da AD Belém – Sede</h3>
+          <p class="admin-muted">Todo dia o site confere as notícias da sede (ad.org.br) dos últimos 30 dias e separa aqui as que importam. Publicar coloca no site o título, a data em que a sede publicou, o resumo e o link para ler lá; o texto completo e as fotos ficam no site da sede.</p>
+        </div>
+        <button class="btn btn-ghost btn-sm" type="button" onclick="fetchSedeNews(this)">${icon("search", 15)} Buscar agora</button>
+      </div>
+      ${
+        list.length
+          ? list
+              .map(
+                ({ n, i }) => `
+        <div class="admin-list-item sede-item">
+          <div class="meta">
+            <strong>${esc(n.title)}</strong>
+            <small>Publicada pela sede em ${fmtDateLong(n.published_at)}</small>
+            ${n.summary ? `<p>${esc(n.summary)}</p>` : ""}
+            ${safeUrl(n.sourceUrl) ? `<a href="${esc(safeUrl(n.sourceUrl))}" target="_blank" rel="noopener">${icon("external", 13)} Ver no site da sede</a>` : ""}
+          </div>
+          <div class="item-actions">
+            <button class="btn btn-primary btn-sm" type="button" onclick="publishSedeNews(${i})">Publicar</button>
+            <button class="btn btn-ghost btn-sm" type="button" onclick="dismissSedeNews(${i})">Descartar</button>
+          </div>
+        </div>`,
+              )
+              .join("")
+          : `<p class="admin-muted sede-empty">Nenhuma sugestão nova da sede no momento.</p>`
+      }
+    </div>`;
+}
+
+async function publishSedeNews(i) {
+  const n = data.news[i];
+  if (!n) return;
+  if (!(await dbWrite(db("news").update({ published: true }).eq("id", n.id), "Notícia publicada no site!", "Erro ao publicar."))) return;
+  n.published = true;
+  renderAdmin();
+  renderSite();
+}
+
+async function dismissSedeNews(i) {
+  const n = data.news[i];
+  if (!n) return;
+  if (!(await dbWrite(db("news").update({ dismissed: true, published: false }).eq("id", n.id), "Sugestão descartada.", "Erro ao descartar."))) return;
+  n.dismissed = true;
+  n.published = false;
+  renderAdmin();
+  renderSite();
+}
+
+async function fetchSedeNews(btn) {
+  if (!(await adminEnsureAccess())) return;
+  btn?.classList.add("loading");
+  if (btn) btn.disabled = true;
+  try {
+    const { data: sess } = await supabaseClient.auth.getSession();
+    const res = await fetch("/api/noticias-sede", { method: "POST", headers: { Authorization: `Bearer ${sess?.session?.access_token || ""}` } });
+    const r = await res.json().catch(() => ({}));
+    if (!res.ok || !r.ok) throw new Error(r.error || "Não deu para buscar agora.");
+    const { data: rows, error } = await db("news").select("*").order("published_at", { ascending: false });
+    if (error) throw error;
+    data.news = rows.map(mapNews);
+    showToast(r.novas.length ? `${r.novas.length} ${r.novas.length === 1 ? "sugestão nova" : "sugestões novas"} da sede.` : "Nenhuma notícia nova da sede.", "success");
+    renderAdmin();
+  } catch (e) {
+    console.error("Notícias da sede:", e);
+    showToast(e.message || "Não deu para buscar agora.", "error");
+  } finally {
+    btn?.classList.remove("loading");
+    if (btn) btn.disabled = false;
+  }
 }
 
 async function handleNewsImageUpload(input, i) {
@@ -1165,6 +1248,10 @@ async function updateNews(i, key, val) {
 
 async function removeNews(i) {
   const n = data.news[i];
+  if (n?.sourceId) {
+    if (!confirm(`Tirar "${n.title}" do site? Ela não volta nas sugestões.`)) return;
+    return dismissSedeNews(i);
+  }
   if (!n || !confirm(`Deseja excluir "${n.title}"?`)) return;
   if (!(await dbWrite(db("news").delete().eq("id", n.id), "Notícia excluída!", "Erro ao excluir notícia."))) return;
   data.news.splice(i, 1);

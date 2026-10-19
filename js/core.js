@@ -728,6 +728,12 @@ const mapNews = (n) => ({
   featured: n.featured === true,
   published: n.published !== false,
   created_at: n.created_at || "",
+  // Notícia trazida do site da sede (api/noticias-sede.mjs): só título, data,
+  // resumo e o link para ler lá. Descartada = escondida e não volta.
+  sourceId: n.source_id || "",
+  sourceUrl: n.source_url || "",
+  sourceName: n.source_name || "",
+  dismissed: n.dismissed === true,
 });
 const mapPodcast = (p) => ({
   id: p.id,

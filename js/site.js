@@ -222,7 +222,11 @@ function updateMeta(route) {
   const param = routeParam(route);
   if (base === "noticias" && param) {
     const n = publishedNews().find((x) => x.slug === param);
-    if (n) return setMeta(n.title, truncate(n.summary || n.content, 160) || ROUTE_META.noticias[1]);
+    if (n) {
+      setMeta(n.title, truncate(n.summary || n.content, 160) || ROUTE_META.noticias[1]);
+      if (n.sourceUrl && safeUrl(n.sourceUrl)) document.head.querySelector('link[rel="canonical"]')?.setAttribute("href", safeUrl(n.sourceUrl));
+      return;
+    }
   }
   const meta = ROUTE_META[base];
   if (meta) return setMeta(meta[0], meta[1]);
@@ -675,14 +679,20 @@ function newsHomeHTML() {
   </section>`;
 }
 
+// Notícia da sede: sem foto (fica no site deles), com o brasão e o selo da fonte.
+const newsMediaAttrs = (n) => (n.sourceUrl ? `class="card-media is-sede"` : `class="card-media" style="${bgImage(n.cover_image)}"`);
+const newsSourceTag = (n) => (n.sourceUrl ? `<span class="news-source-tag">${esc(n.sourceName || "AD Belém – Sede")}</span>` : "");
+const newsKicker = (n) => fmtDateLong(n.published_at || n.created_at) + (n.sourceUrl ? ` · ${esc(n.sourceName || "AD Belém – Sede")}` : "");
+
 function newsSlideHTML(n) {
   return `
   <a class="card carousel-slide" href="/noticias/${esc(encodeURIComponent(n.slug))}">
-    <div class="card-media" style="${bgImage(n.cover_image)}">
+    <div ${newsMediaAttrs(n)}>
+      ${newsSourceTag(n)}
       <span class="card-hint">Ler notícia ${icon("external", 13)}</span>
     </div>
     <div class="card-body">
-      <span class="card-kicker">${fmtDateLong(n.published_at || n.created_at)}</span>
+      <span class="card-kicker">${newsKicker(n)}</span>
       <h4>${esc(n.title)}</h4>
       <p class="clamp-3">${esc(n.summary)}</p>
     </div>
@@ -1115,9 +1125,9 @@ function newsPageHTML() {
     <div class="container">
       ${
         featured
-          ? `<a class="news-featured" data-reveal href="/noticias/${esc(encodeURIComponent(featured.slug))}" style="${bgImage(featured.cover_image)}">
+          ? `<a class="news-featured${featured.sourceUrl ? " is-sede" : ""}" data-reveal href="/noticias/${esc(encodeURIComponent(featured.slug))}" ${featured.sourceUrl ? "" : `style="${bgImage(featured.cover_image)}"`}>
               <div class="news-featured-overlay">
-                <span class="eyebrow">Destaque</span>
+                <span class="eyebrow">${featured.sourceUrl ? esc(featured.sourceName || "AD Belém – Sede") : "Destaque"}</span>
                 <h2>${esc(featured.title)}</h2>
                 <p>${esc(featured.summary || "Confira esta notícia da nossa igreja.")}</p>
                 <small>${fmtDateLong(featured.published_at || featured.created_at)}</small>
@@ -1135,9 +1145,9 @@ function newsPageHTML() {
 function newsCardHTML(n) {
   return `
   <a class="card news-card" href="/noticias/${esc(encodeURIComponent(n.slug))}">
-    <div class="card-media" style="${bgImage(n.cover_image)}"></div>
+    <div ${newsMediaAttrs(n)}>${newsSourceTag(n)}</div>
     <div class="card-body">
-      <span class="card-kicker">${fmtDateLong(n.published_at || n.created_at)}</span>
+      <span class="card-kicker">${newsKicker(n)}</span>
       <h4>${esc(n.title)}</h4>
       <p class="clamp-3">${esc(n.summary)}</p>
       <span class="card-link">Leia mais ${icon("arrow", 15)}</span>
@@ -1150,7 +1160,7 @@ function newsDetailPageHTML(slug) {
   if (!n) {
     return `<section class="block"><div class="container">${emptyState("megaphone", "Notícia não encontrada", "Ela pode ter sido removida.", `<a class="btn btn-primary btn-sm" href="/noticias">Ver todas as notícias</a>`)}</div></section>`;
   }
-  const paragraphs = esc(n.content || "")
+  const paragraphs = esc(n.content || (n.sourceUrl ? n.summary : ""))
     .split(/\n\s*\n/)
     .filter(Boolean)
     .map((p) => `<p data-listen>${p.replace(/\n/g, "<br>")}</p>`)
@@ -1164,8 +1174,16 @@ function newsDetailPageHTML(slug) {
         <h1 data-listen>${esc(n.title)}</h1>
         ${n.author ? `<p>Por ${esc(n.author)}</p>` : ""}
       </header>
-      ${n.cover_image && safeUrl(n.cover_image) ? `<img class="news-detail-cover" data-reveal src="${esc(safeUrl(n.cover_image))}" alt="">` : ""}
+      ${!n.sourceUrl && n.cover_image && safeUrl(n.cover_image) ? `<img class="news-detail-cover" data-reveal src="${esc(safeUrl(n.cover_image))}" alt="">` : ""}
       <div class="news-detail-content" data-reveal>${paragraphs}</div>
+      ${
+        n.sourceUrl && safeUrl(n.sourceUrl)
+          ? `<aside class="news-source" data-reveal>
+        <p>Esta notícia é da <strong>${esc(n.sourceName || "AD Belém – Sede")}</strong>, publicada no site deles em ${fmtDateLong(n.published_at)}. Aqui fica só o resumo: o texto completo e as fotos estão lá.</p>
+        <a class="btn btn-primary btn-sm" href="${esc(safeUrl(n.sourceUrl))}" target="_blank" rel="noopener">${icon("external", 15)} Ler a notícia completa no site da sede</a>
+      </aside>`
+          : ""
+      }
       <div class="news-detail-foot">
         ${listenButtonHTML()}
         <button class="btn btn-ghost btn-sm" type="button" onclick="shareLink(document.title)">${icon("share", 15)} Compartilhar</button>

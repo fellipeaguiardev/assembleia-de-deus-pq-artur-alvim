@@ -27,8 +27,10 @@
 -- (bloco 6), já na regra de todas as outras tabelas; a produção é corrigida
 -- por 20261019_podcasts_admin.sql.
 --
--- Num banco criado por este arquivo, as migrations com data (20261002_… em
--- diante) NÃO precisam ser rodadas: o que elas fazem já está aqui.
+-- Num banco criado por este arquivo, as migrations com data até
+-- 20261019_sync_youtube_segredo.sql NÃO precisam ser rodadas: o que elas fazem
+-- já está aqui. As criadas depois do baseline (a partir de
+-- 20261019_noticias_sede.sql) precisam, em ordem.
 -- ============================================================
 begin;
 

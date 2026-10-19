@@ -3039,3 +3039,42 @@ a.creed-ref {
   margin: 8px 0 16px;
   color: var(--c-text-soft);
 }
+
+/* ---------- Notícia trazida da AD Belém – Sede (sem foto: brasão + selo) ---------- */
+.card-media.is-sede,
+.news-featured.is-sede {
+  position: relative;
+  background:
+    url("/assets/img/brasao.svg") center / auto 58% no-repeat,
+    linear-gradient(135deg, var(--c-deep), var(--c-secondary));
+}
+.news-featured.is-sede {
+  background-position: 88% 50%, center;
+  background-size: auto 70%, cover;
+}
+.news-source-tag {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--c-secondary);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.news-source {
+  display: grid;
+  gap: 14px;
+  justify-items: start;
+  margin: 8px 0 24px;
+  padding: 18px 20px;
+  border-left: 4px solid var(--c-accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: color-mix(in srgb, var(--c-accent) 12%, var(--c-surface));
+  color: var(--c-text-soft);
+}
+.news-source p {
+  margin: 0;
+}

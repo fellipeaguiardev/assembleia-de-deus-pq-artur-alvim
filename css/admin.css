@@ -1067,3 +1067,52 @@ p.gate-note {
     flex-wrap: nowrap;
   }
 }
+
+/* Notícias: sugestões da AD Belém – Sede */
+.sede-card {
+  border-color: color-mix(in srgb, var(--c-accent) 55%, transparent);
+}
+.sede-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.sede-card-head > div {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+.sede-item {
+  align-items: flex-start;
+}
+.sede-item .meta {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  flex: 1 1 320px;
+  overflow-wrap: anywhere;
+}
+.sede-item .meta small {
+  color: #6b7080;
+}
+.sede-item .meta p {
+  margin: 2px 0;
+  font-size: 14px;
+  color: #4a4f60;
+}
+.sede-item .meta a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: fit-content;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.sede-empty {
+  margin: 6px 0 0;
+}
+.sede-note {
+  margin: 0 0 12px;
+}

@@ -16,6 +16,9 @@
     },
     "api/capa-livro/[arquivo].mjs": {
       "maxDuration": 10
+    },
+    "api/noticias-sede.mjs": {
+      "maxDuration": 30
     }
   },
   "crons": [
@@ -26,6 +29,10 @@
     {
       "path": "/api/biblioteca-sync",
       "schedule": "30 9 * * *"
+    },
+    {
+      "path": "/api/noticias-sede",
+      "schedule": "0 10 * * *"
     }
   ],
   "redirects": [

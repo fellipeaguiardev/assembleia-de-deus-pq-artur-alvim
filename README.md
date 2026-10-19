@@ -79,7 +79,7 @@ O `.gitignore` deixa de fora tudo o que é segredo ou dado da igreja:
 
 - **Chaves e senhas**: ficam só nas variáveis de ambiente da Vercel (`RESEND_API_KEY`, `NOTIFY_TO`,
   `EBD_SYNC_TOKEN`, `CRON_SECRET`, `ADMIN_ACCESS_TOKEN`, `LIB_SHEET_ID`, `LIB_SYNC_TOKEN`,
-  `LIB_TRIGGER_KEY`). A única chave no código é a **publicável** do Supabase, que é
+  `LIB_TRIGGER_KEY`, `NEWS_SYNC_TOKEN`). A única chave no código é a **publicável** do Supabase, que é
   pública por natureza (veja "Segurança").
 - **Cópias de segurança do banco** (`supabase/backups/`) e os ids do projeto na Vercel (`.vercel/`,
   `scripts/vercel-projeto.json`).
@@ -191,6 +191,26 @@ O leitor da página de origem fica em `api/_lib/fonte.mjs` — se o layout de l�
 ajusta. Precisa do SQL `supabase/migrations/20261010_ebd_sync.sql` e da variável `EBD_SYNC_TOKEN` no
 Vercel (a chave do servidor; no banco fica só o hash dela). Educado com a origem: identifica-se no
 User-Agent, uma requisição por vez, e só baixa a página de uma lição quando faltam dados dela.
+
+## Notícias da AD Belém – Sede
+
+Todo dia às 07:00 (Brasília) a função `api/noticias-sede.mjs` (Vercel Cron) lê as notícias dos
+**últimos 30 dias** do site da sede (ad.org.br, pela API pública do WordPress, a mesma do RSS) e
+separa as que importam. O filtro (`api/_lib/noticias-sede.mjs`) tira aniversários e homenagens a
+pessoas, transições de pastor em outros setores e os boletins diários repetidos ("EBO chega ao 10º
+dia"); deixa batismos, Ceia do Senhor, EBD/EBO, missões, Círculo de Oração, congressos, campanhas e
+notícias institucionais.
+
+- **Nada vai ao ar sozinho**: as escolhidas aparecem em **Painel → Notícias → Sugestões da AD Belém –
+  Sede** com **Publicar** e **Descartar** (descartada não volta). O botão **Buscar agora** faz a
+  conferência na hora.
+- **Direito autoral**: guarda e mostra só o título, a **data em que a sede publicou**, um resumo
+  curto e o link "Ler a notícia completa no site da sede"; o texto completo e as fotos ficam lá. A
+  página da notícia aponta o `canonical` para o original. Para usar as fotos, peça autorização à
+  comunicação da sede.
+- **Banco**: `supabase/migrations/20261019_noticias_sede.sql` (colunas `source_id`, `source_url`,
+  `source_name` e `dismissed` em `news`, e a função `news_sede_apply`, protegida pela chave do
+  servidor). **Variável na Vercel**: `NEWS_SYNC_TOKEN` (no banco fica só o SHA-256).
 
 ## Palavra Diária e Modo ouvir
 
@@ -376,6 +396,7 @@ update private.admin_access
 | Notícias e podcast agendados | Publique com data futura: aparecem sozinhos no dia |
 | Pedidos de oração | Vão direto por e-mail para a equipe, com a identidade da igreja (nada fica guardado) |
 | Lições da EBD | Vercel Cron todo dia às 06:00 (`api/ebd-sync-diario.mjs`) |
+| Notícias da sede | Vercel Cron todo dia às 07:00 (`api/noticias-sede.mjs`): sugestões no painel, a equipe publica |
 | Versão nova do app | O site confere `/version.json` ao voltar para o app e oferece “Atualizar” |
 
 **E-mail dos pedidos:** a função `api/contato.mjs` recebe o formulário, barra robôs (campo-isca,
@@ -400,8 +421,9 @@ ficou **idêntico à produção** em colunas, restrições, índices, funções,
 permissões. A única diferença é proposital: as regras de `podcasts`, que já vêm corrigidas (veja
 `20261019_podcasts_admin.sql`).
 
-Os arquivos com data (`20261002_…` em diante) são o histórico de como o banco chegou até aqui; num
-banco novo, basta o baseline. O histórico de migrations do próprio Supabase (*Database →
+Os arquivos com data até `20261019_sync_youtube_segredo.sql` são o histórico de como o banco chegou
+ao baseline; num banco novo, eles não precisam ser rodados. Os criados **depois** do baseline,
+sim, em ordem (a partir de `20261019_noticias_sede.sql`). O histórico de migrations do próprio Supabase (*Database →
 Migrations*) não reflete este repositório: ele só registra duas mudanças antigas feitas pelo painel.
 
 Passo a passo (ex.: um projeto de teste):
