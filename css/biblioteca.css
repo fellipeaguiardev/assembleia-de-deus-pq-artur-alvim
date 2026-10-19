@@ -910,21 +910,22 @@
   min-width: 0;
 }
 
-/* Faixa de sub-abas com rolagem lateral (marcada por setupScrollStrip em admin.js) */
-.scroll-strip {
-  --fade-l: 0px;
-  --fade-r: 0px;
-  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent 100%);
-  mask-image: linear-gradient(90deg, transparent 0, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent 100%);
-}
-.scroll-strip[data-more-left] {
-  --fade-l: 28px;
-}
-.scroll-strip[data-more-right] {
-  --fade-r: 28px;
-}
-
 @media (max-width: 900px) {
+  /* Faixa de sub-abas com rolagem lateral (marcada por setupScrollStrip em admin.js):
+     degradê só na borda que ainda tem abas escondidas */
+  .scroll-strip[data-more-left],
+  .scroll-strip[data-more-right] {
+    --fade-l: 0px;
+    --fade-r: 0px;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent 100%);
+  }
+  .scroll-strip[data-more-left] {
+    --fade-l: 28px;
+  }
+  .scroll-strip[data-more-right] {
+    --fade-r: 28px;
+  }
   .segmented.lib-seg {
     position: relative;
     display: flex;
