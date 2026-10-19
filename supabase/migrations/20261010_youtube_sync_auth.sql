@@ -1,4 +1,6 @@
 -- ============================================================
+-- SUBSTITUÍDO por 20261019_sync_youtube_segredo.sql (não rode este arquivo).
+-- ============================================================
 -- PENDENTE — protege a função sync-youtube contra chamadas de visitantes
 -- ------------------------------------------------------------
 -- Passos (nesta ordem):

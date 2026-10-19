@@ -73,29 +73,46 @@ function guessCategory(title: string): string {
   return "Cultos";
 }
 
-// Quem pode disparar a sincronização: o agendamento (header x-cron-secret) ou
-// um admin logado no painel. Enquanto o segredo CRON_SECRET não estiver
-// configurado (supabase secrets set CRON_SECRET=...), a função aceita qualquer
-// chamada com a chave pública, como na primeira versão.
-const ADMIN_EMAILS = ["adparque@gmail.com", "fellipe.aguiar1058@gmail.com"];
+// Quem pode disparar a sincronização:
+//  - o agendamento (pg_cron), que manda o header x-cron-secret igual ao
+//    segredo CRON_SECRET (supabase secrets set CRON_SECRET=...);
+//  - um admin com a entrada liberada no painel ("Sincronizar agora"): quem
+//    responde é o banco, pela função public.is_admin() chamada com o login da
+//    própria pessoa — está em public.admins E a sessão foi liberada por e-mail
+//    (vale 12 h). A lista de admins fica só na tabela, não no código.
+// Qualquer outra chamada é recusada, inclusive enquanto CRON_SECRET não existir.
+function sameSecret(a: string, b: string): boolean {
+  if (!a || !b || a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
 
-async function isAuthorized(req: Request, supabase: ReturnType<typeof createClient>): Promise<boolean> {
-  const secret = Deno.env.get("CRON_SECRET");
-  if (!secret) return true;
-  if (req.headers.get("x-cron-secret") === secret) return true;
+async function isAuthorized(req: Request): Promise<boolean> {
+  if (sameSecret(req.headers.get("x-cron-secret") ?? "", Deno.env.get("CRON_SECRET") ?? "")) return true;
   const token = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
   if (!token) return false;
-  const { data } = await supabase.auth.getUser(token);
-  return ADMIN_EMAILS.includes(data?.user?.email ?? "");
+  // Cliente com a chave pública + o token de quem chamou: a RPC roda com as
+  // permissões dessa pessoa (com a chave pública sozinha, is_admin() dá false).
+  const asCaller = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const { data, error } = await asCaller.rpc("is_admin");
+  if (error) {
+    console.error("is_admin:", error.message);
+    return false;
+  }
+  return data === true;
 }
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
-  const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-  if (!(await isAuthorized(req, supabase))) {
+  if (!(await isAuthorized(req))) {
     return Response.json({ ok: false, error: "Não autorizado" }, { status: 401, headers: cors });
   }
+  const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
   try {
     const { data: settings } = await supabase.from("settings").select("data").eq("id", "main").maybeSingle();

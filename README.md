@@ -314,9 +314,12 @@ update private.admin_access
   pedidos com login.
 - `'unsafe-inline'` no CSP continua necessário por causa dos `onclick` gerados; a proteção contra
   XSS é o escape (`esc`) de todo conteúdo dinâmico.
-- **Pendente (risco baixo):** a função `sync-youtube` pode ser chamada por qualquer um com a chave
-  pública — só faz reler o canal da igreja (o canal vem das configurações, não do pedido). O
-  passo a passo para exigir um segredo está em `supabase/migrations/20261010_youtube_sync_auth.sql`.
+- **Função `sync-youtube`** (Supabase Edge Function): só aceita o agendamento, que manda o header
+  `x-cron-secret` igual ao segredo `CRON_SECRET` **do Supabase** (Edge Functions → Secrets; não é o
+  mesmo `CRON_SECRET` da Vercel), ou um admin com a entrada liberada — quem responde é o banco,
+  por `public.is_admin()` chamada com o login da pessoa. Qualquer outra chamada recebe 401. Para
+  ligar: passo a passo em `supabase/migrations/20261019_sync_youtube_segredo.sql` (gerar o segredo,
+  `supabase secrets set`, rodar o SQL, `supabase functions deploy`, nessa ordem).
 
 ## Privacidade (LGPD)
 
