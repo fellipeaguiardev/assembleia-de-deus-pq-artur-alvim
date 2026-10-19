@@ -10,14 +10,18 @@
 -- dos passos importa. Nesta ordem o YouTube continua sincronizando o tempo
 -- todo (a versão que está no ar hoje ignora o header):
 --
+--  (A CLI do Supabase não precisa ser instalada: "npx supabase …" baixa
+--   na hora. Uma vez só: npx supabase login, que abre o navegador.)
 --  1. Gere um segredo aleatório (Git Bash):   openssl rand -hex 32
---  2. Guarde no Supabase:   supabase secrets set CRON_SECRET=<segredo> --project-ref rtludbkopxbhiwlwycid
+--  2. Guarde no Supabase:   npx supabase secrets set CRON_SECRET=<segredo> --project-ref rtludbkopxbhiwlwycid
 --     (ou Dashboard → Edge Functions → Secrets → Add new secret)
+--     Confira com:  npx supabase secrets list --project-ref rtludbkopxbhiwlwycid
 --  3. Cole ESTE arquivo no SQL Editor, troque '<CRON_SECRET>' (linha
 --     "segredo text := ...") pelo mesmo segredo e rode. Troque só na cópia
 --     colada no editor: o segredo não vai para o repositório. Se esquecer,
 --     o bloco para com erro sem mexer no agendamento.
---  4. Publique a função:   supabase functions deploy sync-youtube --project-ref rtludbkopxbhiwlwycid
+--  4. Publique a função (na pasta do projeto; --use-api dispensa o Docker):
+--     npx supabase functions deploy sync-youtube --project-ref rtludbkopxbhiwlwycid --use-api
 --  5. Confira (passos no fim do arquivo).
 --
 -- O Authorization abaixo é a chave pública antiga (anon, JWT): o Supabase
@@ -55,7 +59,8 @@ end $$;
 --   select status_code, left(content::text, 120), created
 --     from net._http_response order by created desc limit 5;
 --   → 200 com {"ok":true,...}. Se aparecer 401, o segredo do passo 3 não
---     é o mesmo do passo 2.
+--     é o mesmo do passo 2. Um 500 "Feed do YouTube respondeu …" quer dizer
+--     que a autorização passou e o problema é o feed do próprio YouTube.
 --
 -- No painel, Vídeos → "Sincronizar agora" continua funcionando para quem
 -- entrou com a liberação por e-mail.

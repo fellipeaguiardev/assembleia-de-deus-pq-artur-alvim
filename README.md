@@ -351,7 +351,7 @@ update private.admin_access
   mesmo `CRON_SECRET` da Vercel), ou um admin com a entrada liberada — quem responde é o banco,
   por `public.is_admin()` chamada com o login da pessoa. Qualquer outra chamada recebe 401. Para
   ligar: passo a passo em `supabase/migrations/20261019_sync_youtube_segredo.sql` (gerar o segredo,
-  `supabase secrets set`, rodar o SQL, `supabase functions deploy`, nessa ordem).
+  `npx supabase secrets set`, rodar o SQL, `npx supabase functions deploy … --use-api`, nessa ordem).
 
 ## Privacidade (LGPD)
 
@@ -416,9 +416,10 @@ Passo a passo (ex.: um projeto de teste):
    **Authentication → URL Configuration**: *Site URL* e *Redirect URLs* do endereço do site.
 4. **Admins**: crie as contas em *Authentication → Users* e coloque-as em `public.admins` (veja
    "Adicionar ou remover um admin").
-5. **YouTube**: `supabase functions deploy sync-youtube --project-ref <ref>` e
-   `supabase secrets set CRON_SECRET=<segredo> --project-ref <ref>`; depois rode o bloco 11 do
-   baseline com a URL do projeto, a chave anon e o segredo.
+5. **YouTube**: `npx supabase secrets set CRON_SECRET=<segredo> --project-ref <ref>` e
+   `npx supabase functions deploy sync-youtube --project-ref <ref> --use-api` (antes, uma vez:
+   `npx supabase login`); depois rode o bloco 11 do baseline com a URL do projeto, a chave anon e
+   o segredo.
 6. **Apontar o site**: localmente, pelo `js/config.local.js` (veja "Rodar localmente"). As funções
    de `api/` usam o projeto fixo em `api/_lib/fonte.mjs` (`SUPABASE_URL` e `SUPABASE_KEY`).
 
