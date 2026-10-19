@@ -594,13 +594,15 @@ function announcementsHTML() {
 }
 
 function latestVideoHTML() {
-  const v = publicVideos()[0];
-  if (!v) return "";
+  const v = data.videos.find((x) => !videoAgendado(x));
+  const prox = proximaTransmissao();
+  if (!v && !prox) return "";
   return `
   <section class="block">
     <div class="container">
       ${sectionHead("Fique por dentro", "Última transmissão", `<a class="btn btn-ghost btn-sm" href="/videos">Ver todos os vídeos</a>`)}
-      <article class="latest-video" data-reveal>
+      ${prox ? proximaTransmissaoHTML(prox) : ""}
+      ${v ? `<article class="latest-video" data-reveal>
         <button class="thumb" type="button" style="${bgImage(ytThumb(v.youtubeUrl))}" data-id="${esc(v.id)}" onclick="openVideoModal(this.dataset.id)" aria-label="Assistir ${esc(v.title)}">
           <span class="play-btn">${icon("play", 26)}</span>
         </button>
@@ -610,7 +612,7 @@ function latestVideoHTML() {
           ${v.description ? `<p class="video-desc clamp-3">${esc(v.description)}</p>` : ""}
           <button class="btn btn-accent btn-sm" type="button" data-id="${esc(v.id)}" onclick="openVideoModal(this.dataset.id)">${icon("play", 14)} Assistir</button>
         </div>
-      </article>
+      </article>` : ""}
     </div>
   </section>`;
 }
@@ -940,26 +942,62 @@ let videoSearchTimer = null;
 
 /* Transmissões agendadas: a igreja cria a live no YouTube antes do culto e ela
    chega pela sincronização com a data no título. Até o culto começar, o player
-   só mostraria "Transmissão ao vivo off-line", então o site esconde o vídeo:
-   - data futura: escondido;
-   - no dia: escondido até 10 min antes do horário do culto de mesmo nome
-     (aba Cultos do painel); sem horário conhecido, aparece desde cedo.
-   No painel a equipe continua vendo todos os vídeos. */
+   só mostraria "Transmissão ao vivo off-line", então o site mostra um aviso
+   ("Começa terça-feira, às 19:30") em vez do player:
+   - data futura: agendada;
+   - no dia: agendada até 10 min antes do horário do culto de mesmo nome
+     (aba Cultos do painel); sem horário conhecido, vira vídeo normal no dia.
+   "Última transmissão" é sempre a mais recente que já pode ser assistida. */
+
+// Horário do culto (aba Cultos) com o nome do vídeo, no dia da semana da data dele.
+function horaDaTransmissao(v) {
+  const d = parseISODate(v.date);
+  if (!d) return "";
+  const titulo = normalizeText(v.title);
+  const dia = (data.services || []).find((s) => weekdayIndex(s.day) === d.getDay());
+  const culto = (dia?.items || []).find((i) => [i.name, i.monthly?.name].some((n) => n && titulo.includes(normalizeText(n))));
+  const hm = String(culto?.time || "").match(/^(\d{1,2}):(\d{2})/);
+  return hm ? `${hm[1].padStart(2, "0")}:${hm[2]}` : "";
+}
+
 function videoAgendado(v, agora = new Date()) {
   if (!v.date) return false;
   const hoje = localISO(agora);
   if (v.date !== hoje) return v.date > hoje;
-  const titulo = normalizeText(v.title);
-  const dia = (data.services || []).find((s) => weekdayIndex(s.day) === agora.getDay());
-  const culto = (dia?.items || []).find((i) => [i.name, i.monthly?.name].some((n) => n && titulo.includes(normalizeText(n))));
-  const hm = String(culto?.time || "").match(/^(\d{1,2}):(\d{2})/);
-  if (!hm) return false;
-  return agora.getHours() * 60 + agora.getMinutes() < Number(hm[1]) * 60 + Number(hm[2]) - 10;
+  const [h, m] = horaDaTransmissao(v).split(":").map(Number);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return false;
+  return agora.getHours() * 60 + agora.getMinutes() < h * 60 + m - 10;
 }
 
-// Vídeos que o visitante vê (sem as transmissões que ainda não começaram).
-function publicVideos() {
-  return data.videos.filter((v) => !videoAgendado(v));
+// "hoje, às 19:30" · "amanhã, às 19:30" · "terça-feira, 20 de outubro, às 19:30"
+function quandoComeca(v, agora = new Date()) {
+  const d = parseISODate(v.date);
+  if (!d) return "";
+  const amanha = localISO(new Date(agora.getFullYear(), agora.getMonth(), agora.getDate() + 1));
+  const dia =
+    v.date === localISO(agora) ? "hoje" : v.date === amanha ? "amanhã" : d.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
+  const hora = horaDaTransmissao(v);
+  return hora ? `${dia}, às ${hora}` : dia;
+}
+
+// Nome do culto sem a data do título ("Culto de Ensino - 20 de outubro de 2026" → "Culto de Ensino").
+const nomeTransmissao = (v) => String(v.title || "").replace(/\s*[-–—|]\s*\d{1,2} de [a-zç]+ de \d{4}\s*$/i, "") || v.title;
+
+// A próxima transmissão agendada (a de data mais próxima).
+function proximaTransmissao() {
+  return data.videos.filter((v) => videoAgendado(v)).sort((a, b) => a.date.localeCompare(b.date))[0] || null;
+}
+
+function proximaTransmissaoHTML(v) {
+  return `
+      <button class="live-next" type="button" data-id="${esc(v.id)}" onclick="openVideoModal(this.dataset.id)" data-reveal>
+        <span class="live-next-icon">${icon("live", 20)}</span>
+        <span class="live-next-text">
+          <strong>Próxima transmissão ao vivo</strong>
+          <span>${esc(nomeTransmissao(v))} · ${esc(quandoComeca(v))}</span>
+        </span>
+        <span class="live-next-more">${icon("right", 18)}</span>
+      </button>`;
 }
 
 function videoMatches(v, words) {
@@ -969,7 +1007,7 @@ function videoMatches(v, words) {
 }
 
 function videosPageHTML() {
-  const cats = ["Todos", ...new Set(publicVideos().map((v) => v.category).filter(Boolean))];
+  const cats = ["Todos", ...new Set(data.videos.map((v) => v.category).filter(Boolean))];
   if (!cats.includes(activeVideoFilter)) activeVideoFilter = "Todos";
   videoQuery = (new URLSearchParams(location.search).get("q") || "").slice(0, 80);
   return (
@@ -978,7 +1016,7 @@ function videosPageHTML() {
   <section class="block">
     <div class="container">
       ${
-        publicVideos().length
+        data.videos.length
           ? `<form class="video-search" role="search" onsubmit="event.preventDefault(); this.querySelector('input').blur()" data-reveal>
         ${icon("search", 18)}
         <label class="sr-only" for="videoSearch">Buscar vídeos</label>
@@ -997,11 +1035,11 @@ function videosPageHTML() {
 const videoWords = () => normalizeText(videoQuery).split(/\s+/).filter(Boolean);
 const filteredVideos = () => {
   const words = videoWords();
-  return publicVideos().filter((v) => (activeVideoFilter === "Todos" || v.category === activeVideoFilter) && videoMatches(v, words));
+  return data.videos.filter((v) => (activeVideoFilter === "Todos" || v.category === activeVideoFilter) && videoMatches(v, words));
 };
 
 function videoCountText() {
-  if (!publicVideos().length) return "";
+  if (!data.videos.length) return "";
   const n = filteredVideos().length;
   const q = videoQuery.trim();
   if (!q) return n === 1 ? "1 vídeo" : `${n} vídeos`;
@@ -1035,7 +1073,7 @@ function refreshVideoList() {
 }
 
 function videosListHTML() {
-  if (!publicVideos().length) return emptyState("youtube", "Nenhum vídeo publicado ainda");
+  if (!data.videos.length) return emptyState("youtube", "Nenhum vídeo publicado ainda");
   const list = filteredVideos();
   if (!list.length) {
     return emptyState(
@@ -1046,15 +1084,16 @@ function videosListHTML() {
     );
   }
   return `<div class="video-grid" data-stagger>${list
-    .map(
-      (v) => `
-    <article class="video-card" ${pressable("openVideoModal", v.id, "Assistir " + v.title)}>
-      <div class="thumb" style="${bgImage(ytThumb(v.youtubeUrl))}"><span class="play-btn sm">${icon("play", 18)}</span></div>
+    .map((v) => {
+      const agendada = videoAgendado(v);
+      return `
+    <article class="video-card${agendada ? " is-scheduled" : ""}" ${pressable("openVideoModal", v.id, (agendada ? "Transmissão agendada: " : "Assistir ") + v.title)}>
+      <div class="thumb" style="${bgImage(ytThumb(v.youtubeUrl))}">${agendada ? `<span class="scheduled-tag">${icon("clock", 14)} Agendada</span>` : `<span class="play-btn sm">${icon("play", 18)}</span>`}</div>
       <span class="card-kicker">${esc(v.category)}</span>
       <h4>${esc(v.title)}</h4>
-      <span class="date">${fmtDateLong(v.date)}</span>
-    </article>`,
-    )
+      <span class="date">${agendada ? "Começa " + esc(quandoComeca(v)) : fmtDateLong(v.date)}</span>
+    </article>`;
+    })
     .join("")}</div>`;
 }
 
@@ -1673,6 +1712,7 @@ window.addEventListener("keydown", (e) => {
 function openVideoModal(id) {
   const v = data.videos.find((x) => String(x.id) === String(id));
   if (!v) return;
+  if (videoAgendado(v)) return openScheduledModal(v);
   const vid = ytId(v.youtubeUrl);
   openModal(
     `
@@ -1685,6 +1725,29 @@ function openVideoModal(id) {
       ${v.description ? `<p class="video-desc">${esc(v.description)}</p>` : ""}
     </div>`,
     { className: "modal-media", label: v.title },
+  );
+}
+
+// Transmissão que ainda não começou: aviso de quando começa no lugar do player
+// (que só mostraria "off-line") e o atalho para o lembrete do YouTube.
+function openScheduledModal(v) {
+  const yt = safeUrl(v.youtubeUrl);
+  openModal(
+    `
+    <div class="modal-video-frame scheduled-frame" style="${bgImage(ytThumb(v.youtubeUrl))}">
+      <div class="scheduled-msg">
+        <span class="scheduled-tag">${icon("clock", 14)} Transmissão agendada</span>
+        <strong>Começa ${esc(quandoComeca(v))}</strong>
+        <span>Volte aqui nesse horário para assistir ao vivo.</span>
+      </div>
+    </div>
+    <div class="modal-pad">
+      <span class="eyebrow">${esc(v.category)}${v.date ? " · " + fmtDateLong(v.date) : ""}</span>
+      <h3>${esc(v.title)}</h3>
+      <p class="scheduled-help">A transmissão ainda não começou. No YouTube dá para ativar o lembrete (o sininho) e receber um aviso quando ela começar.</p>
+      ${yt ? `<a class="btn btn-primary btn-sm" href="${esc(yt)}" target="_blank" rel="noopener">${icon("youtube", 16)} Ativar lembrete no YouTube</a>` : ""}
+    </div>`,
+    { className: "modal-media", label: "Transmissão agendada: " + v.title },
   );
 }
 
