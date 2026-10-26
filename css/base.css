@@ -374,16 +374,20 @@ html.booting body {
    - Entradas usam animation com fill "backwards": ao terminar,
      o elemento volta a obedecer seus estados de hover normais.
    ============================================================ */
+/* Curtas de propósito: a animação dá vida, mas o conteúdo tem de aparecer
+   logo (no celular, demora parece "não carregou"). */
 .motion [data-reveal]:not(.in),
-.motion [data-stagger]:not(.in) > * {
+.motion [data-stagger]:not(.in):not(.reveal-each) > *,
+.motion .reveal-each > :not(.in) {
   opacity: 0;
 }
 .motion [data-reveal].in {
-  animation: reveal 700ms var(--ease-out) backwards;
+  animation: reveal 450ms var(--ease-out) backwards;
 }
-.motion [data-stagger].in > * {
-  animation: reveal 600ms var(--ease-out) backwards;
-  animation-delay: calc(var(--i, 0) * 70ms);
+.motion [data-stagger].in > *,
+.motion .reveal-each > .in {
+  animation: reveal 380ms var(--ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * 45ms);
 }
 
 main.page-enter {
@@ -393,7 +397,7 @@ main.page-enter {
 @keyframes reveal {
   from {
     opacity: 0;
-    transform: translateY(18px);
+    transform: translateY(12px);
   }
 }
 @keyframes pageIn {

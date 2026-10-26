@@ -1925,29 +1925,44 @@ function closePhotoLightbox() {
 const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 let revealObserver = null;
 
+// Cada item aparece assim que a ponta dele entra na tela (threshold 0).
+// Antes, a lista inteira esperava 8% dela estar visível: numa lista comprida
+// (ex.: 27 vídeos, mais de 10 mil px no celular) isso nunca acontecia e os
+// cartões ficavam invisíveis. Agora cada cartão de uma [data-stagger] é
+// observado sozinho e a cascata acontece só entre os que entram juntos.
+// Carrossel (rolagem lateral) continua aparecendo inteiro de uma vez.
 function initReveal(scope = document) {
-  const els = scope.querySelectorAll("[data-reveal], [data-stagger]");
-  // Índice de atraso para os filhos em cascata (máx. 8 passos).
-  scope.querySelectorAll("[data-stagger]").forEach((g) => {
-    [...g.children].forEach((child, i) => child.style.setProperty("--i", Math.min(i, 8)));
-  });
+  const singles = [...scope.querySelectorAll("[data-reveal]")];
+  const groups = [...scope.querySelectorAll("[data-stagger]")];
   if (reduceMotion() || !("IntersectionObserver" in window)) {
-    els.forEach((el) => el.classList.add("in"));
+    [...singles, ...groups].forEach((el) => el.classList.add("in"));
     return;
   }
   document.documentElement.classList.add("motion");
   revealObserver ||= new IntersectionObserver(
     (entries) => {
+      let n = 0; // posição na cascata, contada só entre os que apareceram agora
       entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("in");
-          revealObserver.unobserve(entry.target);
-        }
+        if (!entry.isIntersecting) return;
+        const el = entry.target;
+        if (el.parentElement?.classList.contains("reveal-each")) el.style.setProperty("--i", Math.min(n++, 4));
+        el.classList.add("in");
+        revealObserver.unobserve(el);
       });
     },
-    { rootMargin: "0px 0px -8% 0px", threshold: 0.08 },
+    { rootMargin: "0px 0px 40px 0px", threshold: 0 }, // começa um pouco antes de entrar: chega já animando
   );
-  els.forEach((el) => revealObserver.observe(el));
+  singles.forEach((el) => revealObserver.observe(el));
+  groups.forEach((g) => {
+    const kids = [...g.children];
+    if (g.closest(".carousel")) {
+      kids.forEach((child, i) => child.style.setProperty("--i", Math.min(i, 4)));
+      revealObserver.observe(g);
+      return;
+    }
+    g.classList.add("reveal-each");
+    kids.forEach((child) => revealObserver.observe(child));
+  });
 }
 
 let scrollTicking = false;
