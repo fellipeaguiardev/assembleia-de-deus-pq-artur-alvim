@@ -8,8 +8,9 @@ migrateLegacyHash();
 migrateRenamedRoute();
 
 // Se a sessão do admin expirar ou sair em outra aba, volta para a tela de login.
+// (Só se o código do painel já foi carregado: ver loadAdminAssets em js/core.js.)
 supabaseClient.auth.onAuthStateChange((event) => {
-  if (event === "SIGNED_OUT" && (adminAuthed || adminGate)) {
+  if (event === "SIGNED_OUT" && adminLoaded() && (adminAuthed || adminGate)) {
     adminResetAccess();
     if (isAdminOpen()) renderAdmin();
   }
@@ -39,7 +40,7 @@ INTRO.done.then(() => !siteReady && document.documentElement.classList.add("intr
   try {
     await loadData();
     const route = currentRoute();
-    if (route === "admin") openAdmin();
+    if (route === "admin") openAdminRoute();
     else afterRoute(route);
     injectStructuredData();
   } catch (e) {

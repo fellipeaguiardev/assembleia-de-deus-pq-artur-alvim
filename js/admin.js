@@ -24,7 +24,7 @@ const ADMIN_TABS = [
 ];
 
 const adminRoot = () => document.getElementById("adminRoot");
-const isAdminOpen = () => adminRoot()?.classList.contains("open");
+// isAdminOpen() fica em js/core.js: o site usa antes de o painel ser carregado.
 
 async function openAdmin() {
   const root = adminRoot();

@@ -122,7 +122,9 @@ js/
   ebd.js      Escola Bíblica Dominical (páginas públicas)
   harpa.js    Harpa Cristã (índice e hinos)
   biblioteca.js  Biblioteca dos Jovens (acervo e pedidos)
-  admin.js    painel (abra /admin)
+  compartilhado.js  ROUTE_META, páginas que existem e a lista da Palavra Diária (navegador e servidor)
+  admin.js    painel (abra /admin) — os admin*.js e o css/admin.css só são baixados em /admin
+              (loadAdminAssets em core.js); o site público não carrega nada do painel
   admin-ebd.js  aba EBD do painel (trimestres e lições)
   admin-biblioteca.js  aba Biblioteca do painel (empréstimos, fila, acervo)
   admin-podcast.js  importação dos episódios do Spotify (feed RSS) na aba Podcast
@@ -535,7 +537,8 @@ A cada push, o GitHub Actions (`.github/workflows/check.yml`) roda `scripts/veri
 
 - confere a sintaxe de `js/*.js`, `sw.js` e `api/**/*.mjs` (`node --check`);
 - confere se todo arquivo citado no `index.html`, na lista do `sw.js` e no `manifest.webmanifest`
-  existe (o `version.json` fica de fora: é gerado na publicação);
+  existe, e também os `/js/…` e `/css/…` escritos no próprio JS (ex.: o painel, carregado sob
+  demanda); o `version.json` fica de fora: é gerado na publicação;
 - procura segredos nos arquivos do git: chave secreta do Supabase (`sb_secret_…`), JWT com papel
   `service_role`, `service_role` com valor, blocos `-----BEGIN …` e arquivos `.env`.
 

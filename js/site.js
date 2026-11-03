@@ -120,7 +120,7 @@ function onRouteChange() {
   migrateRenamedRoute(); // ex.: um link antigo para /ministerios gravado em algum aviso
   const route = currentRoute();
   if (route === "admin") {
-    openAdmin();
+    openAdminRoute(); // baixa o código do painel na primeira vez (js/core.js)
     return;
   }
   if (isAdminOpen()) closeAdminPanel({ keepHash: true });

@@ -764,6 +764,59 @@ const mapDonationType = (d) => ({
 
 const db = (table) => supabaseClient.from(table);
 
+/* ---------- Painel sob demanda ----------
+   O código do painel (js/admin*.js e css/admin.css, ~200 KB) só é baixado
+   quando alguém abre /admin. Os scripts rodam na ordem da lista (admin.js
+   primeiro); o painel só aparece depois que o CSS dele chegou. */
+const ADMIN_ASSETS = {
+  css: "/css/admin.css",
+  js: ["/js/admin.js", "/js/admin-ebd.js", "/js/admin-biblioteca.js", "/js/admin-podcast.js"],
+};
+let adminAssetsLoading = null;
+const adminLoaded = () => typeof window.renderAdmin === "function";
+const isAdminOpen = () => document.getElementById("adminRoot")?.classList.contains("open") === true;
+
+function loadAdminAssets() {
+  if (adminLoaded()) return Promise.resolve();
+  adminAssetsLoading ||= new Promise((resolve, reject) => {
+    const css = document.createElement("link");
+    css.rel = "stylesheet";
+    css.href = ADMIN_ASSETS.css;
+    const cssReady = new Promise((ok) => {
+      css.onload = ok;
+      css.onerror = ok; // sem o CSS o painel fica feio, mas funciona
+    });
+    document.head.appendChild(css);
+    const scripts = ADMIN_ASSETS.js.map((src) => {
+      const s = document.createElement("script");
+      s.src = src;
+      s.async = false; // executa na ordem em que foi inserido
+      return s;
+    });
+    const jsReady = new Promise((ok, fail) => {
+      scripts[scripts.length - 1].onload = ok;
+      scripts.forEach((s) => (s.onerror = () => fail(new Error(`Não foi possível carregar ${s.src}`))));
+    });
+    scripts.forEach((s) => document.body.appendChild(s));
+    Promise.all([cssReady, jsReady]).then(resolve, (e) => {
+      adminAssetsLoading = null; // deixa tentar de novo
+      reject(e);
+    });
+  });
+  return adminAssetsLoading;
+}
+
+async function openAdminRoute() {
+  try {
+    await loadAdminAssets();
+  } catch (e) {
+    console.error("Painel:", e);
+    showToast("Não foi possível abrir o painel agora. Verifique a internet e tente de novo.", "error");
+    return;
+  }
+  if (currentRoute() === "admin") openAdmin();
+}
+
 /* ---------- Listas que só crescem (vídeos, podcast, notícias) ----------
    A primeira carga (página inicial, cópia offline) pede só as colunas que o
    site usa e os itens mais recentes. A lista completa vem quando a pessoa

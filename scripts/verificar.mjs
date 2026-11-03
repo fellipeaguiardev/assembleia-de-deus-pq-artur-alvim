@@ -5,8 +5,10 @@
 //
 //  1. Sintaxe: node --check em js/*.js, sw.js e api/**/*.mjs.
 //  2. Arquivos citados: tudo que index.html, sw.js (lista SHELL) e
-//     manifest.webmanifest carregam precisa existir no repositório.
-//     version.json fica de fora: é gerado na publicação.
+//     manifest.webmanifest carregam precisa existir no repositório, e
+//     também os /js/… e /css/… citados no próprio JS (ex.: o painel,
+//     carregado sob demanda por js/core.js). version.json fica de fora:
+//     é gerado na publicação.
 //  3. Segredos: chave secreta do Supabase (sb_secret_…), JWT com papel
 //     service_role, "service_role" com valor, blocos -----BEGIN … e
 //     arquivos .env no git.
@@ -95,7 +97,13 @@ try {
 } catch (e) {
   falhar("arquivos", `manifest.webmanifest não é um JSON válido: ${e.message}`);
 }
-console.log(`Arquivos citados: ${nHtml} no index.html, ${nSw} no sw.js, ${nManifest} no manifest.`);
+// JS do site: caminhos "/js/…" e "/css/…" escritos no código (carregamento sob demanda)
+let nJs = 0;
+for (const arq of readdirSync(join(RAIZ, "js")).filter((n) => n.endsWith(".js"))) {
+  const valores = [...ler(`js/${arq}`).matchAll(/["'`](\/(?:js|css)\/[\w./-]+\.(?:js|css))["'`]/g)].map((m) => m[1]);
+  nJs += conferir(`js/${arq}`, valores);
+}
+console.log(`Arquivos citados: ${nHtml} no index.html, ${nSw} no sw.js, ${nManifest} no manifest, ${nJs} no JS.`);
 
 // ---------- 3) Segredos ----------
 // Os padrões são montados em partes para este arquivo não acusar a si mesmo.
