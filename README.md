@@ -257,6 +257,12 @@ Atalhos no ícone (toque longo): Palavra Diária, Lição da EBD, Bíblia, Horá
 O que já foi aberto fica guardado no aparelho: capítulos da Bíblia, lições da EBD e as informações
 públicas do site. As fotos da tela de instalação ficam em `assets/img/screens/`.
 
+**Sinal fraco** (`sw.js`): páginas, CSS e JS tentam a rede primeiro, mas se ela passar de **3 s** o
+service worker devolve a cópia guardada e deixa a resposta da rede atualizar o cache por trás (nos 15 s
+seguintes, os outros arquivos da página já vêm da cópia, sem esperar de novo). Todas
+as páginas usam **uma cópia só** do `index.html` (o conteúdo de cada endereço é montado pelo JS), em
+vez de uma cópia por endereço visitado. Página de erro (404, 500) nunca substitui a cópia boa.
+
 **O que cada abertura baixa** (`js/core.js`, `LIST_QUERIES`): a página inicial pede só as colunas que
 usa e os itens mais recentes (12 vídeos, 8 episódios, 20 notícias; eventos e avisos que ainda valem),
 cerca de 33 KB do banco em vez de 160 KB. A lista completa vem quando a pessoa abre `/videos`,
