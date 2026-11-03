@@ -53,7 +53,7 @@
     <noscript><style>#splash{display:none!important}html.booting body{overflow:auto}</style></noscript>
 
     <!-- Antes da primeira pintura: cores do último tema visto e o tipo de
-         abertura (vinheta completa sempre que o site é aberto — ver js/intro.js) -->
+         abertura (ver js/intro.js) -->
     <script>
       try {
         var t = JSON.parse(localStorage.getItem("site-theme") || "null");
@@ -65,15 +65,21 @@
           s.setProperty("--c-bg", t.background);
         }
       } catch (e) {}
+      // full    primeira visita do aparelho (vinheta de 6 s, uma vez só)
+      // short   reabertura na página inicial (~1,2 s, termina antes se os dados chegarem)
+      // none    link direto (/biblia/joao/3/16, /palavra…): sem vinheta, só um fade rápido
+      // reduced "reduzir movimento" ligado: tela final parada, como sempre foi
       (function () {
-        var mode = "full";
+        var home = (location.pathname.replace(/\/+$/, "") || "/") === "/";
+        var mode = home ? "short" : "none";
         try {
           if (matchMedia("(prefers-reduced-motion: reduce)").matches) mode = "reduced";
           // O próprio site recarregou para entrar a versão nova: abertura curta.
           else if (sessionStorage.getItem("intro-curta")) {
             mode = "short";
             sessionStorage.removeItem("intro-curta");
-          }
+          } else if (home && !localStorage.getItem("intro-vista")) mode = "full";
+          if (mode === "full") localStorage.setItem("intro-vista", "1");
           localStorage.removeItem("intro-day"); // controle antigo (1 vez por dia), não é mais usado
         } catch (e) {}
         document.documentElement.setAttribute("data-intro", mode);

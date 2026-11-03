@@ -3,10 +3,13 @@
    ------------------------------------------------------------
    O tipo de abertura é escolhido no <head> (index.html), antes da
    primeira pintura, e fica em <html data-intro="...">:
-     full     sempre que o site é aberto: vinheta completa de 6 s
-     short    quando o site recarrega sozinho para atualizar: ~1,2 s
+     full     primeira visita do aparelho: vinheta completa de 6 s
+     short    reabertura na página inicial e recarga para atualizar:
+              ~1,2 s (o js/main.js encerra antes se os dados chegarem)
+     none     link direto para uma página (ex.: /biblia/joao/3/16):
+              sem vinheta, só a barrinha de carregando e um fade rápido
      reduced  aparelho com "reduzir movimento": tela final parada
-   Quem quiser entrar direto toca em "Pular abertura".
+   Na vinheta completa, quem quiser entrar direto toca em "Pular abertura".
    Este arquivo prepara a frase (letra por letra), desenha as
    partículas e cuida do "Pular". O js/main.js espera INTRO.done
    para tirar a abertura da tela.
@@ -14,9 +17,9 @@
 (function () {
   var root = document.documentElement;
   var splash = document.getElementById("splash");
-  var DURATION = { full: 6000, short: 1200, reduced: 600 };
+  var DURATION = { full: 6000, short: 1200, reduced: 600, none: 0 };
   var mode = root.getAttribute("data-intro") || "reduced";
-  var ms = DURATION[mode] || 600;
+  var ms = mode in DURATION ? DURATION[mode] : 600;
 
   var resolveDone;
   var done = new Promise(function (r) {

@@ -48,6 +48,9 @@ INTRO.done.then(() => !siteReady && document.documentElement.classList.add("intr
     // Mesmo se algo falhar acima, a abertura some (ao fim da vinheta) e o
     // aviso de cookies aparece logo depois.
     siteReady = true;
+    // Vinheta curta: com os dados prontos, não espera o tempo cheio
+    // (mínimo de ~0,6 s desde a abertura, para não piscar).
+    if (INTRO.mode === "short" && INTRO.skip) setTimeout(INTRO.skip, Math.max(0, 600 - performance.now()));
     INTRO.done.then(() => {
       requestAnimationFrame(hideSplash);
       setTimeout(renderCookieBanner, 900);

@@ -1,7 +1,7 @@
 /* ============================================================
    VINHETA DE ABERTURA — 6 s, estilo vinheta de estúdio
    ------------------------------------------------------------
-   Linha do tempo (modo "full", sempre que o site é aberto):
+   Linha do tempo (modo "full", só na primeira visita do aparelho):
      0,0 s  ponto de luz + partículas convergindo (canvas, js/intro.js)
      1,1 s  a luz vira linhas que desenham o contorno do brasão
      2,3 s  formas geométricas se encaixam (overshoot + motion blur)
@@ -11,8 +11,10 @@
      4,7 s  frase surge letra por letra
      6,0 s  fim (some quando o site terminar de carregar)
    Sem data-intro (JS falhou) ou com "reduzir movimento": só a tela
-   final, sem animação. Modo "short" (o site recarregou sozinho para
-   atualizar): entrada rápida de ~1,2 s.
+   final, sem animação. Modo "short" (reabertura na página inicial ou
+   recarga para atualizar): entrada rápida de ~1,2 s. Modo "none" (link
+   direto para uma página): tela clara com a barrinha de carregando,
+   que some num fade rápido.
    ============================================================ */
 #splash {
   --logo-w: min(62vw, 36vh, 330px);
@@ -456,7 +458,34 @@ html.intro-ended .intro-skip {
 }
 
 /* ============================================================
-   MODO CURTO (outras visitas no mesmo dia)
+   LINK DIRETO (sem vinheta): página clara + barrinha, fade rápido
+   ============================================================ */
+[data-intro="none"] #splash {
+  background: var(--c-bg, #f6f8fc);
+  transition:
+    opacity 180ms ease,
+    visibility 0s linear 180ms;
+}
+[data-intro="none"] #splash .intro-bg,
+[data-intro="none"] #splash .intro-particles,
+[data-intro="none"] #splash .intro-lockup,
+[data-intro="none"] #splash .intro-ring,
+[data-intro="none"] #splash .intro-flash,
+[data-intro="none"] #splash .intro-name,
+[data-intro="none"] #splash .intro-sub,
+[data-intro="none"] #splash .intro-tagline {
+  visibility: hidden;
+}
+[data-intro="none"] #splash.done .intro-stage {
+  transform: none;
+  filter: none;
+}
+[data-intro="none"] .intro-wait {
+  background: color-mix(in srgb, var(--c-primary, #003399) 14%, transparent);
+}
+
+/* ============================================================
+   MODO CURTO (reabertura na página inicial)
    ============================================================ */
 [data-intro="short"] .intro-logo {
   animation: introLogoIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;

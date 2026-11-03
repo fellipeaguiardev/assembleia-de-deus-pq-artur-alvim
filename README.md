@@ -41,7 +41,7 @@ lições, livros, vídeos, cores) é editado pela equipe num **painel administra
 | **Biblioteca dos Jovens** | Acervo com busca e categorias, situação de cada livro (disponível, emprestado com data de volta, reservado), sinopse e pedido "Quero este livro" ou "Entrar na fila de espera". |
 | **Vídeos e podcast** | Cultos e lives do YouTube atualizados sozinhos, busca e filtros, botão "Ao vivo" e player de podcast que continua tocando enquanto se navega. |
 | **Comunidade** | Pedido de oração e contato (chega por e-mail à equipe), primeira visita (horários, endereço, como chegar), departamentos, história e liderança da igreja e ofertas por PIX com QR Code. |
-| **App e privacidade** | App instalável (PWA) com atalhos, abertura animada com o brasão montado em formas geométricas, aviso de versão nova, política de privacidade (LGPD) e conteúdos de terceiros (YouTube, Spotify, Maps) só com permissão. |
+| **App e privacidade** | App instalável (PWA) com atalhos, abertura animada com o brasão montado em formas geométricas (na primeira visita), aviso de versão nova, política de privacidade (LGPD) e conteúdos de terceiros (YouTube, Spotify, Maps) só com permissão. |
 
 <p align="center">
   <img src="docs/telas/inicio-computador.jpg" alt="Página inicial no computador" width="640">
@@ -143,12 +143,18 @@ abrirem o `index.html` (arquivos que existem são servidos antes).
 
 ## Abertura (vinheta)
 
-Sempre que o site é aberto, ele começa com uma vinheta de 6 s: ponto de luz e partículas →
-linhas desenham o contorno do brasão → as formas geométricas se encaixam e montam o brasão em
-vetor → clarão → brilho → nome e frase letra por letra. A abertura curta (~1,2 s) só aparece
-quando o próprio site recarrega para entrar uma versão nova; com "reduzir movimento" ligado no
-aparelho, não há animação. Dá para pular tocando na tela, no botão "Pular abertura" ou com Esc.
-Trocar de página dentro do site não repete a vinheta.
+O tipo de abertura é escolhido no `<head>` do `index.html`, antes da primeira pintura:
+
+| Quando | O que aparece |
+| --- | --- |
+| **Primeira visita do aparelho** (na página inicial) | Vinheta completa de 6 s: ponto de luz e partículas → linhas desenham o contorno do brasão → as formas se encaixam e montam o brasão em vetor → clarão → brilho → nome e frase letra por letra. Dá para pular tocando na tela, no botão "Pular abertura" ou com Esc. |
+| **Reabertura na página inicial** | Versão curta (~1,2 s), que termina antes se os dados já chegaram (no mínimo ~0,6 s, para não piscar). |
+| **Link direto** para qualquer outra página (ex.: `/biblia/joao/3/16` vindo do WhatsApp, `/palavra`, `/ebd/atual`) | Sem vinheta: tela clara com a barrinha de carregando e um fade rápido (~0,2 s) assim que os dados chegam. |
+| **Site recarregou sozinho para entrar uma versão nova** | Versão curta. |
+| **"Reduzir movimento"** ligado no aparelho | Tela final parada, sem animação. |
+
+A marca de "já viu a vinheta" fica no aparelho (`localStorage`, chave `intro-vista`); limpar os dados
+do site faz a vinheta completa aparecer de novo. Trocar de página dentro do site não repete a abertura.
 A frase muda em **Painel → Aparência → Abertura do site**. Tudo é CSS/SVG/canvas, sem vídeo.
 
 ## Doações (PIX)
