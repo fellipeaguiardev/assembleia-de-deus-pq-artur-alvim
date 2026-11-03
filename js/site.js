@@ -126,9 +126,23 @@ function onRouteChange() {
   if (isAdminOpen()) closeAdminPanel({ keepHash: true });
   closeModal({ instant: true });
   toggleMobileMenu(false);
+  // /videos, /podcast e /noticias mostram a lista completa: na primeira vez,
+  // espera ela chegar (no máximo 1,2 s) para a página não montar duas vezes.
+  const table = FULL_LIST_BY_ROUTE[routeBase(route)];
+  if (table && !fullLists.has(table)) {
+    const token = ++routeWaitToken;
+    Promise.race([ensureFullList(table), new Promise((r) => setTimeout(r, 1200))]).then(() => {
+      if (token !== routeWaitToken || currentRoute() !== route) return;
+      renderSite();
+      afterRoute(route);
+    });
+    return;
+  }
+  routeWaitToken++;
   renderSite();
   afterRoute(route);
 }
+let routeWaitToken = 0;
 
 /* ---------- Toda página nova começa no topo ----------
    No iPhone, se a pessoa toca num link com a página ainda deslizando (inércia),

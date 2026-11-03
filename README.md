@@ -255,6 +255,13 @@ Atalhos no ícone (toque longo): Palavra Diária, Lição da EBD, Bíblia, Horá
 O que já foi aberto fica guardado no aparelho: capítulos da Bíblia, lições da EBD e as informações
 públicas do site. As fotos da tela de instalação ficam em `assets/img/screens/`.
 
+**O que cada abertura baixa** (`js/core.js`, `LIST_QUERIES`): a página inicial pede só as colunas que
+usa e os itens mais recentes (12 vídeos, 8 episódios, 20 notícias; eventos e avisos que ainda valem),
+cerca de 33 KB do banco em vez de 160 KB. A lista completa vem quando a pessoa abre `/videos`,
+`/podcast` ou `/noticias` (ou um episódio por link); o painel recebe tudo, inclusive rascunhos e itens
+antigos. A cópia offline junta o que a pessoa já viu, então uma lista vista com internet continua
+inteira sem internet.
+
 ## Bíblia
 
 Texto da **Bíblia Livre** (BLIVRE), © 2018 Diego Santos, Mario Sérgio e Marco Teles, licença

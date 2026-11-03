@@ -764,6 +764,60 @@ const mapDonationType = (d) => ({
 
 const db = (table) => supabaseClient.from(table);
 
+/* ---------- Listas que só crescem (vídeos, podcast, notícias) ----------
+   A primeira carga (página inicial, cópia offline) pede só as colunas que o
+   site usa e os itens mais recentes. A lista completa vem quando a pessoa
+   abre a página dela (/videos, /podcast, /noticias): ensureFullList. O painel
+   recebe tudo, inclusive rascunhos, em loadAdminOnlyData. */
+const LIST_QUERIES = {
+  videos: {
+    cols: "id,title,youtube_url,youtube_id,category,date,description,source,created_at",
+    first: 12, // a "Última transmissão" e a próxima live agendada
+    map: (rows) => rows.map(mapVideo),
+    query: (q) => q.eq("hidden", false).order("date", { ascending: false }).order("created_at", { ascending: false }),
+  },
+  podcasts: {
+    cols: "id,title,description,episode_number,cover_url,audio_url,spotify_url,youtube_url,published_at,status,created_at",
+    first: 8, // destaque + episódios recentes da home
+    map: (rows) => rows.map(mapPodcast),
+    query: (q) => q.eq("status", "Publicado").order("published_at", { ascending: false }),
+  },
+  news: {
+    cols: "id,title,slug,summary,content,cover_image,published_at,author,featured,published,created_at,source_id,source_url,source_name,dismissed",
+    first: 20,
+    map: (rows) => rows.map(mapNews),
+    query: (q) => q.eq("published", true).order("published_at", { ascending: false }),
+  },
+};
+const FULL_LIST_BY_ROUTE = { videos: "videos", podcast: "podcasts", noticias: "news" };
+const fullLists = new Set(); // listas que já vieram completas nesta visita
+const fullListPending = {};
+
+function listQuery(table, full) {
+  const c = LIST_QUERIES[table];
+  const q = c.query(db(table).select(c.cols));
+  return full ? q : q.limit(c.first);
+}
+
+// Lista completa de uma página; devolve true quando estiver em data[table].
+function ensureFullList(table) {
+  if (!LIST_QUERIES[table] || fullLists.has(table)) return Promise.resolve(true);
+  fullListPending[table] ||= listQuery(table, true)
+    .then(({ data: rows, error }) => {
+      if (error || !rows) {
+        if (error) console.warn(`[Supabase] ${table} (lista completa):`, error.message);
+        return false;
+      }
+      data[table] = LIST_QUERIES[table].map(rows);
+      fullLists.add(table);
+      saveSnapshot();
+      return true;
+    })
+    .catch(() => false)
+    .finally(() => delete fullListPending[table]);
+  return fullListPending[table];
+}
+
 async function loadData() {
   // Sem conexão: abre na hora com a última cópia salva. (A biblioteca do
   // Supabase tentaria de novo por vários segundos antes de desistir.)
@@ -777,18 +831,25 @@ async function loadData() {
     return;
   }
   try {
+    // Aberto direto em /videos, /podcast ou /noticias: essa lista já vem completa.
+    fullLists.clear();
+    const fullNow = FULL_LIST_BY_ROUTE[routeBase(currentRoute())];
+    const today = localISO();
+    const yesterday = localISO(new Date(Date.now() - 864e5));
     const [settings, events, videos, services, announcements, ministries, news, donationTypes, podcasts] =
       await Promise.all([
         db("settings").select("data").eq("id", "main").maybeSingle(),
-        db("events").select("*").order("date", { ascending: true }),
-        db("videos").select("*").order("date", { ascending: false }).order("created_at", { ascending: false }),
+        // Eventos e avisos que já passaram não aparecem no site (o painel carrega todos).
+        db("events").select("*").gte("date", yesterday).order("date", { ascending: true }),
+        listQuery("videos", fullNow === "videos"),
         db("services").select("*"),
-        db("announcements").select("*"),
+        db("announcements").select("*").or(`end_date.is.null,end_date.gte.${today}`),
         db("ministries").select("*"),
-        db("news").select("*").order("published_at", { ascending: false }),
+        listQuery("news", fullNow === "news"),
         db("donation_types").select("*").order("sort_order", { ascending: true }),
-        db("podcasts").select("*").order("published_at", { ascending: false }),
+        listQuery("podcasts", fullNow === "podcasts"),
       ]);
+    if (fullNow && !{ videos, news, podcasts }[fullNow].error) fullLists.add(fullNow);
 
     const log = (label, res) => res.error && console.warn(`[Supabase] ${label}:`, res.error.message);
     log("settings", settings);
@@ -829,7 +890,7 @@ async function loadData() {
     if (events.data) data.events = events.data.map(mapEvent);
     else data.events = (data.events || []).map(mapEvent);
     // Vídeos ocultados no painel não aparecem (e não voltam na sincronização).
-    if (videos.data) data.videos = videos.data.filter((v) => !v.hidden).map(mapVideo);
+    if (videos.data) data.videos = videos.data.map(mapVideo);
     else data.videos = (data.videos || []).map(mapVideo);
     if (services.data) data.services = services.data.map(mapService).sort(byWeekday);
     if (announcements.data) data.announcements = announcements.data.map(mapAnnouncement);
@@ -858,12 +919,26 @@ async function loadData() {
 const SNAPSHOT_KEY = "site-data-cache";
 const SNAPSHOT_KEYS = [...SETTINGS_KEYS, "services", "events", "videos", "announcements", "ministries", "news", "podcasts"];
 
+// Junta a lista nova com a da cópia anterior (o que a pessoa já viu continua
+// disponível sem internet, mesmo que a página inicial traga só os recentes).
+function mergeSeen(fresh, old, cap, sortKey) {
+  const ids = new Set((fresh || []).map((x) => String(x.id)));
+  const all = [...(fresh || []), ...(old || []).filter((x) => x && !ids.has(String(x.id)))];
+  if (sortKey) all.sort((a, b) => String(b[sortKey] || "").localeCompare(String(a[sortKey] || "")));
+  return all.slice(0, cap);
+}
+
 function saveSnapshot() {
   try {
+    let old = {};
+    try {
+      old = JSON.parse(localStorage.getItem(SNAPSHOT_KEY) || "null")?.data || {};
+    } catch {}
     const snap = {};
     SNAPSHOT_KEYS.forEach((k) => (snap[k] = data[k]));
-    snap.news = (data.news || []).filter((n) => n.published !== false);
-    snap.podcasts = (data.podcasts || []).filter((p) => normalizeText(p.status) === "publicado");
+    snap.videos = mergeSeen(data.videos, old.videos, 300, "date");
+    snap.news = mergeSeen((data.news || []).filter((n) => n.published !== false && !n.dismissed), old.news, 80, "published_at");
+    snap.podcasts = mergeSeen((data.podcasts || []).filter((p) => normalizeText(p.status) === "publicado"), old.podcasts, 200, "published_at");
     const json = JSON.stringify({ at: new Date().toISOString(), data: snap });
     if (json.length < 1_500_000) localStorage.setItem(SNAPSHOT_KEY, json);
   } catch {}
@@ -886,17 +961,26 @@ function restoreSnapshot() {
   } catch {}
 }
 
-// Depois do login, recarrega o que o visitante comum não enxerga
-// (rascunhos de notícias e podcasts, ofertas inativas).
+// Depois do login, recarrega o que o visitante comum não enxerga e as listas
+// inteiras (rascunhos de notícias e podcasts, ofertas inativas, todos os
+// vídeos, eventos e avisos, inclusive os que já passaram).
 async function loadAdminOnlyData() {
-  const [news, podcasts, donationTypes] = await Promise.all([
+  const [news, podcasts, donationTypes, videos, events, announcements] = await Promise.all([
     db("news").select("*").order("published_at", { ascending: false }),
     db("podcasts").select("*").order("published_at", { ascending: false }),
     db("donation_types").select("*").order("sort_order", { ascending: true }),
+    db("videos").select("*").eq("hidden", false).order("date", { ascending: false }).order("created_at", { ascending: false }),
+    db("events").select("*").order("date", { ascending: true }),
+    db("announcements").select("*"),
   ]);
   if (news.data) data.news = news.data.map(mapNews);
   if (podcasts.data) data.podcasts = podcasts.data.map(mapPodcast);
   if (donationTypes.data?.length) data.donationTypes = donationTypes.data.map(mapDonationType);
+  if (videos.data) data.videos = videos.data.map(mapVideo);
+  if (events.data) data.events = events.data.map(mapEvent);
+  if (announcements.data) data.announcements = announcements.data.map(mapAnnouncement);
+  // O painel já tem as listas completas: o site não troca pelas versões só publicadas.
+  [news.data && "news", podcasts.data && "podcasts", videos.data && "videos"].filter(Boolean).forEach((t) => fullLists.add(t));
 }
 
 /* ============================================================
