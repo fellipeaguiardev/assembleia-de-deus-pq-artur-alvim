@@ -3,7 +3,7 @@
    ============================================================ */
 
 const SITE_URL = window.APP_CONFIG.SITE_URL; // definido em js/config.js
-const SITE_NAME = "AD Belém - Parque Artur Alvim";
+const { SITE_NAME } = SITE_SHARED;
 
 // Menu principal (computador) + menu "Mais".
 const NAV_PRIMARY = [
@@ -176,29 +176,12 @@ function afterRoute(route) {
 /* ============================================================
    TÍTULO, DESCRIÇÃO E ENDEREÇO OFICIAL DE CADA PÁGINA
    ============================================================ */
-const ROUTE_META = {
-  home: ["", "Assembleia de Deus Belém - Parque Artur Alvim, São Paulo: horários dos cultos, Bíblia online, eventos, vídeos, departamentos e localização."],
-  cultos: ["Horários dos cultos", "Dias e horários dos cultos e da Escola Bíblica Dominical da AD Belém - Parque Artur Alvim."],
-  biblia: ["Bíblia", "Leia a Bíblia Sagrada completa no site, gratuitamente, na tradução Bíblia Livre, e abra a mesma passagem na ARC, ARA, NVI, NTLH ou BKJ."],
-  biblioteca: ["Biblioteca dos Jovens", "Livros de teologia, história, filosofia e literatura para emprestar: veja o acervo, a situação de cada livro e peça o seu. Aberta a todos."],
-  harpa: ["Harpa Cristã", "Os 640 hinos da Harpa Cristã, o hinário das Assembleias de Deus: procure pelo número ou pelo nome e ouça."],
-  ebd: ["Escola Bíblica Dominical", "Lição da semana da EBD, referências bíblicas e perguntas para aprofundar o estudo."],
-  palavra: ["Palavra Diária", "Um versículo da Bíblia para meditar a cada dia."],
-  videos: ["Vídeos e transmissões", "Cultos, estudos e mensagens transmitidos pela AD Belém - Parque Artur Alvim."],
-  eventos: ["Eventos", "Congressos, encontros e programações especiais da AD Belém - Parque Artur Alvim."],
-  noticias: ["Notícias", "Novidades, acontecimentos e informações da AD Belém - Parque Artur Alvim."],
-  sobre: ["Quem somos", "História, missão, valores e liderança da Assembleia de Deus Belém - Parque Artur Alvim."],
-  "primeira-visita": ["Sua primeira visita", "Horários, endereço e como chegar para visitar a AD Belém - Parque Artur Alvim pela primeira vez."],
-  departamentos: ["Departamentos", "Conheça os departamentos da AD Belém - Parque Artur Alvim."],
-  podcast: ["Podcast", "Mensagens e conversas para fortalecer a sua fé, do podcast da AD Belém - Parque Artur Alvim."],
-  doacoes: ["Ofertas e doações", "Contribua com ofertas, dízimos e projetos da AD Belém - Parque Artur Alvim via PIX."],
-  oracao: ["Pedido de oração", "Envie seu pedido de oração ou fale com a equipe pastoral da AD Belém - Parque Artur Alvim."],
-  privacidade: ["Política de privacidade", "Como a AD Belém - Parque Artur Alvim trata seus dados, de acordo com a LGPD."],
-};
+// Título e descrição padrão de cada página: js/compartilhado.js (o servidor usa os mesmos).
+const { ROUTE_META, HOME_TITLE } = SITE_SHARED;
 
 // noindex: páginas de "não encontrado" não devem aparecer no Google.
 function setMeta(title, description, path = location.pathname, { noindex = false } = {}) {
-  document.title = title ? `${title} | ${SITE_NAME}` : "Assembleia de Deus Belém - Parque Artur Alvim | São Paulo";
+  document.title = title ? `${title} | ${SITE_NAME}` : HOME_TITLE;
   const url = SITE_URL + (path === "/" ? "/" : path.replace(/\/+$/, ""));
   const tag = (selector, create, attr, value) => {
     let el = document.head.querySelector(selector);

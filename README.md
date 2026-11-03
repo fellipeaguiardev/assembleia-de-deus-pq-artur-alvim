@@ -141,6 +141,26 @@ Cada página tem um endereço próprio: `/cultos`, `/eventos`, `/noticias/<slug>
 são convertidos sozinhos. Na Vercel, a regra `rewrites` do `vercel.json` faz todos esses endereços
 abrirem o `index.html` (arquivos que existem são servidos antes).
 
+### Preview no WhatsApp (título e descrição no HTML)
+
+O WhatsApp, o Facebook e o Google não rodam o JavaScript do site, então leem só o `<head>` do HTML.
+A função `api/pagina.mjs` pega o `index.html` e troca só o `<title>`, a `description`, o `og:title`,
+o `og:description`, o `og:url` e o `canonical` (montados em `api/_lib/paginas.mjs`):
+
+| Rota | De onde vem |
+| --- | --- |
+| `/biblia/<livro>/<capítulo>[/<versículos>]` | Referência no título e o texto do(s) versículo(s) na descrição, com o crédito da Bíblia Livre (arquivos de `data/bible/blivre`, sem banco) |
+| `/palavra`, `/palavra/<data>` | O versículo do dia (mesma lista e mesma regra do navegador) |
+| `/noticias/<slug>`, `/eventos`, `/ebd/…` | Supabase com a chave publicável, só leitura (RLS); notícia da sede aponta o `canonical` para o original |
+| Demais rotas | `ROUTE_META` |
+
+O `ROUTE_META`, a lista da Palavra Diária e a lista de páginas que existem ficam em
+`js/compartilhado.js`, lido igual pelo navegador e pelo servidor. Se a função falhar ou demorar mais de
+2,5 s, ela devolve o `index.html` original (nunca uma página de erro). Cache curto na Vercel
+(`s-maxage=300, stale-while-revalidate`). Para testar sem a rewrite: `/api/pagina?caminho=/biblia/joao/3/16`.
+**Pendente:** a função só atende as páginas quando o `rewrites` do `vercel.json` apontar para ela
+(`"destination": "/api/pagina?caminho=/$1"`).
+
 ## Abertura (vinheta)
 
 O tipo de abertura é escolhido no `<head>` do `index.html`, antes da primeira pintura:

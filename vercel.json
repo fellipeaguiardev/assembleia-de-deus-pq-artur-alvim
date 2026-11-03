@@ -19,6 +19,10 @@
     },
     "api/noticias-sede.mjs": {
       "maxDuration": 30
+    },
+    "api/pagina.mjs": {
+      "maxDuration": 10,
+      "includeFiles": "{index.html,data/bible/blivre/*.json}"
     }
   },
   "crons": [

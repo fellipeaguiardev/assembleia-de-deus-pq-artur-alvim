@@ -31,6 +31,7 @@ const SHELL = [
   "/vendor/qrcode.js",
   "/js/intro.js",
   "/js/config.js",
+  "/js/compartilhado.js",
   "/js/core.js",
   "/js/site.js",
   "/js/podcast.js",
