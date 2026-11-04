@@ -29,6 +29,10 @@
     },
     "api/evento-da-imagem.mjs": {
       "maxDuration": 60
+    },
+    "api/imagem.mjs": {
+      "maxDuration": 15,
+      "includeFiles": "{api/_fontes/*.ttf,assets/img/brasao.svg,data/bible/blivre/*.json}"
     }
   },
   "crons": [

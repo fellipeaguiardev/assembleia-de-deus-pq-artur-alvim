@@ -66,8 +66,10 @@ lições, livros, vídeos, cores) é editado pela equipe num **painel administra
 
 ## Como é feito
 
-- **HTML, CSS e JavaScript puro**, sem framework e sem etapa de build. O `package.json` é só dos
-  testes (Playwright); o site publicado não usa npm.
+- **HTML, CSS e JavaScript puro**, sem framework e sem etapa de build. O `package.json` tem os
+  testes (Playwright, em `devDependencies`) e as três bibliotecas da imagem dos versículos
+  (`dependencies`: `satori`, `@resvg/resvg-js` e `jpeg-js`), que só as funções de `api/` usam: o
+  `publicar.sh` manda para a Vercel um `package.json` só com elas, e a Vercel instala sozinha.
 - **Supabase**: banco Postgres com regras de acesso (RLS) por tabela, login do painel, armazenamento
   de imagens e uma função que busca os vídeos do YouTube.
 - **Vercel**: hospedagem, funções do servidor (`api/`) e tarefa agendada diária.
@@ -157,7 +159,7 @@ o `og:description`, o `og:url` e o `canonical` (montados em `api/_lib/paginas.mj
 | Rota | De onde vem |
 | --- | --- |
 | `/biblia/<livro>/<capítulo>[/<versículos>]` | Referência no título e o texto do(s) versículo(s) na descrição, com o crédito da Bíblia Livre (arquivos de `data/bible/blivre`, sem banco) |
-| `/palavra`, `/palavra/<data>` | O versículo do dia (mesma lista e mesma regra do navegador) |
+| `/palavra`, `/palavra/<data>` | O versículo do dia (mesma lista e mesma regra do navegador), com a **imagem do versículo** na prévia |
 | `/noticias/<slug>`, `/eventos`, `/ebd/…` | Supabase com a chave publicável, só leitura (RLS); notícia da sede aponta o `canonical` para o original |
 | Demais rotas | `ROUTE_META` |
 
@@ -492,6 +494,29 @@ update private.admin_access
      sozinha.
 - **Pedidos de oração não ficam guardados no site:** `api/contato.mjs` só valida e manda o
   e-mail para a equipe (nada em banco ou em painel de formulários).
+
+## Imagem dos versículos
+
+Quem compartilha a **Palavra Diária** (`/palavra`) ou um **versículo da Bíblia**
+(`/biblia/<livro>/<capítulo>/<versículos>`) vê, na prévia do WhatsApp/Facebook, uma imagem com o
+texto do versículo, a referência, o brasão e o crédito da Bíblia Livre, em vez do banner padrão.
+No site, o botão **"Imagem"** (na Palavra Diária e na barra dos versículos selecionados) abre a
+mesma arte no formato de **status/stories** (1080×1920), com "Compartilhar" (manda o arquivo direto,
+no celular) e "Baixar".
+
+- **Quem desenha:** `api/imagem.mjs`, na hora, sem banco e sem serviço externo: `satori` monta a
+  arte, `@resvg/resvg-js` desenha e `jpeg-js` grava em JPEG (80 a 300 KB; o WhatsApp não mostra
+  prévia pesada). As fontes são cópias em TTF das do site (`api/_fontes/`).
+- **Fundo:** degradê de uma de 8 paletas (azul da igreja, amanhecer, esmeralda, mar, púrpura, pôr
+  do sol, terra, céu da noite), escolhida pelo versículo: o mesmo versículo sai sempre igual, e cada
+  dia muda. Para mudar cores ou textos, edite `PALETAS` e `desenho()` em `api/imagem.mjs` e suba
+  `IMAGEM_VERSAO` em `js/compartilhado.js` (senão a Vercel e o WhatsApp mostram a imagem antiga).
+- **Endereços:** `/api/imagem?palavra=AAAA-MM-DD` ou `/api/imagem?biblia=joao/3/16-17`, com
+  `&formato=story` para o vertical. Dia futuro ou referência inválida: 404. A resposta fica em cache
+  por muito tempo (o conteúdo de uma data ou referência não muda).
+- **WhatsApp guarda a prévia** de cada link por um tempo: um link compartilhado antes desta mudança
+  pode continuar mostrando o banner antigo; links novos já vêm com a imagem do versículo.
+- No computador (`npx serve`) o botão "Imagem" não aparece: lá não há as funções de `api/`.
 
 ## Eventos pelo cartaz (Gemini)
 

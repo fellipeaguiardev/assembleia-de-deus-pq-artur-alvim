@@ -8,7 +8,8 @@
 // canonical (com escape de HTML). O resto da página é o mesmo de sempre.
 //
 // - /biblia/<livro>/<capítulo>[/<versículos>] e /palavra: texto da Bíblia
-//   Livre (data/bible/blivre), sem banco.
+//   Livre (data/bible/blivre), sem banco. Com versículo (e na Palavra
+//   Diária), a og:image é a imagem do próprio versículo (api/imagem.mjs).
 // - /noticias/<slug>, /eventos e /ebd/…: Supabase com a chave publicável,
 //   só leitura (o RLS mostra só o que é público).
 // - Demais rotas: ROUTE_META de js/compartilhado.js (o mesmo do navegador).
@@ -24,7 +25,12 @@ const RAIZ = new URL("../../", import.meta.url);
 const TEMPO_BANCO_MS = 1500;
 
 export const escAttr = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-const limpa = (s) => String(s ?? "").replace(/[[\]]/g, "").replace(/\s+/g, " ").trim();
+const limpa = (s) =>
+  String(s ?? "")
+    .replace(/[[\]]/g, "")
+    .replace(/\s+/g, " ")
+    .replace(/\s+([,.;:!?])/g, "$1") // "interesses , não" (espaço que sobra no arquivo) → "interesses, não"
+    .trim();
 export const truncate = (s, n) => {
   const t = limpa(s);
   return t.length > n ? t.slice(0, n).trimEnd() + "…" : t;
@@ -61,6 +67,32 @@ function versiculos(spec, max) {
   return [...out];
 }
 
+// Imagem do versículo (api/imagem.mjs). A versão do desenho (js/compartilhado.js)
+// vai no endereço: mudou o desenho, o WhatsApp e a Vercel não reaproveitam a antiga.
+const imagemUrl = (q) => `${SITE_URL}/api/imagem?${q}&v=${S.IMAGEM_VERSAO}`;
+
+// { texto, referencia } de /biblia/<slug>/<cap>/<versículos>, ou null.
+export async function versiculoDaBiblia(slug, capStr, spec) {
+  const idx = await bibliaIndice();
+  const book = idx.books.find((b) => b.slug === slug);
+  const cap = Number(capStr);
+  if (!book || !cap || cap > book.chapters || !spec) return null;
+  const texto = (await bibliaLivro(book.code)).chapters[cap - 1] || [];
+  const vs = versiculos(spec, texto.length);
+  if (!vs.length) return null;
+  return { texto: limpa(vs.map((v) => texto[v - 1]).join(" ")), referencia: `${book.name} ${cap}:${spec}` };
+}
+
+// { texto, referencia, iso } da Palavra Diária do dia (nunca de um dia futuro).
+export async function versiculoDaPalavra(param) {
+  const hoje = S.spToday();
+  const iso = /^\d{4}-\d{2}-\d{2}$/.test(param || "") && param <= hoje ? param : hoje;
+  const r = await refPorNome(S.palavraRefFor(iso));
+  if (!r) return null;
+  const texto = (await bibliaLivro(r.book.code)).chapters[r.cap - 1] || [];
+  return { texto: limpa(versiculos(r.spec, texto.length).map((v) => texto[v - 1]).join(" ")), referencia: `${r.book.name} ${r.cap}:${r.spec}`, iso };
+}
+
 async function metaBiblia(param) {
   const [slug, capStr, spec] = String(param || "").split("/");
   if (!slug) return { title: S.ROUTE_META.biblia[0], description: S.ROUTE_META.biblia[1] };
@@ -75,7 +107,8 @@ async function metaBiblia(param) {
   const vs = versiculos(spec, texto.length);
   const corpo = vs.length ? vs.map((v) => texto[v - 1]).join(" ") : texto[0] || "";
   const ref = `${book.name} ${cap}${vs.length ? ":" + spec : ""}`;
-  return { title: ref, description: `${truncate(corpo, 220)} (${ref}, Bíblia Livre)` };
+  const imagem = vs.length ? { imagem: imagemUrl(`biblia=${encodeURIComponent(`${book.slug}/${cap}/${spec}`)}`), imagemAlt: `${ref}: ${truncate(corpo, 180)}` } : {};
+  return { title: ref, description: `${truncate(corpo, 220)} (${ref}, Bíblia Livre)`, ...imagem };
 }
 
 // "Salmos 23:1" → { book, cap, spec } usando os nomes do index.json
@@ -100,6 +133,8 @@ async function metaPalavra(param) {
     title: iso === hoje ? "Palavra Diária" : `Palavra de ${dataLonga}`,
     description: `${ref} — ${truncate(corpo, 180)} (Bíblia Livre)`,
     path: iso === hoje ? "/palavra" : `/palavra/${iso}`,
+    imagem: imagemUrl(`palavra=${iso}`),
+    imagemAlt: `Palavra Diária, ${ref}: ${truncate(corpo, 180)}`,
   };
 }
 
@@ -195,6 +230,12 @@ export function aplicarMeta(html, meta) {
     .replace(/<meta\s+property="og:description"\s+content="[^"]*"\s*\/?>/, `<meta property="og:description" content="${d}" />`)
     .replace(/<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/, `<meta property="og:url" content="${escAttr(url)}" />`);
   if (meta.noindex) out = out.replace(/<\/title>/, `</title>\n    <meta name="robots" content="noindex" />`);
+  // Imagem própria da página (versículo): troca a og:image padrão (o banner com o brasão)
+  if (meta.imagem)
+    out = out.replace(
+      /<meta\s+property="og:image"\s+content="[^"]*"\s*\/?>/,
+      `<meta property="og:image" content="${escAttr(meta.imagem)}" />\n    <meta property="og:image:type" content="image/jpeg" />\n    <meta property="og:image:alt" content="${escAttr(meta.imagemAlt || title)}" />`,
+    );
   return out;
 }
 

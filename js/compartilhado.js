@@ -10,6 +10,8 @@
      PALAVRA_REFS           lista da Palavra Diária (um versículo por dia)
      spToday()              data de hoje em Brasília (AAAA-MM-DD)
      palavraRefFor(iso)     versículo da Palavra Diária daquele dia
+     IMAGEM_VERSAO          versão do desenho das imagens de versículo
+                            (api/imagem.mjs): suba quando o desenho mudar
    Sem dependências e sem DOM: roda igual no navegador e no Node.
    ============================================================ */
 (function (g) {
@@ -70,5 +72,7 @@
     return PALAVRA_REFS[((day % PALAVRA_REFS.length) + PALAVRA_REFS.length) % PALAVRA_REFS.length];
   }
 
-  g.SITE_SHARED = Object.freeze({ SITE_NAME, HOME_TITLE, ROUTE_META, ROUTE_BASES, PALAVRA_REFS, spToday, palavraRefFor });
+  const IMAGEM_VERSAO = "1";
+
+  g.SITE_SHARED = Object.freeze({ SITE_NAME, HOME_TITLE, ROUTE_META, ROUTE_BASES, PALAVRA_REFS, spToday, palavraRefFor, IMAGEM_VERSAO });
 })(typeof globalThis !== "undefined" ? globalThis : this);

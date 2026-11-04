@@ -435,6 +435,7 @@ function renderBibleChapter(root, book, chapter, verses, verseSpec) {
           <button type="button" onclick="bibleSelectionAction('copy')">${icon("copy", 16)}<span>Copiar</span></button>
           <button type="button" onclick="bibleSelectionAction('share')">${icon("share", 16)}<span>Compartilhar</span></button>
           <button type="button" onclick="bibleSelectionAction('link')">${icon("link", 16)}<span>Link</span></button>
+          ${IS_LOCALHOST ? "" : `<button type="button" onclick="bibleSelectionAction('image')">${icon("image", 16)}<span>Imagem</span></button>`}
           <button type="button" onclick="openBibleVersions(true)" aria-label="Ler em outra versão">${icon("book", 16)}<span>Versões</span></button>
           <button type="button" onclick="clearVerseSelection()" aria-label="Limpar seleção">${icon("x", 16)}</button>
         </div>
@@ -510,6 +511,7 @@ async function bibleSelectionAction(kind) {
   const label = `${book.name} ${root.dataset.chapter}:${spec}`;
   const url = `${location.origin}/biblia/${book.slug}/${root.dataset.chapter}/${spec}`;
   const text = `${sel.map((s) => (sel.length > 1 ? `${s.n} ${s.text}` : s.text)).join(" ")}\n— ${label} (BLIVRE)`;
+  if (kind === "image") return abrirImagemVersiculo(`biblia=${encodeURIComponent(`${book.slug}/${root.dataset.chapter}/${spec}`)}`, label);
   try {
     if (kind === "copy") {
       await copyText(text);
@@ -688,6 +690,7 @@ async function initPalavraView(param) {
           <div class="palavra-actions">
             ${listenButtonHTML()}
             <button class="btn btn-ghost btn-sm" type="button" onclick="sharePalavra()">${icon("share", 15)} Compartilhar</button>
+            ${IS_LOCALHOST ? "" : `<button class="btn btn-ghost btn-sm" type="button" onclick="abrirImagemVersiculo('palavra=${iso}', ${esc(JSON.stringify(refLabel(p.ref)))})">${icon("image", 15)} Imagem</button>`}
             <a class="btn btn-ghost btn-sm" href="/biblia/${p.ref.book.slug}/${p.ref.chapter}">${icon("book", 15)} Ler o capítulo</a>
           </div>
         </div>
@@ -711,6 +714,55 @@ async function initPalavraView(param) {
   } catch (e) {
     console.error("Palavra Diária:", e);
     root.innerHTML = `<div class="container">${emptyState("book", "Não foi possível abrir a Palavra agora", navigator.onLine ? "Tente novamente em instantes." : "Você está sem internet.", `<button class="btn btn-primary btn-sm" type="button" onclick="initPalavraView(routeParam(currentRoute()))">Tentar de novo</button>`)}</div>`;
+  }
+}
+
+/* ---------- Imagem do versículo (status/stories) ----------
+   A imagem vem de /api/imagem (o mesmo desenho da prévia do WhatsApp, no
+   formato 1080×1920). Abre numa janela com a prévia; o arquivo é baixado
+   enquanto a pessoa olha, e "Compartilhar" já envia a imagem pronta (no
+   iPhone o compartilhamento precisa sair direto do toque). */
+let imagemVersiculo = null; // { file, url }
+
+function abrirImagemVersiculo(query, referencia) {
+  const url = `/api/imagem?${query}&formato=story&v=${SITE_SHARED.IMAGEM_VERSAO}`;
+  const nome = `${String(referencia).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w]+/g, "-").replace(/^-|-$/g, "").toLowerCase() || "versiculo"}.jpg`;
+  imagemVersiculo = { file: null, url, nome };
+  const podeCompartilhar = typeof navigator.canShare === "function";
+  openModal(
+    `<div class="modal-pad versiculo-imagem">
+      <span class="eyebrow">${icon("image", 14)} Imagem para status e stories</span>
+      <h3>${esc(referencia)}</h3>
+      <img src="${url}" alt="Imagem com o texto de ${esc(referencia)}" width="1080" height="1920" decoding="async" onerror="this.closest('.versiculo-imagem').classList.add('falhou')">
+      <p class="versiculo-imagem-erro">Não foi possível gerar a imagem agora. Tente de novo em instantes.</p>
+      <div class="modal-actions">
+        ${podeCompartilhar ? `<button class="btn btn-primary btn-sm" type="button" id="imgVersoShare" onclick="compartilharImagemVersiculo()" disabled>${icon("share", 15)} Compartilhar</button>` : ""}
+        <a class="btn ${podeCompartilhar ? "btn-ghost" : "btn-primary"} btn-sm" href="${url}" download="${esc(nome)}">${icon("down", 15)} Baixar</a>
+      </div>
+    </div>`,
+    { label: `Imagem de ${referencia}` },
+  );
+  if (!podeCompartilhar) return;
+  fetch(url)
+    .then((r) => (r.ok ? r.blob() : Promise.reject(new Error(`HTTP ${r.status}`))))
+    .then((blob) => {
+      if (imagemVersiculo?.url !== url) return;
+      const file = new File([blob], nome, { type: "image/jpeg" });
+      if (!navigator.canShare({ files: [file] })) return document.getElementById("imgVersoShare")?.remove();
+      imagemVersiculo.file = file;
+      const b = document.getElementById("imgVersoShare");
+      if (b) b.disabled = false;
+    })
+    .catch(() => document.getElementById("imgVersoShare")?.remove());
+}
+
+async function compartilharImagemVersiculo() {
+  const file = imagemVersiculo?.file;
+  if (!file) return;
+  try {
+    await navigator.share({ files: [file] });
+  } catch (e) {
+    if (e?.name !== "AbortError") showToast("Não deu para compartilhar: use “Baixar”.", "error");
   }
 }
 

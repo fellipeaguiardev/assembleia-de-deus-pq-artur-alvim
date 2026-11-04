@@ -35,6 +35,9 @@ mkdir -p "$DIST"
 cd "$SRC"
 cp index.html manifest.webmanifest sw.js robots.txt sitemap.xml vercel.json "$DIST/"
 cp -r css js vendor assets data api "$DIST/"
+# Dependências das funções de api/ (imagem dos versículos): só o "dependencies" do
+# package.json; o Playwright e o serve (testes) ficam fora. A Vercel instala sozinha.
+node -e 'const p = require("./package.json"); require("fs").writeFileSync(process.argv[1], JSON.stringify({ private: true, dependencies: p.dependencies || {} }, null, 2) + "\n")' "$DIST/package.json"
 # A configuração local (outro projeto do Supabase, só para o computador) nunca vai para o ar.
 rm -f "$DIST/js/config.local.json" "$DIST/js/config.local.example.json"
 sed -i "s|VERSION: \"dev\"|VERSION: \"$BUILD\"|" "$DIST/js/config.js"

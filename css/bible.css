@@ -615,3 +615,27 @@
 .bible-ps-letter:first-child {
   margin-top: 0.2em;
 }
+
+/* Imagem do versículo (abrirImagemVersiculo em js/bible.js) */
+.versiculo-imagem img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: min(58vh, 520px);
+  aspect-ratio: 9 / 16;
+  margin: 12px auto 16px;
+  border-radius: 14px;
+  object-fit: cover;
+  background: var(--c-tint);
+  box-shadow: 0 10px 30px -14px rgba(0, 0, 0, 0.45);
+}
+.versiculo-imagem-erro {
+  display: none;
+  color: #9a2a1d;
+}
+.versiculo-imagem.falhou img {
+  display: none;
+}
+.versiculo-imagem.falhou .versiculo-imagem-erro {
+  display: block;
+}
