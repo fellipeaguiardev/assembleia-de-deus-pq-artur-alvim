@@ -28,10 +28,11 @@
 -- (20261019_podcasts_admin.sql) foi rodada e, conferido em 03/11/2026, a
 -- produção ficou igual a este arquivo.
 --
--- Num banco criado por este arquivo, as migrations com data até
--- 20261019_sync_youtube_segredo.sql NÃO precisam ser rodadas: o que elas fazem
--- já está aqui. As criadas depois do baseline (a partir de
--- 20261019_noticias_sede.sql) precisam, em ordem.
+-- Esta pasta (supabase/migrations) tem só o que um banco novo precisa, na
+-- ordem: este arquivo e as migrations criadas depois dele (a partir de
+-- 20261019120000_noticias_sede.sql). O que veio antes do baseline está em
+-- supabase/historico/, só para consulta: já está todo aqui dentro.
+-- Pelo CLI: npx supabase@3 db push --remote=<ref> (README, "Mudanças no banco").
 -- ============================================================
 begin;
 

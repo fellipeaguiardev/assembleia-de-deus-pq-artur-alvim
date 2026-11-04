@@ -11,6 +11,8 @@
 //     é gerado na publicação.
 //  2b. Rotas: as páginas de ROUTE_BASES (js/compartilhado.js) e os "case"
 //     do roteador (pageHTML em js/site.js) são as mesmas.
+//  2c. Migrations: supabase/migrations/ só com nomes que o CLI do Supabase
+//     aceita (14 dígitos + _nome.sql, versões sem repetir) e o baseline primeiro.
 //  3. Segredos: chave secreta do Supabase (sb_secret_…), JWT com papel
 //     service_role, "service_role" com valor, blocos -----BEGIN … e
 //     arquivos .env no git.
@@ -116,6 +118,19 @@ const casos = new Set([...corpo.matchAll(/case\s+"([^"]+)"/g)].map((m) => m[1]))
 for (const b of bases) if (!casos.has(b)) falhar("rotas", `"${b}" está em ROUTE_BASES (js/compartilhado.js) mas não tem case em pageHTML (js/site.js)`);
 for (const c of casos) if (!bases.includes(c)) falhar("rotas", `pageHTML (js/site.js) tem case "${c}", que falta em ROUTE_BASES (js/compartilhado.js)`);
 console.log(`Rotas: ${bases.length} páginas na lista única, todas no roteador.`);
+
+// ---------- 2c) Migrations no formato do CLI do Supabase ----------
+const MIG = "supabase/migrations";
+const migs = readdirSync(join(RAIZ, MIG)).filter((f) => !f.startsWith(".")).sort();
+const versoes = new Set();
+for (const f of migs) {
+  const m = f.match(/^(\d{14})_[a-z0-9_]+\.sql$/);
+  if (!m) falhar("migrations", `${MIG}/${f}: nome fora do padrão do CLI (use: npx supabase@3 migration new <nome>)`);
+  else if (versoes.has(m[1])) falhar("migrations", `${MIG}/${f}: versão ${m[1]} repetida`);
+  else versoes.add(m[1]);
+}
+if (migs[0] !== "00000000000000_baseline.sql") falhar("migrations", `${MIG}: o primeiro arquivo precisa ser o 00000000000000_baseline.sql`);
+console.log(`Migrations: ${migs.length} arquivos no formato do CLI.`);
 
 // ---------- 3) Segredos ----------
 // Os padrões são montados em partes para este arquivo não acusar a si mesmo.

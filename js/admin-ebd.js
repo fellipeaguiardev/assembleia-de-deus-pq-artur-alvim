@@ -85,7 +85,7 @@ function ebdSetupHTML() {
     <p class="admin-note">Isso é feito uma vez só e não apaga nada:</p>
     <ol class="install-steps">
       <li>Abra o Supabase do site → <strong>SQL Editor</strong> → <strong>New query</strong>.</li>
-      <li>Cole o conteúdo do arquivo <code>supabase/migrations/20261010_ebd.sql</code> (está na pasta do projeto).</li>
+      <li>Cole o conteúdo do arquivo <code>supabase/historico/20261010_ebd.sql</code> (está na pasta do projeto).</li>
       <li>Clique em <strong>Run</strong> e volte aqui.</li>
     </ol>
     <button class="btn btn-primary btn-sm" type="button" onclick="try { sessionStorage.removeItem('ebd-off') } catch {} ebdAdmin.loaded=false; renderAdmin()">Já rodei, verificar</button>

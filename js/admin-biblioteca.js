@@ -176,7 +176,7 @@ function tabBiblioteca() {
       `<div class="admin-card">
         <h3>Falta um passo no banco de dados</h3>
         <p class="admin-note">Para ativar a biblioteca, abra o Supabase → <strong>SQL Editor</strong> → <strong>New query</strong>, cole o arquivo
-        <code>supabase/migrations/20261011_biblioteca.sql</code> inteiro e toque em <strong>Run</strong>. Depois volte aqui e toque em “Tentar de novo”.</p>
+        <code>supabase/historico/20261011_biblioteca.sql</code> inteiro e toque em <strong>Run</strong>. Depois volte aqui e toque em “Tentar de novo”.</p>
         <button class="btn btn-primary btn-sm" type="button" onclick="libAdmin.loaded=false;renderAdmin()">Tentar de novo</button>
       </div>`
     );

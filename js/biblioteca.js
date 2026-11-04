@@ -4,7 +4,7 @@
    Endereços:
      /biblioteca          acervo: busca, categorias, situação de cada livro
      /biblioteca/<id>     livro: sinopse, situação e pedido
-   Dados: tabelas library_* (supabase/migrations/20261011_biblioteca.sql).
+   Dados: tabelas library_* (supabase/historico/20261011_biblioteca.sql).
    O visitante recebe só o acervo e a SITUAÇÃO de cada livro (função
    library_status) — nomes e telefones de quem pegou ou pediu ficam no
    banco, visíveis só para a equipe no painel. Pedidos passam pela função

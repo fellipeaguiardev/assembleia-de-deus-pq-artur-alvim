@@ -49,7 +49,7 @@ export async function POST(req) {
     return json(200, result);
   } catch (e) {
     console.error("ebd-sincronizar:", e.message);
-    if (e.missing) return json(503, { error: "Falta rodar o arquivo supabase/migrations/20261010_ebd_sync.sql no Supabase." });
+    if (e.missing) return json(503, { error: "Falta rodar o arquivo supabase/historico/20261010_ebd_sync.sql no Supabase." });
     return json(502, { error: "Não foi possível ler o sumário agora. Tente mais tarde." });
   }
 }

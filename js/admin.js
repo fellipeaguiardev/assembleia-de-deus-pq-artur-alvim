@@ -58,7 +58,7 @@ function closeAdminPanel({ keepHash = false } = {}) {
    A senha certa não basta: cada login precisa ser liberado no e-mail
    "Liberar acesso / Não fui eu" (api/admin-acesso.mjs). Quem garante é
    o banco: toda regra de escrita usa is_site_admin(), que só vale para
-   a sessão liberada (supabase/migrations/20261014_admin_acesso.sql).
+   a sessão liberada (supabase/historico/20261014_admin_acesso.sql).
    Esta tela só acompanha o andamento. */
 const ADMIN_RECHECK_MS = 5 * 60 * 1000; // a liberação vence em 12 h; confere de vez em quando
 let adminCheckedAt = 0;

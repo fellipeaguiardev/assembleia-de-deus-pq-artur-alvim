@@ -1,5 +1,9 @@
 -- ============================================================
--- PENDENTE — agendamento da função sync-youtube com segredo
+-- FEITO NA PRODUÇÃO (conferido em 03/11/2026: o agendamento sync-youtube
+-- manda o x-cron-secret). Histórico: num banco novo, use o bloco 11 do
+-- baseline. Na CLI versão 3, troque --project-ref <ref> por --remote=<ref>.
+-- ------------------------------------------------------------
+-- Agendamento da função sync-youtube com segredo
 -- (substitui 20261010_youtube_sync_auth.sql, que nunca foi rodado)
 -- ------------------------------------------------------------
 -- A nova versão da função (supabase/functions/sync-youtube/index.ts) só

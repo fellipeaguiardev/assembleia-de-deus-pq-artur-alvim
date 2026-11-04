@@ -6,7 +6,7 @@
      /ebd/atual                    vai direto para a lição da semana
      /ebd/2026/4/adultos           lições do trimestre (revista Adultos)
      /ebd/2026/4/adultos/3         lição 3
-   Dados: tabelas ebd_quarters e ebd_lessons (supabase/migrations/
+   Dados: tabelas ebd_quarters e ebd_lessons (supabase/historico/
    20261010_ebd.sql). O visitante só recebe lições publicadas — a
    regra está no banco (RLS), não aqui.
    Conteúdo: referências bíblicas (texto da Bíblia Livre), textos da

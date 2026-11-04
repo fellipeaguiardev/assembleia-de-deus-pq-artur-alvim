@@ -81,8 +81,8 @@ O `.gitignore` deixa de fora tudo o que é segredo ou dado da igreja:
   `EBD_SYNC_TOKEN`, `CRON_SECRET`, `ADMIN_ACCESS_TOKEN`, `LIB_SHEET_ID`, `LIB_SYNC_TOKEN`,
   `LIB_TRIGGER_KEY`, `NEWS_SYNC_TOKEN`). A única chave no código é a **publicável** do Supabase, que é
   pública por natureza (veja "Segurança").
-- **Cópias de segurança do banco** (`supabase/backups/`) e os ids do projeto na Vercel (`.vercel/`,
-  `scripts/vercel-projeto.json`).
+- **Cópias de segurança do banco** (`supabase/backups/`), o projeto ligado ao CLI do Supabase
+  (`supabase/.temp/`) e os ids do projeto na Vercel (`.vercel/`, `scripts/vercel-projeto.json`).
 - Nomes e telefones da biblioteca e os pedidos de oração nunca ficam em arquivos: estão no banco,
   protegidos por RLS, ou vão direto por e-mail.
 
@@ -129,8 +129,9 @@ js/
   admin-biblioteca.js  aba Biblioteca do painel (empréstimos, fila, acervo)
   admin-podcast.js  importação dos episódios do Spotify (feed RSS) na aba Podcast
   main.js     inicialização
-supabase/     SQL do banco (NÃO é publicado no site): migrations/00000000000000_baseline.sql é a
-              estrutura completa; os outros arquivos de migrations/ são o histórico
+supabase/     SQL do banco (NÃO é publicado no site): migrations/ tem o baseline (estrutura
+              completa) e o que veio depois dele; historico/ guarda os SQL de antes do
+              baseline; config.toml é do CLI do Supabase (veja "Mudanças no banco")
 docs/telas/   imagens usadas neste README
 ```
 
@@ -192,7 +193,7 @@ O CNPJ só aparece se for válido.
 
 Endereços: `/ebd` (lição da semana e trimestres), `/ebd/atual`, `/ebd/2026/4/adultos` e
 `/ebd/2026/4/adultos/3`. **Para ativar**, rode uma vez no Supabase (SQL Editor) o arquivo
-`supabase/migrations/20261010_ebd.sql` — cria as tabelas `ebd_quarters` e `ebd_lessons` com RLS:
+`supabase/historico/20261010_ebd.sql` — cria as tabelas `ebd_quarters` e `ebd_lessons` com RLS:
 o visitante só lê lições publicadas; só admin (com a entrada liberada) grava.
 
 Como usar (Painel → EBD):
@@ -219,7 +220,7 @@ escreveu (só preenche campos vazios). O botão **Sincronizar agora** (Painel �
 sozinho** ligado, cada lição com texto áureo entra no ar na segunda-feira da semana dela.
 
 O leitor da página de origem fica em `api/_lib/fonte.mjs` — se o layout de lá mudar, é ali que se
-ajusta. Precisa do SQL `supabase/migrations/20261010_ebd_sync.sql` e da variável `EBD_SYNC_TOKEN` no
+ajusta. Precisa do SQL `supabase/historico/20261010_ebd_sync.sql` e da variável `EBD_SYNC_TOKEN` no
 Vercel (a chave do servidor; no banco fica só o hash dela). Educado com a origem: identifica-se no
 User-Agent, uma requisição por vez, e só baixa a página de uma lição quando faltam dados dela.
 
@@ -239,7 +240,7 @@ notícias institucionais.
   curto e o link "Ler a notícia completa no site da sede"; o texto completo e as fotos ficam lá. A
   página da notícia aponta o `canonical` para o original. Para usar as fotos, peça autorização à
   comunicação da sede.
-- **Banco**: `supabase/migrations/20261019_noticias_sede.sql` (colunas `source_id`, `source_url`,
+- **Banco**: `supabase/migrations/20261019120000_noticias_sede.sql` (colunas `source_id`, `source_url`,
   `source_name` e `dismissed` em `news`, e a função `news_sede_apply`, protegida pela chave do
   servidor). **Variável na Vercel**: `NEWS_SYNC_TOKEN` (no banco fica só o SHA-256).
 
@@ -296,7 +297,7 @@ reproduzidas: cada hino tem "Ouvir" (busca no YouTube) e "Ver a letra" (site ext
 com previsão de volta, reservado); página de cada livro com sinopse e o pedido "Quero este livro"
 ou "Entrar na fila de espera" (nome + WhatsApp, com consentimento).
 
-- **Banco**: `supabase/migrations/20261011_biblioteca.sql` (rodar uma vez no SQL Editor). O
+- **Banco**: `supabase/historico/20261011_biblioteca.sql` (rodar uma vez no SQL Editor). O
   visitante lê só o acervo (sem o dono do exemplar nem observações) e a situação pela função
   `library_status()`; nomes e telefones de quem pegou ou pediu ficam só para o admin (RLS).
   Pedidos passam por `library_request()`, que valida, evita repetição e limita abusos.
@@ -309,7 +310,7 @@ ou "Entrar na fila de espera" (nome + WhatsApp, com consentimento).
   planilha ganha capa da internet só quando título e autor batem (Open Library; Google Books se houver
   `GOOGLE_BOOKS_KEY`). Só adiciona: não apaga nem muda o que foi editado no painel; cada livro guarda
   de qual linha veio (`sheet_key`), então corrigir o título no painel não duplica. Livro apagado no
-  painel volta se ainda estiver na planilha. Banco: `supabase/migrations/20261015_biblioteca_planilha.sql`.
+  painel volta se ainda estiver na planilha. Banco: `supabase/historico/20261015_biblioteca_planilha.sql`.
   Variáveis na Vercel: `LIB_SHEET_ID`, `LIB_SYNC_TOKEN`, `LIB_TRIGGER_KEY` (e `CRON_SECRET`).
 - **Capas leves**: todas as capas passam pelo redutor de imagens da Vercel (`imgThumb`, ~6 KB na
   lista em vez de ~30 KB), com `srcset` para telas comuns e de alta resolução.
@@ -335,7 +336,7 @@ ou "Entrar na fila de espera" (nome + WhatsApp, com consentimento).
 
 ### Entrada no painel: senha + liberação por e-mail
 
-Desde `supabase/migrations/20261014_admin_acesso.sql`, a senha certa não basta:
+Desde `supabase/historico/20261014_admin_acesso.sql`, a senha certa não basta:
 
 1. A pessoa entra em `/admin` com **e-mail e senha** (o e-mail não fica mais no código).
 2. O painel chama `api/admin-acesso.mjs`, que confere o login e manda um e-mail
@@ -383,7 +384,7 @@ select u.email, a.created_at
 
 **Podcasts**: até 19/10/2026 a tabela `podcasts` gravava pela conta de um e-mail fixo, sem a
 liberação por e-mail (políticas criadas pelo painel do Supabase). A correção
-(`supabase/migrations/20261019_podcasts_admin.sql`) já foi rodada: conferido em 03/11/2026, a tabela
+(`supabase/historico/20261019_podcasts_admin.sql`) já foi rodada: conferido em 03/11/2026, a tabela
 tem só "Public can read published podcasts" e "Site admin gerencia" (`is_site_admin()`), e nenhuma
 regra do banco usa e-mail. Para conferir de novo, só leitura, no SQL Editor:
 
@@ -427,8 +428,9 @@ update private.admin_access
   `x-cron-secret` igual ao segredo `CRON_SECRET` **do Supabase** (Edge Functions → Secrets; não é o
   mesmo `CRON_SECRET` da Vercel), ou um admin com a entrada liberada — quem responde é o banco,
   por `public.is_admin()` chamada com o login da pessoa. Qualquer outra chamada recebe 401. Para
-  ligar: passo a passo em `supabase/migrations/20261019_sync_youtube_segredo.sql` (gerar o segredo,
-  `npx supabase secrets set`, rodar o SQL, `npx supabase functions deploy … --use-api`, nessa ordem).
+  ligar: passo a passo em `supabase/historico/20261019_sync_youtube_segredo.sql` (gerar o segredo,
+  `npx supabase@3 secrets set`, rodar o SQL, `npx supabase@3 functions deploy … --use-api`, nessa
+  ordem). Na produção, já ligado: conferido em 03/11/2026, o agendamento manda o `x-cron-secret`.
 
 ## Acessibilidade
 
@@ -458,7 +460,7 @@ update private.admin_access
   (aviso de cookies; dá para mudar depois em “Preferências de cookies”, no rodapé).
 - A política fica em `/privacidade`. Preencha em **Painel → Igreja & redes** o
   “E-mail para assuntos de privacidade”, que aparece na política.
-- **Prazos de guarda automáticos:** `supabase/migrations/20261014_lgpd_limpeza.sql` agenda no pg_cron uma
+- **Prazos de guarda automáticos:** `supabase/historico/20261014_lgpd_limpeza.sql` agenda no pg_cron uma
   limpeza diária (pedidos de livros encerrados há 6 meses; registros de entrada no painel com mais de 30 dias).
   Rode no *SQL Editor* do Supabase; sem ele a limpeza só acontece quando o painel é aberto.
 - **Pedidos de oração não ficam guardados no site:** `api/contato.mjs` só valida e manda o
@@ -499,10 +501,10 @@ ficou **idêntico à produção** em colunas, restrições, índices, funções,
 permissões. A única diferença é proposital: as regras de `podcasts`, que já vêm corrigidas (veja
 `20261019_podcasts_admin.sql`).
 
-Os arquivos com data até `20261019_sync_youtube_segredo.sql` são o histórico de como o banco chegou
-ao baseline; num banco novo, eles não precisam ser rodados. Os criados **depois** do baseline,
-sim, em ordem (a partir de `20261019_noticias_sede.sql`). O histórico de migrations do próprio Supabase (*Database →
-Migrations*) não reflete este repositório: ele só registra duas mudanças antigas feitas pelo painel.
+`supabase/migrations/` tem só o que um banco novo precisa, na ordem: o baseline e as migrations
+criadas depois dele (a partir de `20261019120000_noticias_sede.sql`). Os SQL de antes do baseline
+(rodados à mão no SQL Editor de 02/10 a 19/10/2026) estão em `supabase/historico/`, só para
+consulta: num banco novo, eles não precisam ser rodados.
 
 Passo a passo (ex.: um projeto de teste):
 
@@ -511,14 +513,20 @@ Passo a passo (ex.: um projeto de teste):
 2. **SQL Editor**: cole o `00000000000000_baseline.sql` inteiro e clique em **Run**. Ele roda numa
    transação só; se der erro, nada fica pela metade. Os blocos 10 (chaves do servidor) e 11
    (agendamento do YouTube) só avisam enquanto os `<...>` não forem trocados; dá para rodá-los
-   depois, só aquele trecho.
+   depois, só aquele trecho. Depois, o resto pelo CLI (veja "Mudanças no banco"): marque o
+   baseline como aplicado e rode as migrations seguintes.
+
+   ```bash
+   npx supabase@3 migration repair --status applied 00000000000000 --remote=<ref>
+   npx supabase@3 db push --remote=<ref>
+   ```
 3. **Authentication → Sign In / Providers**: desligue *Allow new users to sign up*.
    **Authentication → URL Configuration**: *Site URL* e *Redirect URLs* do endereço do site.
 4. **Admins**: crie as contas em *Authentication → Users* e coloque-as em `public.admins` (veja
    "Adicionar ou remover um admin").
-5. **YouTube**: `npx supabase secrets set CRON_SECRET=<segredo> --project-ref <ref>` e
-   `npx supabase functions deploy sync-youtube --project-ref <ref> --use-api` (antes, uma vez:
-   `npx supabase login`); depois rode o bloco 11 do baseline com a URL do projeto, a chave anon e
+5. **YouTube**: `npx supabase@3 secrets set CRON_SECRET=<segredo> --remote=<ref>` e
+   `npx supabase@3 functions deploy sync-youtube --remote=<ref> --use-api` (antes, uma vez:
+   `npx supabase@3 login`); depois rode o bloco 11 do baseline com a URL do projeto, a chave anon e
    o segredo.
 6. **Apontar o site**: localmente, pelo `js/config.local.json` (veja "Rodar localmente"). As funções
    de `api/` leem as variáveis de ambiente `SUPABASE_URL` e `SUPABASE_KEY` (sem elas, a produção;
@@ -527,6 +535,97 @@ Passo a passo (ex.: um projeto de teste):
 Não entram no baseline (refaça à mão num projeto novo): dados, contas, arquivos do Storage,
 segredos e as configurações do painel do Supabase dos passos 3 e 5. **Nunca rode o baseline no
 projeto de produção**: o primeiro comando (`create schema private`) falha lá e nada é aplicado.
+
+## Mudanças no banco (migrations)
+
+Toda mudança de estrutura (tabela, coluna, função, regra RLS, agendamento) vira um arquivo em
+`supabase/migrations/` e entra no banco pelo CLI do Supabase. Assim o repositório e o histórico do
+Supabase (*Database → Migrations*) contam a mesma história, e um banco novo sai igual à produção.
+
+**Use a versão 3 do CLI** (`npx supabase@3 …`, baixa na hora; uma vez: `npx supabase@3 login`).
+Nela, `db push`, `migration list` e `migration repair` vão no banco **local** quando ninguém diz
+outro; o remoto só com `--remote=<ref>`. Na versão 2 o padrão era o projeto ligado, e neste
+computador o projeto ligado é a **produção** (`supabase/.temp/`). Já `secrets` e
+`functions deploy` usam o projeto ligado mesmo na versão 3: passe sempre `--remote=<ref>`. O CLI
+pede a senha do banco (*Settings → Database*); dá para passar com `--password` ou com a variável
+`SUPABASE_DB_PASSWORD`.
+
+`supabase/config.toml` é do CLI e do banco local (`npx supabase@3 start`, precisa do Docker). Nada
+dele vai para a produção sozinho. Não rode `supabase config push`.
+
+**Fluxo de uma mudança**
+
+1. Crie o arquivo (o nome ganha data e hora):
+
+   ```bash
+   npx supabase@3 migration new nome_curto
+   ```
+
+   Escreva o SQL em `supabase/migrations/<data-hora>_nome_curto.sql`. Prefira o que pode rodar de
+   novo sem estrago (`if not exists`, `create or replace`, `drop policy if exists` antes do
+   `create policy`).
+2. Teste num projeto de teste (crie com "Recriar o banco do zero"):
+
+   ```bash
+   npx supabase@3 db push --remote=<ref-do-teste> --dry-run   # mostra o que vai rodar
+   npx supabase@3 db push --remote=<ref-do-teste>
+   ```
+
+   Abra o site no computador apontando para ele (`js/config.local.json`, veja "Rodar localmente") e
+   confira o que mudou, inclusive o painel.
+3. Produção, depois de testado:
+
+   ```bash
+   npx supabase@3 migration list --remote=rtludbkopxbhiwlwycid            # o que falta
+   npx supabase@3 db push --remote=rtludbkopxbhiwlwycid --dry-run         # só o arquivo novo?
+   npx supabase@3 db push --remote=rtludbkopxbhiwlwycid
+   npx supabase@3 migration list --remote=rtludbkopxbhiwlwycid            # local e remoto iguais
+   ```
+4. Commit do arquivo e `git push`. O `node scripts/verificar.mjs` (e o GitHub Actions) recusa nome
+   fora do padrão do CLI ou versão repetida em `supabase/migrations/`.
+
+Evite mexer na estrutura direto no SQL Editor da produção: o que entra por fora não fica no
+histórico, e o próximo `db push` não sabe dele. Se precisar (emergência), guarde o mesmo SQL numa
+migration nova e marque-a como aplicada, sem rodar de novo:
+`npx supabase@3 migration repair --status applied <versão> --remote=rtludbkopxbhiwlwycid`.
+
+### Alinhar a produção ao baseline (uma vez só; você roda)
+
+Hoje o histórico da produção não conhece nenhum arquivo daqui. Ele tem só duas entradas antigas,
+de mudanças feitas pelo painel do Supabase em 03/10/2026:
+
+| Versão | Nome |
+| --- | --- |
+| `20261003005750` | `youtube_sync` |
+| `20261003024901` | `is_site_admin_dois_emails` |
+
+O banco em si **já está igual** ao baseline mais `20261019120000_noticias_sede.sql` (conferido em
+03/11/2026: as colunas e a função das notícias da sede existem, as regras de podcasts são as do
+baseline e o agendamento do YouTube usa o segredo). Falta só a lista. Os comandos abaixo mexem
+**só nessa lista** (a tabela `supabase_migrations.schema_migrations`): não rodam o SQL dos
+arquivos e não mudam tabela, dado nem permissão.
+
+```bash
+npx supabase@3 login
+npx supabase@3 migration list --remote=rtludbkopxbhiwlwycid
+#   antes: 20261003005750 e 20261003024901 só no remoto; 00000000000000 e 20261019120000 só no local
+
+# tira da lista as duas entradas antigas (o que elas fizeram está no baseline)
+npx supabase@3 migration repair --status reverted 20261003005750 20261003024901 --remote=rtludbkopxbhiwlwycid
+
+# marca como aplicados o baseline e as notícias da sede (já estão no banco)
+npx supabase@3 migration repair --status applied 00000000000000 20261019120000 --remote=rtludbkopxbhiwlwycid
+
+npx supabase@3 migration list --remote=rtludbkopxbhiwlwycid
+#   depois: 00000000000000 e 20261019120000 nas duas colunas, nada sobrando
+npx supabase@3 db push --remote=rtludbkopxbhiwlwycid --dry-run
+#   precisa dizer que não há nada para aplicar
+```
+
+Se o `migration list` de antes mostrar outra coisa, ou se o `db push --dry-run` do fim quiser
+aplicar algum arquivo, pare e não rode `db push`: o baseline rodado na produção falharia logo no
+primeiro comando (`create schema private`) e nada seria aplicado, mas é sinal de que a lista não
+ficou certa.
 
 ## Rodar localmente
 
@@ -599,6 +698,9 @@ A cada push, o GitHub Actions (`.github/workflows/check.yml`) roda `scripts/veri
 - confere se todo arquivo citado no `index.html`, na lista do `sw.js` e no `manifest.webmanifest`
   existe, e também os `/js/…` e `/css/…` escritos no próprio JS (ex.: o painel, carregado sob
   demanda); o `version.json` fica de fora: é gerado na publicação;
+- confere se a lista de páginas de `js/compartilhado.js` bate com o roteador de `js/site.js`;
+- confere os nomes em `supabase/migrations/` (formato do CLI, sem versão repetida, baseline
+  primeiro);
 - procura segredos nos arquivos do git: chave secreta do Supabase (`sb_secret_…`), JWT com papel
   `service_role`, `service_role` com valor, blocos `-----BEGIN …` e arquivos `.env`.
 

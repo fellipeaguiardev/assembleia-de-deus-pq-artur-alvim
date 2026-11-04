@@ -16,7 +16,7 @@
 //
 // Variáveis na Vercel: LIB_SHEET_ID (id da planilha — não fica no código,
 // ela tem nomes), LIB_SYNC_TOKEN, LIB_TRIGGER_KEY, CRON_SECRET e, opcional,
-// GOOGLE_BOOKS_KEY. No banco: supabase/migrations/20261015_biblioteca_planilha.sql.
+// GOOGLE_BOOKS_KEY. No banco: supabase/historico/20261015_biblioteca_planilha.sql.
 // ============================================================
 import { timingSafeEqual } from "node:crypto";
 import { rpc } from "./_lib/fonte.mjs";
@@ -56,7 +56,7 @@ export async function runLibrarySync() {
     });
   } catch (e) {
     console.error("biblioteca-sync: banco", e.message);
-    if (e.missing) return { ok: false, status: 503, error: "Falta rodar supabase/migrations/20261015_biblioteca_planilha.sql no Supabase." };
+    if (e.missing) return { ok: false, status: 503, error: "Falta rodar supabase/historico/20261015_biblioteca_planilha.sql no Supabase." };
     return { ok: false, status: 502, error: "O banco recusou a sincronização." };
   }
   if (!res?.ok) return { ok: false, status: 429, error: "A planilha acabou de ser conferida. Tente de novo daqui a 30 segundos." };

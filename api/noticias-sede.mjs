@@ -12,7 +12,7 @@
 // decide no painel (Notícias → Sugestões da sede); a descartada não volta.
 //
 // Variáveis na Vercel: NEWS_SYNC_TOKEN e CRON_SECRET.
-// No banco: supabase/migrations/20261019_noticias_sede.sql.
+// No banco: supabase/migrations/20261019120000_noticias_sede.sql.
 // ============================================================
 import { timingSafeEqual } from "node:crypto";
 import { rpc } from "./_lib/fonte.mjs";
@@ -41,7 +41,7 @@ export async function runNewsSync() {
   try {
     r = await rpc("news_sede_apply", { p_key: key, p_rows: escolhidas });
   } catch (e) {
-    if (e.missing) return { ok: false, status: 503, error: "Falta rodar supabase/migrations/20261019_noticias_sede.sql no Supabase." };
+    if (e.missing) return { ok: false, status: 503, error: "Falta rodar supabase/migrations/20261019120000_noticias_sede.sql no Supabase." };
     console.error("news_sede_apply:", e);
     return { ok: false, status: 500, error: "Não deu para guardar as sugestões." };
   }
