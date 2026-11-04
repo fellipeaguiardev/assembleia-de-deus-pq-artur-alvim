@@ -161,6 +161,67 @@
     display: flex;
   }
 }
+/* ---------- Ao vivo agora (js/site.js, conferirAoVivo) ----------
+   Enquanto a igreja transmite, o botão do topo fica vermelho com um ponto
+   branco e um anel que pulsa devagar (1,6 s por ciclo, longe do limite de 3
+   piscadas por segundo). Com "reduzir movimento" no aparelho, fica vermelho
+   e parado. Branco sobre #c8102e: contraste 5,9:1. */
+.btn-live.is-live,
+.eyebrow-live {
+  --c-live: #c8102e;
+}
+.btn-live.is-live {
+  background: var(--c-live);
+  color: #fff;
+  animation: live-pulse 1.6s ease-out infinite;
+}
+.aovivo-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: currentColor;
+  animation: live-blink 1.6s ease-in-out infinite;
+}
+.eyebrow-live {
+  color: var(--c-live);
+}
+.eyebrow-live .aovivo-dot {
+  width: 8px;
+  height: 8px;
+  margin-right: 2px;
+}
+@keyframes live-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--c-live) 60%, transparent);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 11px color-mix(in srgb, var(--c-live) 0%, transparent);
+  }
+}
+@keyframes live-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+@media (hover: hover) and (pointer: fine) {
+  .btn-live.is-live:hover {
+    background: color-mix(in srgb, var(--c-live) 86%, #000);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn-live.is-live,
+  .aovivo-dot {
+    animation: none;
+  }
+}
+
 @media (max-width: 420px) {
   .brand {
     font-size: 17px;
@@ -180,6 +241,19 @@
   .header-cta .btn-accent {
     width: 44px;
     padding: 0;
+  }
+  /* ao vivo: o texto aparece também no celular */
+  .header-cta .btn-live.is-live {
+    width: auto;
+    padding: 0 14px;
+  }
+  .header-cta .btn-live.is-live span {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
   }
 }
 

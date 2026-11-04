@@ -23,6 +23,9 @@
     "api/pagina.mjs": {
       "maxDuration": 10,
       "includeFiles": "{index.html,data/bible/blivre/*.json}"
+    },
+    "api/ao-vivo.mjs": {
+      "maxDuration": 10
     }
   },
   "crons": [

@@ -453,7 +453,7 @@ update private.admin_access
   (rodapé, cartões azul-marinho, tema escuro da Bíblia) a variável `--focus-ring` deixa o contorno
   branco. Campos sem contorno próprio mostram o anel no contêiner (`:focus-within`).
 - **Toque e nomes**: botão "Ao vivo" com nome acessível ("Assistir ao vivo"; no celular o texto fica
-  só para o leitor de tela); links "Saiba mais" com área de toque de ~44 px sem mudar o visual;
+  só para o leitor de tela, e aparece na tela quando a transmissão está no ar); links "Saiba mais" com área de toque de ~44 px sem mudar o visual;
   títulos da página inicial sem pular nível (H1 → H2); o app não trava a orientação (tablets podem
   ficar na horizontal).
 - Link "Pular para o conteúdo", janelas que prendem o foco e "reduzir movimento" respeitado.
@@ -493,11 +493,36 @@ update private.admin_access
 - **Pedidos de oração não ficam guardados no site:** `api/contato.mjs` só valida e manda o
   e-mail para a equipe (nada em banco ou em painel de formulários).
 
+## Ao vivo agora
+
+Enquanto a igreja transmite no YouTube, o botão **"Ao vivo"** do topo fica **vermelho e pulsando**,
+em todas as páginas, para quem chega no site sem saber que o culto está no ar. No celular, onde o
+botão normal é só o ícone, aparece também o texto "Ao vivo". Tocando nele, abre o vídeo da
+transmissão dentro do site.
+
+- **Como o site sabe:** a função `api/ao-vivo.mjs` abre a página `/live` do canal (o mesmo
+  `church.liveChannelId` da aba *Igreja & redes*) e lê se o vídeo de lá está no ar
+  (`api/_lib/aovivo.mjs`, sem chave de API). Transmissão **agendada**, que já **terminou** ou de
+  **outro canal** não acende. Na dúvida (YouTube fora do ar, página diferente), o botão fica normal.
+- **Quanto consulta:** o site pergunta ao abrir e a cada 2 min, só com a aba visível. A resposta
+  fica 1 min no cache da Vercel, então o YouTube é consultado no máximo 1 vez por minuto, não
+  importa quantas pessoas estejam no site.
+- **Acessibilidade:** o pulso é lento (1,6 s, longe do limite de 3 piscadas por segundo); com
+  "reduzir movimento" no aparelho, o botão fica vermelho e parado. O leitor de tela ouve "Ao vivo
+  agora: <título>" no botão e, se a transmissão começar com a pessoa no site, "A transmissão ao
+  vivo começou". Branco sobre o vermelho `#c8102e`: contraste 5,9:1.
+- **No computador** (`npx serve`) não consulta: lá não há as funções de `api/`.
+- **Se um dia parar de acender:** o YouTube pode mudar a página. Confira
+  `https://assembleia-de-deus-pq-artur-alvim.vercel.app/api/ao-vivo` durante uma transmissão (deve
+  dizer `"aoVivo":true`). A saída mais firme, se precisar, é a API oficial do YouTube (chave
+  gratuita no Google Cloud, consulta `videos.list` dos vídeos do feed).
+
 ## Automações
 
 | O quê | Como funciona |
 | --- | --- |
 | Lives e vídeos do YouTube | O Supabase lê o canal a cada 10 min e adiciona os vídeos novos |
+| Botão "Ao vivo" vermelho | Enquanto a igreja transmite, o botão do topo fica vermelho e pulsando (veja "Ao vivo agora") |
 | Próximo culto na home | Calculado sozinho a partir dos horários cadastrados |
 | Avisos e eventos | Somem sozinhos depois da data final |
 | Notícias e podcast agendados | Publique com data futura: aparecem sozinhos no dia |

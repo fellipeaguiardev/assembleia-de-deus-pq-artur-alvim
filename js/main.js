@@ -43,6 +43,7 @@ INTRO.done.then(() => !siteReady && document.documentElement.classList.add("intr
     if (route === "admin") openAdminRoute();
     else afterRoute(route);
     injectStructuredData();
+    iniciarAoVivo(); // botão "Ao vivo" vermelho enquanto a igreja transmite (js/site.js)
   } catch (e) {
     console.error("Erro ao iniciar o site:", e);
   } finally {

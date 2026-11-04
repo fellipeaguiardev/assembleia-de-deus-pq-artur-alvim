@@ -390,7 +390,7 @@ function headerHTML(route) {
       </nav>
       <div class="header-cta">
         <a class="btn btn-ghost btn-sm hide-md" href="${href(c.mapsUrl)}" target="_blank" rel="noopener">Como chegar</a>
-        <button class="btn btn-accent btn-sm" type="button" onclick="openLive()" aria-label="Assistir ao vivo">${icon("live", 16)}<span>Ao vivo</span></button>
+        ${liveButtonHTML()}
         <button class="hamburger" type="button" onclick="toggleMobileMenu(true)" aria-label="Abrir menu" aria-controls="mobileMenu" aria-expanded="false"><span></span><span></span><span></span></button>
       </div>
     </div>
@@ -1807,22 +1807,78 @@ function openScheduledModal(v) {
   );
 }
 
+/* ---------- Ao vivo agora ----------
+   O site pergunta a /api/ao-vivo (que olha o YouTube) se a igreja está
+   transmitindo. Enquanto estiver, o botão "Ao vivo" do topo fica vermelho e
+   pulsando, em todas as páginas. Confere ao abrir o site e a cada 2 min com a
+   aba visível (a resposta fica 1 min no cache da Vercel). No computador
+   (localhost) não confere: o npx serve não tem as funções de api/. */
+const AO_VIVO = { aoVivo: false, videoId: "", titulo: "", conferidoEm: 0 };
+const AO_VIVO_INTERVALO = 120000;
+let aoVivoTimer = null;
+
+const canalAoVivo = () => {
+  const c = String(data.church?.liveChannelId || "").trim();
+  return /^UC[\w-]{20,}$/.test(c) ? c : "";
+};
+
+function liveButtonHTML() {
+  const vivo = AO_VIVO.aoVivo;
+  const rotulo = vivo ? `Ao vivo agora${AO_VIVO.titulo ? ": " + AO_VIVO.titulo : ""}. Assistir` : "Assistir ao vivo";
+  return `<button class="btn btn-accent btn-sm btn-live${vivo ? " is-live" : ""}" type="button" data-live-btn onclick="openLive()" aria-label="${esc(rotulo)}">${vivo ? '<i class="aovivo-dot" aria-hidden="true"></i>' : icon("live", 16)}<span>Ao vivo</span></button>`;
+}
+
+async function conferirAoVivo() {
+  if (IS_LOCALHOST || document.hidden || !canalAoVivo()) return;
+  let s;
+  try {
+    const res = await fetch("/api/ao-vivo", { cache: "no-store" });
+    if (!res.ok) return;
+    s = await res.json();
+  } catch {
+    return; // sem internet ou função fora do ar: fica como está
+  }
+  const antes = AO_VIVO.aoVivo;
+  const primeira = !AO_VIVO.conferidoEm;
+  AO_VIVO.aoVivo = s?.aoVivo === true && /^[\w-]{11}$/.test(String(s.videoId || ""));
+  AO_VIVO.videoId = AO_VIVO.aoVivo ? s.videoId : "";
+  AO_VIVO.titulo = AO_VIVO.aoVivo ? String(s.titulo || "") : "";
+  AO_VIVO.conferidoEm = Date.now();
+  document.querySelectorAll("[data-live-btn]").forEach((b) => (b.outerHTML = liveButtonHTML()));
+  // Começou com a pessoa no site: avisa também o leitor de tela (uma vez).
+  if (!primeira && !antes && AO_VIVO.aoVivo) announce("A transmissão ao vivo começou");
+}
+
+function iniciarAoVivo() {
+  if (aoVivoTimer || IS_LOCALHOST || !canalAoVivo()) return;
+  conferirAoVivo();
+  aoVivoTimer = setInterval(conferirAoVivo, AO_VIVO_INTERVALO);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && Date.now() - AO_VIVO.conferidoEm > AO_VIVO_INTERVALO / 2) conferirAoVivo();
+  });
+}
+
 function openLive() {
   const c = data.church;
-  const channel = String(c.liveChannelId || "").trim();
-  if (!/^UC[\w-]{20,}$/.test(channel)) {
+  const channel = canalAoVivo();
+  if (!channel) {
     if (currentRoute() !== "videos") navigateTo("/videos");
     return;
   }
+  // No ar: abre o próprio vídeo da transmissão; senão, o player "ao vivo" do canal.
+  const vivo = AO_VIVO.aoVivo && AO_VIVO.videoId;
+  const src = vivo
+    ? `https://www.youtube-nocookie.com/embed/${encodeURIComponent(AO_VIVO.videoId)}?autoplay=1`
+    : `https://www.youtube-nocookie.com/embed/live_stream?channel=${encodeURIComponent(channel)}&autoplay=1`;
   openModal(
     `
     <div class="modal-video-frame">
-      ${embedGate("youtube", `https://www.youtube-nocookie.com/embed/live_stream?channel=${encodeURIComponent(channel)}&autoplay=1`, "Transmissão ao vivo", { allow: "autoplay; encrypted-media; picture-in-picture", openUrl: c.youtubeUrl })}
+      ${embedGate("youtube", src, "Transmissão ao vivo", { allow: "autoplay; encrypted-media; picture-in-picture", openUrl: c.youtubeUrl })}
     </div>
     <div class="modal-pad modal-pad-row">
       <div>
-        <span class="eyebrow">${icon("live", 14)} Transmissão ao vivo</span>
-        <p>Se não houver transmissão agora, confira os cultos anteriores na biblioteca de vídeos.</p>
+        <span class="eyebrow${vivo ? " eyebrow-live" : ""}">${vivo ? '<i class="aovivo-dot" aria-hidden="true"></i> Ao vivo agora' : `${icon("live", 14)} Transmissão ao vivo`}</span>
+        <p>${vivo ? esc(AO_VIVO.titulo || "Estamos transmitindo agora.") : "Se não houver transmissão agora, confira os cultos anteriores na biblioteca de vídeos."}</p>
       </div>
       <div class="modal-actions">
         <a class="btn btn-ghost btn-sm" href="/videos">Ver vídeos</a>
