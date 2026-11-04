@@ -508,8 +508,10 @@ pelo cartaz"** mostra o que vai mudar e só troca depois da confirmação.
 - **Chave:** `GEMINI_API_KEY` na Vercel (criada em aistudio.google.com → *Get API key*). Depois de
   colar ou trocar a chave, publique de novo (`bash scripts/publicar.sh`): a Vercel só entrega a
   variável nova às publicações seguintes. Sem a chave, o botão avisa que falta configurar.
-- **Modelos:** `gemini-3.8-flash` e, se ele estiver no limite ou fora do ar, `gemini-3.6-flash`
-  (`api/_lib/cartaz.mjs`). Para usar outro, defina `GEMINI_MODEL` na Vercel.
+- **Modelos:** `gemini-3.5-flash-lite` (o que mais responde no plano grátis), depois `gemini-3.6-flash`, `gemini-3.8-flash` e uma segunda chance do primeiro
+  (`api/_lib/cartaz.mjs`): o plano grátis responde "sobrecarregado" (503) com frequência, então a
+  função passa para o próximo, dentro de um prazo total de ~52 s. A leitura leva de 10 s a 1 min.
+  Para pôr outro modelo na frente, defina `GEMINI_MODEL` na Vercel.
 - **Privacidade:** no plano grátis, o Google usa o que recebe para melhorar os produtos dele e
   pessoas podem revisar o material (sem ligar à conta). Por isso o recurso é só para **cartazes de
   evento**, que já são públicos. Nunca use para pedidos de oração ou dados de pessoas.

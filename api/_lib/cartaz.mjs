@@ -6,17 +6,21 @@
 //   grátis o Google usa o que é enviado para melhorar os produtos dele: por
 //   isso só cartazes de evento (material público) passam por aqui.
 // - Modelos: GEMINI_MODEL (opcional) e depois os da lista MODELOS, em
-//   ordem; se um estiver no limite do plano grátis ou fora do ar, tenta o
-//   próximo.
+//   ordem; se um estiver no limite do plano grátis ou sobrecarregado (o
+//   plano grátis responde 503 "high demand" com frequência), tenta o
+//   próximo. Tudo dentro de um prazo total (PRAZO_MS), abaixo dos 60 s da
+//   função na Vercel: cada tentativa usa só o tempo que sobra.
 // - A resposta vem em JSON com formato fixo (responseJsonSchema) e ainda
 //   passa por limparCampos: data, horário e link inválidos viram vazio,
 //   textos têm tamanho máximo. A IA pode errar: o painel cria o evento
 //   DESATIVADO para a equipe conferir.
 // ============================================================
 
-export const MODELOS = ["gemini-3.8-flash", "gemini-3.6-flash"];
+export const MODELOS = ["gemini-3.5-flash-lite", "gemini-3.6-flash", "gemini-3.8-flash"]; // o leve primeiro: no plano grátis é o que mais responde
 const API = "https://generativelanguage.googleapis.com/v1beta/models";
-const TEMPO_MS = 25000;
+const PRAZO_MS = 52000; // prazo total (a função tem 60 s)
+const TEMPO_MAX_MS = 35000; // uma tentativa não passa disso
+const SOBRA_MIN_MS = 6000; // com menos que isso sobrando, não vale começar outra
 
 export const CATEGORIAS = [
   "Culto", "Congresso", "Conferência", "Encontro", "Retiro", "Vigília", "Batismo", "Santa Ceia",
@@ -126,12 +130,12 @@ export class ErroCartaz extends Error {
   }
 }
 
-async function chamar(modelo, corpo, chave, fetchImpl) {
+async function chamar(modelo, corpo, chave, fetchImpl, tempoMs) {
   const res = await fetchImpl(`${API}/${encodeURIComponent(modelo)}:generateContent`, {
     method: "POST",
     headers: { "x-goog-api-key": chave, "Content-Type": "application/json" },
     body: JSON.stringify(corpo),
-    signal: AbortSignal.timeout(TEMPO_MS),
+    signal: AbortSignal.timeout(tempoMs),
   });
   const bruto = await res.text();
   let json = null;
@@ -142,23 +146,29 @@ async function chamar(modelo, corpo, chave, fetchImpl) {
 }
 
 // { imagem (base64), tipo, hoje } → { campos, modelo }
-export async function lerCartaz({ imagem, tipo, hoje, chave, modelos, fetchImpl = fetch }) {
+const SOBRECARGA = "O Gemini (plano grátis) está sobrecarregado agora. Tente de novo em alguns minutos.";
+
+export async function lerCartaz({ imagem, tipo, hoje, chave, modelos, fetchImpl = fetch, prazoMs = PRAZO_MS }) {
   if (!chave) throw new ErroCartaz(503, "Falta a chave do Gemini (GEMINI_API_KEY) na Vercel.");
   const lista = [...new Set([...(modelos || []), ...MODELOS].filter(Boolean))];
   const partes = [{ text: instrucoes(hoje) }, { inlineData: { mimeType: tipo, data: imagem } }];
+  const fim = Date.now() + prazoMs;
   let ultimo = null;
-  for (const modelo of lista) {
+  // o primeiro ganha uma segunda chance no fim, se ainda houver tempo (a sobrecarga costuma passar rápido)
+  for (const modelo of [...lista, lista[0]]) {
     let comEsquema = true;
     for (let tentativa = 0; tentativa < 2; tentativa++) {
+      const sobra = fim - Date.now();
+      if (sobra < SOBRA_MIN_MS) throw ultimo || new ErroCartaz(504, SOBRECARGA);
       const corpo = {
         contents: [{ role: "user", parts: partes }],
         generationConfig: { responseMimeType: "application/json", ...(comEsquema && { responseJsonSchema: ESQUEMA }) },
       };
       let r;
       try {
-        r = await chamar(modelo, corpo, chave, fetchImpl);
-      } catch (e) {
-        ultimo = new ErroCartaz(504, "O Gemini demorou demais para responder. Tente de novo.");
+        r = await chamar(modelo, corpo, chave, fetchImpl, Math.min(TEMPO_MAX_MS, sobra - 1000));
+      } catch {
+        ultimo = new ErroCartaz(504, "O Gemini demorou demais para responder. Tente de novo em alguns minutos.");
         break; // próximo modelo
       }
       const msg = r.json?.error?.message || r.bruto.slice(0, 300);
@@ -170,6 +180,10 @@ export async function lerCartaz({ imagem, tipo, hoje, chave, modelos, fetchImpl 
       if (r.status === 401 || r.status === 403) throw new ErroCartaz(503, "A chave do Gemini não foi aceita. Confira GEMINI_API_KEY na Vercel.");
       if (r.status === 429) {
         ultimo = new ErroCartaz(429, "O plano grátis do Gemini chegou ao limite por agora. Tente de novo em 1 minuto.");
+        break;
+      }
+      if (r.status === 503) {
+        ultimo = new ErroCartaz(503, SOBRECARGA);
         break;
       }
       if (r.status === 404 || r.status >= 500) {

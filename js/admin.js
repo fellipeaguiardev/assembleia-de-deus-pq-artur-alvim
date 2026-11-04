@@ -881,7 +881,7 @@ async function novoEventoPelaImagem(input) {
   if (!(await adminEnsureAccess())) return;
   lendoCartaz = true;
   marcarBotoesCartaz(true);
-  showToast("Lendo o cartaz… leva uns 10 segundos.");
+  showToast("Lendo o cartaz… pode levar até 1 minuto.");
   try {
     // envio da imagem e leitura ao mesmo tempo; se só a leitura falhar, o evento sai com a imagem
     const [url, leitura] = await Promise.all([
@@ -946,7 +946,7 @@ async function preencherPeloCartaz(i) {
   if (!(await adminEnsureAccess())) return;
   lendoCartaz = true;
   marcarBotoesCartaz(true);
-  showToast("Lendo o cartaz… leva uns 10 segundos.");
+  showToast("Lendo o cartaz… pode levar até 1 minuto.");
   try {
     let blob;
     try {
