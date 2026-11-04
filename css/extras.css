@@ -61,10 +61,17 @@ body.has-player .cookie-banner {
   line-height: 1.55;
 }
 .cookie-text a {
+  position: relative;
   color: var(--c-primary);
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+/* área de toque maior sem mudar o visual (ver .announce a::after em site.css) */
+.cookie-text a::after {
+  content: "";
+  position: absolute;
+  inset: -14px -8px;
 }
 .cookie-actions {
   display: flex;

@@ -426,6 +426,13 @@ update private.admin_access
   "Carregando…", erros). Quando um conteúdo grande chega, uma frase curta vai para a região de status
   `#srStatus` (`announce` em `js/core.js`): "João 3 carregado", "Lição 5 carregada: …", "Hino 15
   carregado: …". As seções da Bíblia, EBD, Palavra, Harpa e Biblioteca não são mais lidas inteiras.
+- **Foco visível**: todo elemento focável tem `:focus-visible` com contorno; nos fundos escuros
+  (rodapé, cartões azul-marinho, tema escuro da Bíblia) a variável `--focus-ring` deixa o contorno
+  branco. Campos sem contorno próprio mostram o anel no contêiner (`:focus-within`).
+- **Toque e nomes**: botão "Ao vivo" com nome acessível ("Assistir ao vivo"; no celular o texto fica
+  só para o leitor de tela); links "Saiba mais" com área de toque de ~44 px sem mudar o visual;
+  títulos da página inicial sem pular nível (H1 → H2); o app não trava a orientação (tablets podem
+  ficar na horizontal).
 - Link "Pular para o conteúdo", janelas que prendem o foco e "reduzir movimento" respeitado.
 
 ## Privacidade (LGPD)

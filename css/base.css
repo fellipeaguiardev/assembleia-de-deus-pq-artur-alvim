@@ -105,9 +105,19 @@ select {
   color: var(--c-text);
 }
 :focus-visible {
-  outline: 2px solid var(--c-primary);
+  outline: 2px solid var(--focus-ring, var(--c-primary));
   outline-offset: 3px;
   border-radius: 4px;
+}
+/* Nos fundos escuros o contorno azul sumiria: lá ele fica branco. */
+.site-footer,
+.latest-video,
+.podcast-featured,
+.location-grid,
+.embed-gate,
+.bible-selection,
+.bible-reader[data-theme="escuro"] {
+  --focus-ring: #fff;
 }
 .ic {
   flex: 0 0 auto;

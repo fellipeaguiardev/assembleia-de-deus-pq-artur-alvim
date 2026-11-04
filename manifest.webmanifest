@@ -6,7 +6,6 @@
   "start_url": "/?origem=app",
   "scope": "/",
   "display": "standalone",
-  "orientation": "portrait",
   "background_color": "#003399",
   "theme_color": "#003399",
   "categories": [

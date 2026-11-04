@@ -384,7 +384,7 @@ function headerHTML(route) {
       </nav>
       <div class="header-cta">
         <a class="btn btn-ghost btn-sm hide-md" href="${href(c.mapsUrl)}" target="_blank" rel="noopener">Como chegar</a>
-        <button class="btn btn-accent btn-sm" type="button" onclick="openLive()">${icon("live", 16)}<span>Ao vivo</span></button>
+        <button class="btn btn-accent btn-sm" type="button" onclick="openLive()" aria-label="Assistir ao vivo">${icon("live", 16)}<span>Ao vivo</span></button>
         <button class="hamburger" type="button" onclick="toggleMobileMenu(true)" aria-label="Abrir menu" aria-controls="mobileMenu" aria-expanded="false"><span></span><span></span><span></span></button>
       </div>
     </div>
@@ -568,7 +568,7 @@ function nextHighlightHTML() {
     <article class="next-card next-empty" data-reveal>
       <div class="next-body">
         <span class="eyebrow">Próximo culto</span>
-        <h3>Nenhum culto ou evento agendado</h3>
+        <h2>Nenhum culto ou evento agendado</h2>
         <p>Em breve novas datas serão anunciadas.</p>
       </div>
     </article>
@@ -589,7 +589,7 @@ function nextHighlightHTML() {
       </div>
       <div class="next-body">
         <span class="eyebrow">${isEvent ? "Próximo evento" : "Próximo culto"}</span>
-        <h3>${esc(n.title)}</h3>
+        <h2>${esc(n.title)}</h2>
         <div class="next-meta">
           <span class="${live ? "is-live" : ""}">${live ? '<i class="live-dot"></i>' : icon("clock", 16)} ${esc(when)}</span>
           ${n.location ? `<span>${icon("pin", 16)} ${esc(n.location)}</span>` : ""}
