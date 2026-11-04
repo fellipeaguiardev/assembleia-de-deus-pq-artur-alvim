@@ -93,8 +93,8 @@ function libMine() {
 
 /* ---------- Páginas ---------- */
 function bibliotecaPageHTML() {
-  return `<section class="lib-page" id="libRoot" aria-live="polite">
-    <div class="container bible-loading">
+  return `<section class="lib-page" id="libRoot">
+    <div class="container bible-loading"><span class="sr-only" role="status">Carregando…</span>
       <div class="bible-skel bible-skel-title"></div>
       <div class="bible-skel"></div><div class="bible-skel"></div><div class="bible-skel short"></div>
     </div>
@@ -253,6 +253,7 @@ async function renderLibBook(root, id, alive) {
   const mine = libMine()[b.id];
   const wantsQueue = s.key !== "livre";
   setMeta(`${b.title} — Biblioteca dos Jovens`, truncate(`${b.title}${b.author ? ", de " + b.author : ""}. ${b.synopsis || ""}`, 155), `/biblioteca/${b.id}`);
+  announce(`${b.title} carregado`);
   const related = LIB.books.filter((x) => x.category === b.category && x.id !== b.id).slice(0, 4);
   const waitingText = s.waiting ? `${s.waiting} ${s.waiting === 1 ? "pessoa" : "pessoas"} na fila de espera` : "";
   root.innerHTML = `
@@ -295,6 +296,7 @@ async function renderLibBook(root, id, alive) {
 
 function libNotFound(root) {
   setMeta("Livro não encontrado", ROUTE_META.biblioteca[1], location.pathname, { noindex: true });
+  announce("Livro não encontrado");
   root.innerHTML = `<div class="container lib-body">${emptyState("book", "Livro não encontrado", "Ele pode ter saído do acervo. Veja os outros livros da biblioteca.", `<a class="btn btn-primary btn-sm" href="/biblioteca">Ver o acervo</a>`)}</div>`;
   initReveal(root);
   settleTop();

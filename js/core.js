@@ -764,6 +764,15 @@ const mapDonationType = (d) => ({
 
 const db = (table) => supabaseClient.from(table);
 
+// Leitor de tela: frase curta na região de status (#srStatus, fora do #siteRoot)
+// quando um conteúdo grande termina de carregar (ex.: "João 3 carregado").
+function announce(text) {
+  const el = document.getElementById("srStatus");
+  if (!el) return;
+  el.textContent = "";
+  setTimeout(() => (el.textContent = text), 80); // mesmo texto de novo também é lido
+}
+
 /* ---------- Painel sob demanda ----------
    O código do painel (js/admin*.js e css/admin.css, ~200 KB) só é baixado
    quando alguém abre /admin. Os scripts rodam na ordem da lista (admin.js

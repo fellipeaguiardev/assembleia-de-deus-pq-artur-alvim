@@ -80,8 +80,8 @@ async function harpaShare(n) {
 
 /* ---------- Páginas ---------- */
 function harpaPageHTML() {
-  return `<section class="harpa-page" id="harpaRoot" aria-live="polite">
-    <div class="container bible-loading">
+  return `<section class="harpa-page" id="harpaRoot">
+    <div class="container bible-loading"><span class="sr-only" role="status">Carregando…</span>
       <div class="bible-skel bible-skel-title"></div>
       <div class="bible-skel"></div><div class="bible-skel"></div><div class="bible-skel short"></div>
     </div>
@@ -101,6 +101,7 @@ async function initHarpaView(param) {
     const n = Number(param);
     if (/^\d{1,3}$/.test(param) && n >= 1 && n <= d.hinos.length) return renderHarpaHymn(root, d, n);
     setMeta("Hino não encontrado", ROUTE_META.harpa[1], location.pathname, { noindex: true });
+    announce("Hino não encontrado");
     root.innerHTML = `<div class="container harpa-body">${emptyState(
       "music",
       "Hino não encontrado",
@@ -199,6 +200,7 @@ function renderHarpaHymn(root, d, n) {
   const total = d.hinos.length;
   const fav = harpaFavs().includes(n);
   setMeta(`Hino ${n} — ${t}`, `Hino ${n} da Harpa Cristã: ${t}. Ouça e encontre a letra.`, `/harpa/${n}`);
+  announce(`Hino ${n} carregado: ${t}`);
   const nav = (m, dir) =>
     m >= 1 && m <= total
       ? `<a class="harpa-nav-link ${dir}" href="/harpa/${m}">${dir === "prev" ? icon("left", 18) : ""}<span><small>${dir === "prev" ? "Anterior" : "Próximo"}</small>${m} · ${esc(d.hinos[m - 1])}</span>${dir === "next" ? icon("right", 18) : ""}</a>`

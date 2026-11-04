@@ -422,6 +422,10 @@ update private.admin_access
   EBD, Palavra, Harpa, Biblioteca) passam o foco para o `h1` quando ele chega, se a pessoa ainda não
   mexeu. Com uma janela aberta (ex.: episódio do podcast), o foco fica na janela. No carregamento
   inicial o foco não é mexido.
+- **Avisos curtos para o leitor de tela**: `aria-live` só em mensagens curtas (contadores da busca,
+  "Carregando…", erros). Quando um conteúdo grande chega, uma frase curta vai para a região de status
+  `#srStatus` (`announce` em `js/core.js`): "João 3 carregado", "Lição 5 carregada: …", "Hino 15
+  carregado: …". As seções da Bíblia, EBD, Palavra, Harpa e Biblioteca não são mais lidas inteiras.
 - Link "Pular para o conteúdo", janelas que prendem o foco e "reduzir movimento" respeitado.
 
 ## Privacidade (LGPD)

@@ -194,8 +194,8 @@ function bibleLastRead() {
 // A página é montada em duas etapas: primeiro o "esqueleto" (sincrono, para o
 // roteador), depois o conteúdo, quando o arquivo do livro chega.
 function biblePageHTML(param) {
-  return `<section class="bible-page" id="bibleRoot" aria-live="polite">
-    <div class="container bible-loading">
+  return `<section class="bible-page" id="bibleRoot">
+    <div class="container bible-loading"><span class="sr-only" role="status">Carregando…</span>
       <div class="bible-skel bible-skel-title"></div>
       <div class="bible-skel"></div><div class="bible-skel"></div><div class="bible-skel short"></div>
     </div>
@@ -321,6 +321,7 @@ function bibleSearch(e) {
 
 function renderBibleBook(root, book) {
   setMeta(book.name, `Leia o livro de ${book.name} na Bíblia (${book.chapters} capítulos).`, `/biblia/${book.slug}`);
+  announce(`${book.name} carregado: escolha o capítulo`);
   root.innerHTML = `
     <div class="container bible-book-page">
       <a class="back-link" href="/biblia">${icon("arrowBack", 16)} Todos os livros</a>
@@ -340,6 +341,7 @@ function renderBibleBook(root, book) {
 
 function renderBibleNotFound(root, book) {
   setMeta("Passagem não encontrada", ROUTE_META.biblia[1], location.pathname, { noindex: true });
+  announce("Passagem não encontrada");
   root.innerHTML = `<div class="container">${emptyState(
     "book",
     "Passagem não encontrada",
@@ -384,6 +386,7 @@ function renderBibleChapter(root, book, chapter, verses, verseSpec) {
     truncate(verses[(first || 1) - 1] || "", 155),
     `/biblia/${book.slug}/${chapter}${verseSpec ? "/" + verseSpec : ""}`,
   );
+  announce(`${book.name} ${chapter} carregado`);
   try {
     localStorage.setItem(BIBLE_LAST_KEY, JSON.stringify({ slug: book.slug, name: book.name, chapter, at: new Date().toISOString() }));
   } catch {}
@@ -656,8 +659,8 @@ async function palavraFor(iso) {
 }
 
 function palavraPageHTML() {
-  return `<section class="palavra-page" id="palavraRoot" aria-live="polite">
-    <div class="container narrow bible-loading"><div class="bible-skel bible-skel-title"></div><div class="bible-skel"></div><div class="bible-skel short"></div></div>
+  return `<section class="palavra-page" id="palavraRoot">
+    <div class="container narrow bible-loading"><span class="sr-only" role="status">Carregando…</span><div class="bible-skel bible-skel-title"></div><div class="bible-skel"></div><div class="bible-skel short"></div></div>
   </section>`;
 }
 
@@ -671,6 +674,7 @@ async function initPalavraView(param) {
     if (!document.body.contains(root)) return;
     const isToday = iso === today;
     setMeta(isToday ? "Palavra Diária" : `Palavra de ${fmtDateLong(iso)}`, `${refLabel(p.ref)} — ${truncate(p.text, 140)}`, isToday ? "/palavra" : `/palavra/${iso}`);
+    announce(`Palavra Diária carregada: ${refLabel(p.ref)}`);
     const prevDays = Array.from({ length: 6 }, (_, i) => isoAddDays(today, -(i + 1)));
     root.innerHTML = `
       <div class="palavra-hero">

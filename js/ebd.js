@@ -194,8 +194,8 @@ function ebdScheduleText() {
    PÁGINAS
    ============================================================ */
 function ebdPageHTML() {
-  return `<section class="ebd-page" id="ebdRoot" aria-live="polite">
-    <div class="container bible-loading">
+  return `<section class="ebd-page" id="ebdRoot">
+    <div class="container bible-loading"><span class="sr-only" role="status">Carregando…</span>
       <div class="bible-skel bible-skel-title"></div>
       <div class="bible-skel"></div><div class="bible-skel"></div><div class="bible-skel short"></div>
     </div>
@@ -259,6 +259,7 @@ function renderEbdSoon(root) {
 
 function renderEbdNotFound(root, title, text, back = "/ebd") {
   setMeta(title, ROUTE_META.ebd[1], location.pathname, { noindex: true });
+  announce(title);
   root.innerHTML = `<div class="container ebd-body">${emptyState("school", title, text, `<a class="btn btn-primary btn-sm" href="${back}">Voltar para a EBD</a>`)}</div>`;
 }
 
@@ -302,6 +303,7 @@ async function renderEbdHub(root, alive) {
   if (!alive()) return;
   if (EBD.unavailable || !quarters.length) return renderEbdSoon(root);
   setMeta(ROUTE_META.ebd[0], ROUTE_META.ebd[1], "/ebd");
+  announce("Lições da Escola Bíblica carregadas");
 
   // Trimestres em andamento (um por revista); se nenhum, o mais recente.
   let running = quarters.filter((q) => ebdQuarterRunning(q));
@@ -356,6 +358,7 @@ async function renderEbdQuarter(root, q, alive) {
   const lessons = await ebdLoadQuarterLessons(q.id);
   if (!alive()) return;
   setMeta(`EBD — ${ebdQuarterLabel(q)}`, q.theme ? `${q.theme} — lições da Escola Bíblica Dominical (${q.magazine}).` : ROUTE_META.ebd[1], ebdQuarterPath(q));
+  announce(`${ebdQuarterLabel(q)} carregado`);
   root.innerHTML =
     ebdHeroHTML(
       `${ebdQuarterLabel(q)} · ${q.magazine}`,
@@ -419,6 +422,7 @@ async function renderEbdLesson(root, q, n, alive) {
   const title = lesson.title || `Lição ${n}`;
   const path = ebdLessonPath(q, n);
   setMeta(`${title} — EBD`, `Lição ${n} (${ebdQuarterLabel(q)}, ${q.magazine}): ${golden.length ? "texto áureo " + refListLabel(golden) + ". " : ""}Referências e perguntas para estudo.`, path);
+  announce(`Lição ${n} carregada: ${title}`);
 
   const published = list.filter((l) => l.number !== n).sort((a, b) => a.number - b.number);
   const prev = [...published].reverse().find((l) => l.number < n);
