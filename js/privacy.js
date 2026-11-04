@@ -11,7 +11,7 @@
    carregam depois que a pessoa permite.
    ============================================================ */
 const CONSENT_KEY = "cookie-consent-v1";
-const PRIVACY_UPDATED = "2026-11-03";
+const PRIVACY_UPDATED = "2026-11-04";
 
 let consent = readConsent();
 
@@ -228,7 +228,8 @@ function privacyPageHTML() {
       <p>Usamos serviços de terceiros para o site funcionar: <strong>Supabase</strong> (banco de dados e arquivos, servidores em São Paulo),
       <strong>Vercel</strong> (hospedagem do site, envio do formulário, redução das imagens das capas${stats ? " e estatísticas de visitas" : ""}), <strong>Resend</strong>
       (entrega do e-mail do formulário à equipe, nos Estados Unidos), <strong>Spotify for Creators</strong> (áudio dos episódios do
-      podcast, quando você aperta play) e, quando você permite, <strong>YouTube/Google</strong> e <strong>Spotify</strong>.
+      podcast, quando você aperta play), <strong>Google Gemini</strong> (lê os cartazes de eventos que a equipe envia no painel, para
+      preencher os dados do evento; nenhum dado de visitante passa por ele) e, quando você permite, <strong>YouTube/Google</strong> e <strong>Spotify</strong>.
       As miniaturas (imagens) dos vídeos vêm dos servidores do YouTube, que recebem o endereço IP e o navegador de quem abre a página, sem cookies.
       As fontes de texto ficam no próprio site.
       Alguns desses serviços podem processar dados fora do Brasil, com as garantias previstas no art. 33 da LGPD.</p>

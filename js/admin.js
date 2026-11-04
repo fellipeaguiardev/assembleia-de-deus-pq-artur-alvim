@@ -710,13 +710,21 @@ function updateServiceMonthly(di, ii, key, val) {
 /* ---- EVENTOS ---- */
 function tabEvents() {
   return `
-    ${topbar("Eventos", `<button class="btn btn-primary btn-sm" type="button" onclick="addEvent()">+ Novo evento</button>`)}
+    ${topbar(
+      "Eventos",
+      `<div class="item-actions">
+        <label class="btn btn-ghost btn-sm upload-label" data-cartaz-btn>${icon("image", 15)} Novo evento pela imagem<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden onchange="novoEventoPelaImagem(this)"></label>
+        <button class="btn btn-primary btn-sm" type="button" onclick="addEvent()">+ Novo evento</button>
+      </div>`,
+    )}
+    <p class="admin-note">Envie o cartaz do evento e o site preenche os campos sozinho (leitura pelo Gemini, do Google). O evento é criado <strong>desativado</strong>: confira tudo e marque <strong>Ativo</strong> para aparecer no site.</p>
     ${
       data.events.length
         ? data.events
             .map(
               (ev, i) => `
-      <div class="admin-card">
+      <div class="admin-card" id="evento-${esc(ev.id)}">
+        ${avisoCartazHTML(ev)}
         <div class="field-row">
           ${field("Nome", `<input type="text" value="${esc(ev.name)}" onchange="updateEvent(${i},'name',this.value)">`, true)}
           ${field("Data", `<input type="date" value="${esc(ev.date)}" onchange="updateEvent(${i},'date',this.value)">`)}
@@ -731,6 +739,7 @@ function tabEvents() {
         </div>
         <div class="admin-card-foot">
           <label class="check"><input type="checkbox" ${ev.active !== false ? "checked" : ""} onchange="updateEvent(${i},'active',this.checked)"> Ativo</label>
+          ${safeUrl(ev.image) ? `<button class="btn btn-ghost btn-sm" type="button" data-cartaz-btn onclick="preencherPeloCartaz(${i})">${icon("image", 14)} Preencher pelo cartaz</button>` : ""}
           <button class="btn btn-danger btn-sm" type="button" onclick="removeEvent(${i})">Excluir evento</button>
         </div>
       </div>`,
@@ -785,6 +794,198 @@ async function handleImageUpload(input, eventIndex) {
   } catch (e) {
     console.error("Erro ao enviar imagem:", e);
     showToast(e.userMessage || "Erro ao enviar imagem.", "error");
+  }
+}
+
+/* ---- EVENTOS: preencher pelo cartaz (api/evento-da-imagem.mjs) ----
+   A imagem é reduzida aqui (lado maior até 1600 px, JPEG) e vai para a função,
+   que pergunta ao Gemini. Evento novo nasce DESATIVADO; num evento que já
+   existe, a equipe vê o que vai mudar e confirma. A IA pode errar. */
+let lendoCartaz = false;
+let cartazLido = null; // { id, avisos, erro }: aviso no cartão do último evento lido
+
+const mapsDoEndereco = (endereco) => (endereco ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endereco)}` : "");
+
+function avisoCartazHTML(ev) {
+  if (!cartazLido || String(cartazLido.id) !== String(ev.id)) return "";
+  if (cartazLido.erro)
+    return `<p class="admin-note admin-warn" role="status">${icon("x", 14)}<span>Não deu para ler o cartaz: ${esc(cartazLido.erro)} O evento ficou com a imagem; preencha os campos à mão.</span></p>`;
+  const avisos = cartazLido.avisos?.length ? `<br>${cartazLido.avisos.map((a) => `• ${esc(a)}`).join("<br>")}` : "";
+  return `<p class="admin-note admin-ok" role="status">${icon("check", 15)}<span><strong>Preenchido pelo cartaz.</strong> Confira tudo${ev.active === false ? " e marque <strong>Ativo</strong> para aparecer no site" : ""}.${avisos}</span></p>`;
+}
+
+function marcarBotoesCartaz(ocupado) {
+  document.querySelectorAll("[data-cartaz-btn]").forEach((b) => {
+    b.classList.toggle("is-busy", ocupado);
+    b.setAttribute("aria-busy", String(ocupado));
+    b.querySelectorAll("input").forEach((x) => (x.disabled = ocupado));
+    if (b.tagName === "BUTTON") b.disabled = ocupado;
+  });
+}
+
+async function reduzirImagem(blob, lado = 1600) {
+  const bmp = await createImageBitmap(blob);
+  const escala = Math.min(1, lado / Math.max(bmp.width, bmp.height));
+  const w = Math.max(1, Math.round(bmp.width * escala));
+  const h = Math.max(1, Math.round(bmp.height * escala));
+  const cv = document.createElement("canvas");
+  cv.width = w;
+  cv.height = h;
+  const ctx = cv.getContext("2d");
+  ctx.fillStyle = "#fff"; // PNG transparente vira fundo branco
+  ctx.fillRect(0, 0, w, h);
+  ctx.drawImage(bmp, 0, 0, w, h);
+  bmp.close?.();
+  const jpg = await new Promise((ok) => cv.toBlob(ok, "image/jpeg", 0.86));
+  const imagem = await new Promise((ok, falha) => {
+    const fr = new FileReader();
+    fr.onload = () => ok(String(fr.result).split(",")[1] || "");
+    fr.onerror = falha;
+    fr.readAsDataURL(jpg);
+  });
+  return { imagem, tipo: "image/jpeg" };
+}
+
+async function lerCartazNoServidor(blob) {
+  let corpo;
+  try {
+    corpo = await reduzirImagem(blob);
+  } catch {
+    throw Object.assign(new Error("imagem"), { userMessage: "não consegui abrir essa imagem (use JPG, PNG ou WEBP)." });
+  }
+  const { data: s } = await supabaseClient.auth.getSession();
+  let res;
+  try {
+    res = await fetch("/api/evento-da-imagem", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${s?.session?.access_token || ""}` },
+      body: JSON.stringify(corpo),
+    });
+  } catch {
+    throw Object.assign(new Error("rede"), { userMessage: "sem conexão com o site agora." });
+  }
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok || !body.campos) throw Object.assign(new Error(body.error || body.message || `HTTP ${res.status}`), { userMessage: body.error || body.message || "tente de novo em instantes." });
+  return body.campos;
+}
+
+function rolarAteEvento(id) {
+  requestAnimationFrame(() => document.getElementById(`evento-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" }));
+}
+
+async function novoEventoPelaImagem(input) {
+  const file = input.files?.[0];
+  input.value = "";
+  if (!file || lendoCartaz) return;
+  if (!UPLOAD_RULES.image.types.includes(file.type)) return showToast(`Arquivo inválido: envie uma ${UPLOAD_RULES.image.label}.`, "error");
+  if (!(await adminEnsureAccess())) return;
+  lendoCartaz = true;
+  marcarBotoesCartaz(true);
+  showToast("Lendo o cartaz… leva uns 10 segundos.");
+  try {
+    // envio da imagem e leitura ao mesmo tempo; se só a leitura falhar, o evento sai com a imagem
+    const [url, leitura] = await Promise.all([
+      uploadFile(file, "eventos"),
+      lerCartazNoServidor(file).then(
+        (campos) => ({ campos }),
+        (erro) => ({ erro }),
+      ),
+    ]);
+    const c = leitura.campos || {};
+    const created = await dbWrite(
+      db("events")
+        .insert({
+          name: c.nome || "Novo evento",
+          date: c.data || localISO(),
+          time: c.horario || "19:00",
+          category: c.categoria || "Culto",
+          location: c.local || "",
+          address: c.endereco || "",
+          description: c.descricao || "",
+          image: url,
+          link: c.link || "",
+          maps_url: mapsDoEndereco(c.endereco),
+          active: false,
+        })
+        .select()
+        .single(),
+      null,
+      "Erro ao criar evento.",
+    );
+    if (!created) return;
+    data.events.unshift(mapEvent(created));
+    cartazLido = { id: created.id, avisos: c.avisos || [], erro: leitura.erro ? leitura.erro.userMessage || "tente de novo." : "" };
+    renderAdmin();
+    renderSite();
+    rolarAteEvento(created.id);
+    if (leitura.erro) showToast("Evento criado só com a imagem: não deu para ler o cartaz.", "error");
+    else showToast("Evento criado pelo cartaz! Confira e marque Ativo.", "success");
+  } catch (e) {
+    console.error("Novo evento pela imagem:", e);
+    showToast(e.userMessage || "Erro ao enviar a imagem.", "error");
+  } finally {
+    lendoCartaz = false;
+    marcarBotoesCartaz(false);
+  }
+}
+
+const CAMPOS_DO_CARTAZ = [
+  ["name", "nome", "Nome"],
+  ["date", "data", "Data"],
+  ["time", "horario", "Horário"],
+  ["category", "categoria", "Categoria"],
+  ["location", "local", "Local"],
+  ["address", "endereco", "Endereço"],
+  ["description", "descricao", "Descrição"],
+  ["link", "link", "Link de inscrição"],
+];
+
+async function preencherPeloCartaz(i) {
+  const ev = data.events[i];
+  if (!ev || !safeUrl(ev.image) || lendoCartaz) return;
+  if (!(await adminEnsureAccess())) return;
+  lendoCartaz = true;
+  marcarBotoesCartaz(true);
+  showToast("Lendo o cartaz… leva uns 10 segundos.");
+  try {
+    let blob;
+    try {
+      const r = await fetch(ev.image);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      blob = await r.blob();
+    } catch {
+      throw Object.assign(new Error("imagem"), { userMessage: "Não deu para abrir a imagem desse evento. Envie o cartaz de novo em “Enviar do computador”." });
+    }
+    const c = await lerCartazNoServidor(blob);
+    const mudancas = {};
+    const linhas = [];
+    for (const [coluna, chave, rotulo] of CAMPOS_DO_CARTAZ) {
+      const novo = c[chave];
+      if (novo && novo !== ev[coluna]) {
+        mudancas[coluna] = novo;
+        linhas.push(`${rotulo}: ${novo.length > 70 ? novo.slice(0, 70) + "…" : novo}`);
+      }
+    }
+    const maps = mapsDoEndereco(c.endereco);
+    if (maps && !ev.mapsUrl) mudancas.maps_url = maps;
+    if (!linhas.length) {
+      cartazLido = { id: ev.id, avisos: c.avisos || [], erro: "" };
+      renderAdmin();
+      return showToast("O cartaz não trouxe nada diferente do que já está preenchido.");
+    }
+    if (!confirm(`Trocar estes campos pelo que está no cartaz?\n\n${linhas.join("\n")}`)) return;
+    if (!(await dbWrite(db("events").update(mudancas).eq("id", ev.id), "Evento preenchido pelo cartaz!", "Erro ao salvar."))) return;
+    Object.assign(ev, mapEvent({ ...ev, ...mudancas }));
+    cartazLido = { id: ev.id, avisos: c.avisos || [], erro: "" };
+    renderAdmin();
+    renderSite();
+    rolarAteEvento(ev.id);
+  } catch (e) {
+    console.error("Preencher pelo cartaz:", e);
+    showToast(e.userMessage ? (/^[A-ZÁÉÍÓÚ]/.test(e.userMessage) ? e.userMessage : `Não deu para ler o cartaz: ${e.userMessage}`) : "Não deu para ler o cartaz agora.", "error");
+  } finally {
+    lendoCartaz = false;
+    marcarBotoesCartaz(false);
   }
 }
 

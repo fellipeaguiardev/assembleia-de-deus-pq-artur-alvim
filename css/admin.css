@@ -872,6 +872,12 @@ p.gate-note {
   color: #9a2a1d;
   background: #fdecea;
 }
+/* "Novo evento pela imagem" / "Preencher pelo cartaz" enquanto o Gemini lê */
+[data-cartaz-btn].is-busy {
+  opacity: 0.55;
+  pointer-events: none;
+  cursor: progress;
+}
 .admin-note.admin-ok {
   color: #1d6b3a;
   background: #e8f6ee;

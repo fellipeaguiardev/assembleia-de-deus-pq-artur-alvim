@@ -80,7 +80,7 @@ O `.gitignore` deixa de fora tudo o que é segredo ou dado da igreja:
 
 - **Chaves e senhas**: ficam só nas variáveis de ambiente da Vercel (`RESEND_API_KEY`, `NOTIFY_TO`,
   `EBD_SYNC_TOKEN`, `CRON_SECRET`, `ADMIN_ACCESS_TOKEN`, `LIB_SHEET_ID`, `LIB_SYNC_TOKEN`,
-  `LIB_TRIGGER_KEY`, `NEWS_SYNC_TOKEN`). A única chave no código é a **publicável** do Supabase, que é
+  `LIB_TRIGGER_KEY`, `NEWS_SYNC_TOKEN`, `GEMINI_API_KEY`). A única chave no código é a **publicável** do Supabase, que é
   pública por natureza (veja "Segurança").
 - **Cópias de segurança do banco** (`supabase/backups/`), o projeto ligado ao CLI do Supabase
   (`supabase/.temp/`) e os ids do projeto na Vercel (`.vercel/`, `scripts/vercel-projeto.json`).
@@ -492,6 +492,30 @@ update private.admin_access
      sozinha.
 - **Pedidos de oração não ficam guardados no site:** `api/contato.mjs` só valida e manda o
   e-mail para a equipe (nada em banco ou em painel de formulários).
+
+## Eventos pelo cartaz (Gemini)
+
+No painel, aba **Eventos**, o botão **"Novo evento pela imagem"** recebe o cartaz do evento e
+preenche sozinho nome, data, horário, categoria, local, endereço, descrição e link de inscrição
+(com o link do Google Maps montado a partir do endereço). O evento nasce **desativado**: a equipe
+confere e marca **Ativo** para ele aparecer no site. Nos eventos que já têm imagem, **"Preencher
+pelo cartaz"** mostra o que vai mudar e só troca depois da confirmação.
+
+- **Quem lê:** o Gemini, do Google, no **plano gratuito** (sem cartão). A função
+  `api/evento-da-imagem.mjs` só atende admin com a entrada liberada por e-mail (`is_site_admin`),
+  para ninguém de fora gastar a cota. O painel reduz a imagem antes de enviar (lado maior até
+  1600 px); a imagem original continua indo para o Storage como antes.
+- **Chave:** `GEMINI_API_KEY` na Vercel (criada em aistudio.google.com → *Get API key*). Depois de
+  colar ou trocar a chave, publique de novo (`bash scripts/publicar.sh`): a Vercel só entrega a
+  variável nova às publicações seguintes. Sem a chave, o botão avisa que falta configurar.
+- **Modelos:** `gemini-3.8-flash` e, se ele estiver no limite ou fora do ar, `gemini-3.6-flash`
+  (`api/_lib/cartaz.mjs`). Para usar outro, defina `GEMINI_MODEL` na Vercel.
+- **Privacidade:** no plano grátis, o Google usa o que recebe para melhorar os produtos dele e
+  pessoas podem revisar o material (sem ligar à conta). Por isso o recurso é só para **cartazes de
+  evento**, que já são públicos. Nunca use para pedidos de oração ou dados de pessoas.
+- **Limites:** o plano grátis tem cota por minuto e por dia; passando dela, o evento é criado só
+  com a imagem e o cartão explica o motivo. A IA pode errar (ano que não aparece no cartaz,
+  letra muito decorada); os avisos dela aparecem no cartão do evento. Código QR não é lido.
 
 ## Ao vivo agora
 

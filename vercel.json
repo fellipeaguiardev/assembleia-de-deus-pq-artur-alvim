@@ -26,6 +26,9 @@
     },
     "api/ao-vivo.mjs": {
       "maxDuration": 10
+    },
+    "api/evento-da-imagem.mjs": {
+      "maxDuration": 60
     }
   },
   "crons": [
