@@ -500,8 +500,9 @@ function tabAppearance() {
     <div class="admin-card">
       <h3>Tipografia (Google Fonts)</h3>
       <div class="field-row">
-        ${field("Fonte dos títulos", `<input type="text" value="${esc(t.fontHeading)}" onchange="updateTheme('fontHeading', this.value)">`)}
-        ${field("Fonte dos textos", `<input type="text" value="${esc(t.fontBody)}" onchange="updateTheme('fontBody', this.value)">`)}
+        ${field("Fonte dos títulos", `<input type="text" value="${esc(t.fontHeading)}" onchange="updateTheme('fontHeading', this.value)" aria-describedby="fontHint">`)}
+        ${field("Fonte dos textos", `<input type="text" value="${esc(t.fontBody)}" onchange="updateTheme('fontBody', this.value)" aria-describedby="fontHint">`)}
+        <p class="admin-muted field full" id="fontHint">Fraunces e Inter ficam no próprio site. Outro nome usa a fonte do aparelho de quem visita (ex.: Georgia, Arial), se ele tiver.</p>
       </div>
       <p class="admin-note">Digite o nome exato da fonte no Google Fonts (ex.: Fraunces, Inter, Playfair Display, Poppins).</p>
     </div>

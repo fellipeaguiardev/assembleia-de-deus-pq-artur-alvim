@@ -408,8 +408,11 @@ update private.admin_access
  where id = (select id from private.admin_access where status = 'pendente' order by created_at desc limit 1);
 ```
 
-- `vercel.json` define CSP (scripts só do próprio site; conexões só com o Supabase;
-  iframes só de YouTube/Spotify/Google Maps), HSTS, anti-clickjacking e outros.
+- `vercel.json` define CSP (scripts, estilos e fontes só do próprio site; conexões com o Supabase e,
+  só para o painel no navegador, `docs.google.com` (importar a planilha antiga da biblioteca),
+  `openlibrary.org` ("Buscar capa") e `anchor.fm` (importar o podcast); iframes só de
+  YouTube/Spotify/Google Maps), HSTS, anti-clickjacking e outros. Nada usa o Google Fonts: um nome de
+  fonte diferente de Fraunces/Inter no painel usa a fonte do aparelho.
 - Bibliotecas ficam em `vendor/` (sem CDN externa). O QR Code do PIX é gerado no
   navegador; nenhum dado vai para serviços de terceiros.
 - Uploads do painel aceitam só imagens (até 8 MB) e áudios (até 50 MB).

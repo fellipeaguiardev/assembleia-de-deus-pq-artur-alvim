@@ -72,8 +72,6 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-const FONT_HOSTS = ["fonts.googleapis.com", "fonts.gstatic.com"];
-
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;
@@ -88,8 +86,6 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(cacheFirst(req));
   } else if (sameOrigin) {
     event.respondWith(networkFirst(req, event));
-  } else if (FONT_HOSTS.includes(url.hostname)) {
-    event.respondWith(cacheFirst(req));
   }
   // Demais origens (Supabase, YouTube, Spotify, Maps…): o navegador cuida normalmente.
 });

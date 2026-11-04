@@ -601,21 +601,9 @@ function icon(name, size = 18, extraClass = "") {
 /* ============================================================
    TEMA
    ============================================================ */
-const loadedFonts = new Set(["Fraunces", "Inter"]);
-
-// Fraunces e Inter vêm de /assets/fonts (sem contato com o Google). Outra fonte
-// escolhida no painel só é buscada no Google Fonts se o visitante permitiu
-// conteúdo de terceiros; senão, o site usa a fonte reserva do sistema.
-function loadGoogleFont(name) {
-  if (!name || loadedFonts.has(name)) return;
-  if (typeof hasEmbedConsent !== "function" || !hasEmbedConsent()) return;
-  loadedFonts.add(name);
-  const link = document.createElement("link");
-  link.rel = "stylesheet";
-  link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(name).replace(/%20/g, "+")}:wght@400;500;600;700&display=swap`;
-  document.head.appendChild(link);
-}
-
+// Fontes: Fraunces e Inter vêm de /assets/fonts (sem contato com o Google, como
+// diz a política de privacidade). Outro nome escolhido no painel usa a fonte do
+// próprio aparelho, se ele tiver (ex.: Georgia, Arial); senão, a reserva abaixo.
 function applyTheme() {
   const r = document.documentElement.style;
   const t = data.theme;
@@ -627,8 +615,6 @@ function applyTheme() {
   r.setProperty("--radius", (Number(t.radius) || 0) + "px");
   r.setProperty("--font-heading", `'${t.fontHeading}', Georgia, serif`);
   r.setProperty("--font-body", `'${t.fontBody}', system-ui, sans-serif`);
-  loadGoogleFont(t.fontHeading);
-  loadGoogleFont(t.fontBody);
   // Guarda as cores para a tela de abertura já nascer com elas na próxima visita.
   try {
     localStorage.setItem(
