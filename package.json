@@ -1,0 +1,14 @@
+{
+  "name": "ad-belem-parque-artur-alvim",
+  "private": true,
+  "description": "Só para os testes (smoke test com Playwright). O site em si não tem build nem dependências: veja o README.",
+  "scripts": {
+    "verificar": "node scripts/verificar.mjs",
+    "test:smoke": "playwright test",
+    "test:smoke:instalar": "playwright install chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "serve": "14.2.6"
+  }
+}

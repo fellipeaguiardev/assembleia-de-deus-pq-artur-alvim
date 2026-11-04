@@ -66,7 +66,8 @@ lições, livros, vídeos, cores) é editado pela equipe num **painel administra
 
 ## Como é feito
 
-- **HTML, CSS e JavaScript puro**, sem framework e sem etapa de build.
+- **HTML, CSS e JavaScript puro**, sem framework e sem etapa de build. O `package.json` é só dos
+  testes (Playwright); o site publicado não usa npm.
 - **Supabase**: banco Postgres com regras de acesso (RLS) por tabela, login do painel, armazenamento
   de imagens e uma função que busca os vídeos do YouTube.
 - **Vercel**: hospedagem, funções do servidor (`api/`) e tarefa agendada diária.
@@ -98,8 +99,9 @@ api/                  funções do servidor: contato.mjs (e-mail do formulário)
                       ebd-sync-diario.mjs (agendada), admin-acesso.mjs e admin-aprovar.mjs
                       (liberação do painel por e-mail) e _lib/ (modelos de e-mail, leitor da EBD)
 scripts/publicar.sh   publica na Vercel (carimba a versão para o app se atualizar)
-scripts/verificar.mjs checagem automática (sintaxe, arquivos citados, segredos)
-.github/workflows/    roda a checagem a cada push
+scripts/verificar.mjs checagem automática (sintaxe, arquivos citados, rotas, migrations, segredos)
+tests/fumaca.spec.mjs smoke test no navegador (Playwright; playwright.config.mjs e package.json)
+.github/workflows/    roda a checagem e o smoke test a cada push
 assets/img/           brasão em vetor (brasao.svg), ícones do app, imagem de compartilhamento
 data/harpa/           índice da Harpa Cristã (número e título)
 assets/fonts/         Fraunces e Inter (hospedadas aqui, sem Google Fonts)
@@ -706,6 +708,36 @@ A cada push, o GitHub Actions (`.github/workflows/check.yml`) roda `scripts/veri
 
 Se algo falhar, o push aparece com ❌ no GitHub e a lista do que corrigir fica no log. Para rodar
 antes de publicar: `node scripts/verificar.mjs` (só precisa de Node e git, sem instalar nada).
+
+### Smoke test no navegador (Playwright)
+
+Depois da checagem, um segundo job (`fumaca`) abre o site num Chromium de verdade, no **celular
+(375 px)** e no **computador (1280 px)**, e confere `/`, `/cultos`, `/biblia/joao/3`, `/palavra`,
+`/ebd`, `/harpa`, `/biblioteca`, `/videos`, `/podcast` e `/privacidade`:
+
+- cada página mostra o `h1` certo e não vira "Página não encontrada";
+- nenhum erro no console nem erro de JavaScript (falha de arquivo de **terceiros**, como a
+  miniatura de um vídeo removido do YouTube, não conta);
+- link direto na primeira visita abre sem vinheta e nada fica na frente da página; no início, a
+  vinheta completa aparece só na primeira vez e depois vem a curta.
+
+É **só leitura**: nenhum formulário, nenhum "Quero este livro", nada do painel. Os dados vêm do
+banco de produção pela internet, em `localhost`, então o modo só leitura do `js/config.js` já
+barra qualquer gravação, e o teste ainda falha se alguma for tentada. Quando falha no GitHub, o
+relatório (com foto da tela) fica em *Actions → a execução → Artifacts → relatorio-playwright*.
+
+No computador (Node 22 ou mais novo):
+
+```bash
+npm ci                              # uma vez (instala o Playwright e o serve do package.json)
+npx playwright install chromium     # uma vez (baixa o navegador)
+npx playwright test                 # sobe o npx serve -s . -l 5500 sozinho (ou usa o que já estiver na 5500)
+npx playwright test --project=celular    # só no celular
+npx playwright show-report          # relatório da última execução
+```
+
+Os testes ficam em `tests/fumaca.spec.mjs` e a configuração em `playwright.config.mjs`. Página nova
+no site: acrescente a rota na lista `ROTAS` do teste.
 
 ## Trocar o domínio
 

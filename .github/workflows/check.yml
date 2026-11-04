@@ -1,7 +1,12 @@
-# Checagem automática a cada push (e em pull requests): sintaxe do JS,
-# arquivos citados pelo site e procura de segredos. A lógica fica em
-# scripts/verificar.mjs, que também roda no computador:
+# Checagem automática a cada push (e em pull requests):
+#  1. checar: sintaxe do JS, arquivos citados pelo site, rotas, migrations e
+#     procura de segredos (scripts/verificar.mjs, sem dependências).
+#  2. fumaca: smoke test no navegador (Playwright, tests/fumaca.spec.mjs),
+#     só depois da checagem: abre as páginas principais no celular e no
+#     computador, só leitura, com o banco de produção pela internet.
+# No computador:
 #   node scripts/verificar.mjs
+#   npm ci && npx playwright install chromium && npx playwright test
 name: Checagem
 
 on:
@@ -22,3 +27,30 @@ jobs:
           node-version: 22
       - name: Sintaxe, arquivos citados e segredos
         run: node scripts/verificar.mjs
+
+  fumaca:
+    name: Smoke test (Playwright)
+    needs: checar
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Dependências dos testes
+        run: npm ci
+      - name: Navegador (Chromium)
+        run: npx playwright install --with-deps chromium
+      - name: Smoke test
+        run: npx playwright test
+      - name: Relatório (quando falha)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-playwright
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

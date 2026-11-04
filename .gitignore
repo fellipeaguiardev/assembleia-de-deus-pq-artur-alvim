@@ -25,3 +25,8 @@ node_modules/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Testes (Playwright): resultados e relatórios gerados
+test-results/
+playwright-report/
+blob-report/

@@ -96,9 +96,9 @@
     <link rel="stylesheet" href="/css/biblioteca.css" />
   </head>
   <body>
-    <!-- Tela de abertura: vinheta de 6 s sempre que o site é aberto (curta só quando
-         o site recarrega sozinho para atualizar; ver js/intro.js) e some quando os
-         dados carregam (js/main.js). -->
+    <!-- Tela de abertura: vinheta de 6 s só na primeira visita à página inicial,
+         curta nas outras aberturas do início e nenhuma em link direto (o modo vem do
+         script do <head>; ver js/intro.js). Some quando os dados carregam (js/main.js). -->
     <div id="splash" role="status" aria-label="Carregando o site">
       <div class="intro-bg" aria-hidden="true"></div>
       <canvas class="intro-particles" aria-hidden="true"></canvas>
