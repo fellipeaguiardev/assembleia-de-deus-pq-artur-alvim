@@ -476,7 +476,7 @@ async function dbWrite(promise, okMsg, errMsg = "Erro ao salvar.") {
   const { data: result, error } = await promise;
   if (error) {
     console.error(errMsg, error);
-    showToast(errMsg, "error");
+    if (error.code !== "LOCAL_READONLY") showToast(errMsg, "error"); // só leitura: o aviso próprio já apareceu
     return null;
   }
   if (okMsg) showToast(okMsg, "success");

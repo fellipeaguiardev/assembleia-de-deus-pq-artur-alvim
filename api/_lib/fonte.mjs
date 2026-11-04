@@ -174,8 +174,11 @@ export function quartersToSync(today = spToday()) {
 }
 
 /* ---------- Banco (Supabase) ---------- */
-export const SUPABASE_URL = "https://rtludbkopxbhiwlwycid.supabase.co";
-export const SUPABASE_KEY = "sb_publishable_eRsl3xo3p7Qe_DanIB4Z7A_5V6Q0p9m"; // chave pública (a mesma do site)
+// Projeto do Supabase das funções de api/: variáveis SUPABASE_URL e SUPABASE_KEY
+// (chave PUBLICÁVEL, a mesma do site), para testar com `npx vercel dev` num banco
+// de teste. Sem elas, a produção.
+export const SUPABASE_URL = (process.env.SUPABASE_URL || "https://rtludbkopxbhiwlwycid.supabase.co").replace(/\/+$/, "");
+export const SUPABASE_KEY = process.env.SUPABASE_KEY || "sb_publishable_eRsl3xo3p7Qe_DanIB4Z7A_5V6Q0p9m"; // chave pública (a mesma do site)
 
 export async function rpc(fn, args, bearer = SUPABASE_KEY) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {

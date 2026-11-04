@@ -520,8 +520,9 @@ Passo a passo (ex.: um projeto de teste):
    `npx supabase functions deploy sync-youtube --project-ref <ref> --use-api` (antes, uma vez:
    `npx supabase login`); depois rode o bloco 11 do baseline com a URL do projeto, a chave anon e
    o segredo.
-6. **Apontar o site**: localmente, pelo `js/config.local.js` (veja "Rodar localmente"). As funções
-   de `api/` usam o projeto fixo em `api/_lib/fonte.mjs` (`SUPABASE_URL` e `SUPABASE_KEY`).
+6. **Apontar o site**: localmente, pelo `js/config.local.json` (veja "Rodar localmente"). As funções
+   de `api/` leem as variáveis de ambiente `SUPABASE_URL` e `SUPABASE_KEY` (sem elas, a produção;
+   veja `api/_lib/fonte.mjs`).
 
 Não entram no baseline (refaça à mão num projeto novo): dados, contas, arquivos do Storage,
 segredos e as configurações do painel do Supabase dos passos 3 e 5. **Nunca rode o baseline no
@@ -529,24 +530,37 @@ projeto de produção**: o primeiro comando (`create schema private`) falha lá 
 
 ## Rodar localmente
 
-> ⚠️ **Por padrão, o site rodando no computador usa o banco de PRODUÇÃO.** Tudo o que for salvo
-> pelo painel em `localhost` (cultos, eventos, livros, empréstimos…) muda o site no ar. Uma faixa
-> vermelha **"COMPUTADOR LIGADO AO BANCO DE PRODUÇÃO"** aparece no topo para lembrar disso.
+> 🔒 **No computador, o painel abre em modo só leitura quando o banco é o de PRODUÇÃO.** Sem
+> `js/config.local.json` (ou com ele apontando para a produção), dá para entrar no painel e ver tudo,
+> mas nenhuma gravação sai do navegador: salvar, apagar, enviar arquivo, sincronizar, o pedido de
+> oração e o "Quero este livro" param com o aviso **"Computador em modo só leitura: nada foi gravado
+> na produção"**. A faixa vermelha no topo diz **"COMPUTADOR NO BANCO DE PRODUÇÃO · SÓ LEITURA"**.
+> O login e a liberação do painel por e-mail continuam funcionando. O site publicado não muda nada.
 
-Para testar sem mexer na produção, aponte para um projeto de teste do Supabase (crie com o
-baseline, veja "Recriar o banco do zero"):
+**Para testar gravando**, aponte para um projeto de teste do Supabase (crie com o baseline, veja
+"Recriar o banco do zero"):
 
 1. Copie `js/config.local.example.json` para `js/config.local.json` (esse arquivo fica fora do
    git e nunca é publicado).
 2. Preencha `SUPABASE_URL` e `SUPABASE_KEY` (a chave **publicável**, `sb_publishable_…`) do projeto
    de teste.
-3. Recarregue a página: a faixa fica amarela, **"AMBIENTE DE TESTE · banco <projeto>"**.
+3. Recarregue a página: a faixa fica amarela, **"AMBIENTE DE TESTE · banco <projeto>"**, e tudo
+   grava nesse projeto.
+
+**Para gravar na produção a partir do computador** (só quando for preciso mesmo), o
+`js/config.local.json` precisa dizer isso com todas as letras:
+
+```json
+{ "PERMITIR_GRAVAR_PRODUCAO": true }
+```
+
+A faixa vermelha muda para **"ATENÇÃO: COMPUTADOR GRAVANDO NO BANCO DE PRODUÇÃO"**. Tudo o que for
+salvo assim muda o site no ar. Apague a linha (ou o arquivo) quando terminar.
 
 O arquivo só é lido em `localhost`/`127.0.0.1`; no site publicado ele é ignorado mesmo se existir.
-Para voltar à produção, apague o `js/config.local.json`. Se o arquivo tiver erro, ele é ignorado (a
-faixa volta a ficar vermelha). As funções de `api/` (formulário, EBD, liberação do painel) continuam
-no projeto fixo em `api/_lib/fonte.mjs`; o CSP do `vercel.json` também só libera o projeto de
-produção, então use o `npx serve` abaixo (sem esses cabeçalhos) para o banco de teste.
+Se o arquivo tiver erro, ele é ignorado (volta o modo só leitura na produção). O CSP do
+`vercel.json` só libera o projeto de produção, então use o `npx serve` abaixo (sem esses
+cabeçalhos) para o banco de teste.
 
 ```bash
 npx serve -s . -l 5500
@@ -555,8 +569,11 @@ npx serve -s . -l 5500
 
 O `-s` faz qualquer endereço (ex.: `/biblia/joao/3`) abrir o `index.html`, como na Vercel.
 
-O formulário de oração e a sincronização da EBD usam as funções de `api/`; localmente use
-`npx vercel dev` para testá-las.
+O formulário de oração, a liberação do painel e as sincronizações (EBD, biblioteca, notícias da
+sede) usam as funções de `api/`; localmente use `npx vercel dev` para testá-las. Elas leem
+`SUPABASE_URL` e `SUPABASE_KEY` do ambiente (a chave **publicável**) e, sem elas, usam a produção.
+Para o projeto de teste, ponha as duas variáveis num arquivo `.env` (fora do git) antes do
+`npx vercel dev`.
 
 ## Publicar
 
