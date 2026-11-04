@@ -167,7 +167,7 @@ volta com status **404** (com `noindex` e a mesma página "não encontrada"), as
 existe; o roteador do `js/site.js` usa a mesma lista, e o `scripts/verificar.mjs` confere que cada
 página dela tem o seu `case` no roteador. Se a função falhar ou demorar mais de
 2,5 s, ela devolve o `index.html` original (nunca uma página de erro). Cache curto na Vercel
-(`s-maxage=300, stale-while-revalidate`). Ligada desde 04/11/2026 (`"destination":
+(`s-maxage=300, stale-while-revalidate`). Ligada desde 03/11/2026 (`"destination":
 "/api/pagina?caminho=/$1"` no `rewrites`). Para conferir o que o WhatsApp vê:
 `curl -s -A "WhatsApp/2.23" https://assembleia-de-deus-pq-artur-alvim.vercel.app/biblia/joao/3/16 | grep -i "og:"`.
 Para desligar, volte o `destination` para `/index.html` e publique.
@@ -461,7 +461,7 @@ update private.admin_access
 ## Privacidade (LGPD)
 
 - O site não usa cookies de rastreamento nem de publicidade.
-- **Estatísticas de visitas (Vercel Web Analytics)**, desligadas até você ligar (veja abaixo). Sem
+- **Estatísticas de visitas (Vercel Web Analytics)**, ligadas desde 03/11/2026 (veja abaixo). Sem
   cookies e sem nada guardado no aparelho: contam a página (sem o `?…` e o `#…` do endereço), o
   site de origem, o país e o tipo de aparelho, sistema e navegador. Só rodam no endereço de
   `SITE_URL`: nunca no computador, nos endereços de teste da Vercel nem no painel (aberto direto
@@ -475,19 +475,21 @@ update private.admin_access
 - **Prazos de guarda automáticos:** `supabase/historico/20261014_lgpd_limpeza.sql` agenda no pg_cron uma
   limpeza diária (pedidos de livros encerrados há 6 meses; registros de entrada no painel com mais de 30 dias).
   Rode no *SQL Editor* do Supabase; sem ele a limpeza só acontece quando o painel é aberto.
-- **Ligar as estatísticas** (uma vez):
-  1. Vercel → projeto **assembleia-de-deus-pq-artur-alvim** → aba **Analytics** → **Enable** (o
-     plano Hobby inclui uma cota mensal de eventos; o uso aparece em *Usage*, no painel da Vercel).
-  2. A Vercel mostra o trecho para sites em HTML com o caminho do script, algo como
-     `<script defer src="/abc123/script.js">`. Copie só o caminho (`/abc123/script.js`) para
-     `ANALYTICS_SCRIPT` em `js/config.js` e publique (`bash scripts/publicar.sh`).
-  3. Confira: `curl -sI https://assembleia-de-deus-pq-artur-alvim.vercel.app/abc123/script.js`
-     precisa responder `content-type: application/javascript`. Se vier `text/html`, o rewrite do
-     `vercel.json` está mandando o caminho para o `index.html`: o caminho precisa entrar na
-     exceção do rewrite (`_vercel/` já está lá). O CSP já permite (`script-src 'self'` e
-     `connect-src 'self'`: o script e o envio das visitas ficam no próprio endereço do site).
-  4. Depois de alguns minutos, as visitas aparecem na aba Analytics. Para desligar: deixe
-     `ANALYTICS_SCRIPT: ""` e publique (e, se quiser, **Disable** na mesma aba).
+- **Como as estatísticas estão ligadas** (feito em 03/11/2026):
+  1. Vercel → projeto **assembleia-de-deus-pq-artur-alvim** → aba **Analytics** → **Enable**. A
+     Vercel só serve o script **depois da publicação seguinte**. O plano Hobby inclui uma cota
+     mensal de eventos; o uso aparece em *Usage*.
+  2. `ANALYTICS_SCRIPT: "/_vercel/insights/script.js"` em `js/config.js`. É o caminho padrão para
+     site sem framework (o mesmo que o pacote `@vercel/analytics` usa quando não há build). As
+     instruções de `npm i @vercel/analytics` que a aba Analytics mostra são para projetos com
+     framework e **não se aplicam** aqui: não há nada para instalar.
+  3. Conferir: `curl -sI https://assembleia-de-deus-pq-artur-alvim.vercel.app/_vercel/insights/script.js`
+     responde `content-type: application/javascript`. O caminho `_vercel/` já fica fora do rewrite
+     do `vercel.json`, o service worker não guarda nada de lá e o CSP já permite (`script-src 'self'`
+     e `connect-src 'self'`: o script e o envio das visitas ficam no próprio endereço do site).
+  4. As visitas aparecem na aba Analytics em alguns minutos. Para desligar: `ANALYTICS_SCRIPT: ""`
+     e publique (e, se quiser, **Disable** na mesma aba). A política de privacidade acompanha
+     sozinha.
 - **Pedidos de oração não ficam guardados no site:** `api/contato.mjs` só valida e manda o
   e-mail para a equipe (nada em banco ou em painel de formulários).
 
