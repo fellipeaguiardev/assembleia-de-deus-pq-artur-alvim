@@ -31,6 +31,12 @@ window.APP_CONFIG = {
   // Brasão padrão (usado quando "logoUrl" não estiver nas configurações).
   DEFAULT_LOGO: "/assets/img/brasao.svg", // brasão em vetor (o mesmo da abertura)
 
+  // Estatísticas de visitas (Vercel Web Analytics, sem cookies). Vazio = desligado.
+  // Para ligar: Vercel → projeto → Analytics → Enable, e cole aqui o caminho do
+  // script que aparece lá (ex.: "/abc123/script.js"). Só roda no endereço de
+  // SITE_URL, nunca no computador nem no painel (loadAnalytics em js/core.js).
+  ANALYTICS_SCRIPT: "",
+
   // Versão publicada. O script de publicação troca "dev" pela data/hora do
   // envio (a mesma de /version.json e do cache do sw.js); o site compara as
   // duas para avisar quando há versão nova.

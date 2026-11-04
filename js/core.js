@@ -763,6 +763,41 @@ function announce(text) {
    O código do painel (js/admin*.js e css/admin.css, ~200 KB) só é baixado
    quando alguém abre /admin. Os scripts rodam na ordem da lista (admin.js
    primeiro); o painel só aparece depois que o CSS dele chegou. */
+/* ---------- Estatísticas de visitas (Vercel Web Analytics) ----------
+   Sem cookies e sem nada guardado no aparelho. Só liga quando
+   APP_CONFIG.ANALYTICS_SCRIPT tem o caminho do script e o site está no
+   endereço de APP_CONFIG.SITE_URL (o computador e os endereços de teste da
+   Vercel ficam de fora). Nunca conta o painel: aberto direto em /admin, o
+   script nem carrega; indo do site para o painel, a visita é descartada.
+   O endereço vai sem "?…" e sem "#…". Navegador com "não rastrear" (Do Not
+   Track ou Global Privacy Control) não envia nada. */
+const ADMIN_PATH = /^\/admin(\/|$)/;
+function loadAnalytics() {
+  const src = window.APP_CONFIG.ANALYTICS_SCRIPT;
+  if (!src || window.va) return;
+  let host = "";
+  try {
+    host = new URL(window.APP_CONFIG.SITE_URL).hostname;
+  } catch {}
+  if (location.hostname !== host || ADMIN_PATH.test(location.pathname)) return;
+  if (navigator.globalPrivacyControl === true || navigator.doNotTrack === "1") return;
+  window.va = function () {
+    (window.vaq = window.vaq || []).push(arguments);
+  };
+  window.va("beforeSend", (event) => {
+    try {
+      const u = new URL(event.url);
+      return ADMIN_PATH.test(u.pathname) ? null : { ...event, url: u.origin + u.pathname };
+    } catch {
+      return null;
+    }
+  });
+  const s = document.createElement("script");
+  s.defer = true;
+  s.src = src;
+  document.head.appendChild(s);
+}
+
 const ADMIN_ASSETS = {
   css: "/css/admin.css",
   js: ["/js/admin.js", "/js/admin-ebd.js", "/js/admin-biblioteca.js", "/js/admin-podcast.js"],

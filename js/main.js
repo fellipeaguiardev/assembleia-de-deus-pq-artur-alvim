@@ -55,6 +55,7 @@ INTRO.done.then(() => !siteReady && document.documentElement.classList.add("intr
     INTRO.done.then(() => {
       requestAnimationFrame(hideSplash);
       setTimeout(renderCookieBanner, 900);
+      loadAnalytics(); // só no site publicado e fora do painel (js/core.js)
     });
   }
 })();

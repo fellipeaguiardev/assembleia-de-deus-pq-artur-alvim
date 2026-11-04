@@ -81,6 +81,9 @@ self.addEventListener("fetch", (event) => {
   if (url.pathname.startsWith("/api/") || url.pathname === "/version.json" || req.headers.has("authorization")) return;
   // Configuração local (só no computador) nunca fica guardada.
   if (url.pathname.startsWith("/js/config.local")) return;
+  // Scripts da própria Vercel (estatísticas de visitas, em /_vercel/ ou num caminho
+  // próprio do projeto): fora de /js e /vendor, nada de cache.
+  if (sameOrigin && (url.pathname.startsWith("/_vercel/") || (req.destination === "script" && !/^\/(js|vendor)\//.test(url.pathname)))) return;
 
   if (sameOrigin && (req.destination === "image" || req.destination === "font" || url.pathname.startsWith("/data/"))) {
     event.respondWith(cacheFirst(req));

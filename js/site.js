@@ -78,9 +78,10 @@ function migrateRenamedRoute() {
 const routeParam = (route) => route.split("/").slice(1).join("/");
 
 // Converte links antigos (/#eventos, /#noticias/slug, /#admin) para o formato novo.
+// Só na raiz: numa página como /cultos#algo, o # é âncora da própria página.
 function migrateLegacyHash() {
   const raw = location.hash.replace(/^#/, "");
-  if (!raw || raw === "main") return false;
+  if (!raw || raw === "main" || !/^\/(index\.html)?$/.test(location.pathname)) return false;
   let route;
   try {
     route = decodeURIComponent(raw);

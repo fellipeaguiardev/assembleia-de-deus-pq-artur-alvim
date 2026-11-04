@@ -2,13 +2,16 @@
    PRIVACIDADE (LGPD) — consentimento de cookies, bloqueio de
    conteúdo de terceiros e página de Política de Privacidade
    ------------------------------------------------------------
-   O site em si não usa cookies de rastreamento nem analytics.
+   O site em si não usa cookies de rastreamento nem de publicidade.
+   As estatísticas de visitas (Vercel Web Analytics, quando
+   APP_CONFIG.ANALYTICS_SCRIPT está preenchido) não usam cookies; a
+   política abaixo muda o texto sozinha conforme estejam ligadas.
    Quem pode usar cookies são os conteúdos incorporados de
    terceiros (YouTube, Spotify e Google Maps). Por isso eles só
    carregam depois que a pessoa permite.
    ============================================================ */
 const CONSENT_KEY = "cookie-consent-v1";
-const PRIVACY_UPDATED = "2026-10-14";
+const PRIVACY_UPDATED = "2026-11-03";
 
 let consent = readConsent();
 
@@ -146,6 +149,7 @@ function privacyContactHTML() {
 
 function privacyPageHTML() {
   const c = data.church;
+  const stats = !!window.APP_CONFIG.ANALYTICS_SCRIPT; // estatísticas de visitas ligadas?
   const updated = fmtDateLong(PRIVACY_UPDATED);
   return (
     pageHeroHTML("Transparência", "Política de Privacidade", "Como tratamos seus dados, em linguagem simples e de acordo com a LGPD (Lei 13.709/2018).") +
@@ -163,7 +167,17 @@ function privacyPageHTML() {
       <ul>
         <li><strong>Navegação:</strong> o site não usa cookies de rastreamento, publicidade ou estatísticas. A empresa de hospedagem
         (Vercel) registra dados técnicos de acesso, como endereço IP e navegador, por segurança e para manter o site no ar.
-        <em>Base legal: legítimo interesse (art. 7º, IX).</em></li>
+        <em>Base legal: legítimo interesse (art. 7º, IX).</em></li>${
+          stats
+            ? `
+        <li><strong>Estatísticas de visitas:</strong> para saber quantas pessoas visitam cada página, usamos o
+        <strong>Vercel Web Analytics</strong>, sem cookies e sem guardar nada no seu aparelho. Ele conta a página visitada (sem o que
+        vem depois de “?” no endereço), o site de onde você veio, o país e o tipo de aparelho, sistema e navegador. Não identifica
+        quem você é: o endereço IP serve só para a Vercel formar um código provisório, trocado todo dia, e não é guardado. Vemos
+        apenas totais. O painel administrativo não é contado, e nada é enviado se o seu navegador pede para não rastrear
+        (“Do Not Track” ou “Global Privacy Control”). <em>Base legal: legítimo interesse em melhorar o site (art. 7º, IX).</em></li>`
+            : ""
+        }
         <li><strong>Formulário de pedido de oração e contato:</strong> nome, forma de contato e mensagem, apenas se você escolher enviar.
         Um pedido de oração pode revelar informações sobre a sua fé, que a LGPD considera <em>dado sensível</em>. Por isso só tratamos
         esses dados com o seu consentimento específico, marcado no próprio formulário. <em>Base legal: consentimento (art. 7º, I, e
@@ -184,7 +198,7 @@ function privacyPageHTML() {
       <ul>
         <li>Responder ao seu contato e orar pelo seu pedido;</li>
         <li>Controlar os empréstimos da Biblioteca dos Jovens (devoluções, renovações e fila de espera);</li>
-        <li>Manter o site seguro e funcionando;</li>
+        <li>Manter o site seguro e funcionando${stats ? " e saber, em números totais, quais páginas são mais usadas" : ""};</li>
         <li>Divulgar cultos, eventos, vídeos, notícias e o podcast da igreja.</li>
       </ul>
       <p>Não vendemos, não alugamos e não usamos seus dados para publicidade.</p>
@@ -212,7 +226,7 @@ function privacyPageHTML() {
 
       <h2>5. Com quem compartilhamos</h2>
       <p>Usamos serviços de terceiros para o site funcionar: <strong>Supabase</strong> (banco de dados e arquivos, servidores em São Paulo),
-      <strong>Vercel</strong> (hospedagem do site, envio do formulário e redução das imagens das capas), <strong>Resend</strong>
+      <strong>Vercel</strong> (hospedagem do site, envio do formulário, redução das imagens das capas${stats ? " e estatísticas de visitas" : ""}), <strong>Resend</strong>
       (entrega do e-mail do formulário à equipe, nos Estados Unidos), <strong>Spotify for Creators</strong> (áudio dos episódios do
       podcast, quando você aperta play) e, quando você permite, <strong>YouTube/Google</strong> e <strong>Spotify</strong>.
       As miniaturas (imagens) dos vídeos vêm dos servidores do YouTube, que recebem o endereço IP e o navegador de quem abre a página, sem cookies.
