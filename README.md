@@ -414,6 +414,16 @@ update private.admin_access
   ligar: passo a passo em `supabase/migrations/20261019_sync_youtube_segredo.sql` (gerar o segredo,
   `npx supabase secrets set`, rodar o SQL, `npx supabase functions deploy … --use-api`, nessa ordem).
 
+## Acessibilidade
+
+- **Foco ao trocar de página**: depois de cada navegação interna, o foco vai para o `h1` da página
+  (sem contorno), para o leitor de tela anunciar a página nova; sem `h1`, para o `<main>`. Em link de
+  versículo ou de doação, vai para o alvo da rolagem. Páginas que carregam o conteúdo depois (Bíblia,
+  EBD, Palavra, Harpa, Biblioteca) passam o foco para o `h1` quando ele chega, se a pessoa ainda não
+  mexeu. Com uma janela aberta (ex.: episódio do podcast), o foco fica na janela. No carregamento
+  inicial o foco não é mexido.
+- Link "Pular para o conteúdo", janelas que prendem o foco e "reduzir movimento" respeitado.
+
 ## Privacidade (LGPD)
 
 - O site não usa cookies de rastreamento nem analytics.

@@ -134,12 +134,14 @@ function onRouteChange() {
     Promise.race([ensureFullList(table), new Promise((r) => setTimeout(r, 1200))]).then(() => {
       if (token !== routeWaitToken || currentRoute() !== route) return;
       renderSite();
+      routeFocusPending = true;
       afterRoute(route);
     });
     return;
   }
   routeWaitToken++;
   renderSite();
+  routeFocusPending = true;
   afterRoute(route);
 }
 let routeWaitToken = 0;
@@ -170,6 +172,34 @@ function scrollToTop() {
 // Chamado quando o conteúdo de uma página carrega depois (Bíblia, EBD, Palavra).
 function settleTop() {
   if (!userScrolledSinceNav && performance.now() - navStartedAt < 4000 && window.scrollY > 0) window.scrollTo(0, 0);
+  focusRouteStart();
+}
+
+/* ---------- Foco ao trocar de página ----------
+   Para o leitor de tela anunciar a página nova: depois de cada navegação
+   interna (não no carregamento inicial), o foco vai para o h1; sem h1, para o
+   <main>. Nas rotas com âncora (versículo, doação), vai para o alvo da
+   rolagem. Páginas que carregam o conteúdo depois (Bíblia, EBD…) passam o
+   foco para o h1 quando ele chega, se a pessoa ainda não mexeu no foco.
+   Com uma janela aberta (ex.: episódio do podcast), o foco fica nela. */
+let routeFocusPending = false;
+
+function focusRouteStart(target) {
+  if (!routeFocusPending) return;
+  if (document.querySelector("#modalRoot [data-modal]")) return void (routeFocusPending = false);
+  const main = document.getElementById("main");
+  const active = document.activeElement;
+  if (active && active !== document.body && active !== main && !active.classList.contains("focus-target")) {
+    routeFocusPending = false; // a pessoa já está em outro lugar: não rouba o foco
+    return;
+  }
+  const el = target || main?.querySelector("h1");
+  const alvo = el || main;
+  if (!alvo) return;
+  if (!alvo.hasAttribute("tabindex")) alvo.setAttribute("tabindex", "-1");
+  alvo.classList.add("focus-target");
+  alvo.focus({ preventScroll: true });
+  if (el) routeFocusPending = false; // sem h1 ainda: espera o conteúdo chegar
 }
 
 function afterRoute(route) {
@@ -178,13 +208,18 @@ function afterRoute(route) {
   if (base === "doacoes" && param) {
     const el = document.getElementById("doacao-" + param);
     if (el) {
-      requestAnimationFrame(() => el.scrollIntoView({ behavior: "smooth", block: "start" }));
+      requestAnimationFrame(() => {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        focusRouteStart(el);
+      });
       return;
     }
   }
   // Na Bíblia, a rolagem até o versículo é feita depois que o capítulo carrega.
   scrollToTop();
   if (base === "podcast" && param) openPodcastModal(param);
+  // Link de versículo: o foco vai para o versículo quando o capítulo é montado (js/bible.js).
+  if (!(base === "biblia" && param.split("/")[2])) requestAnimationFrame(() => focusRouteStart());
 }
 
 /* ============================================================

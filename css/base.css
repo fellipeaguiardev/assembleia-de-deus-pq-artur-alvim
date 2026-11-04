@@ -450,8 +450,10 @@ main.page-enter {
   }
 }
 
-/* Alvo do link "Pular para o conteúdo": recebe foco sem mostrar contorno */
-main:focus {
+/* Alvo do link "Pular para o conteúdo" e do foco depois de trocar de página
+   (h1, versículo, doação): recebe o foco para o leitor de tela, sem contorno */
+main:focus,
+.focus-target:focus {
   outline: none;
 }
 

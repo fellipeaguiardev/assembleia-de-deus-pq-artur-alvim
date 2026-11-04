@@ -442,7 +442,11 @@ function renderBibleChapter(root, book, chapter, verses, verseSpec) {
   root.dataset.chapter = String(chapter);
   root.dataset.verses = verseSpec || "";
   if (first) {
-    requestAnimationFrame(() => document.getElementById("v" + first)?.scrollIntoView({ block: "center", behavior: reduceMotion() ? "auto" : "smooth" }));
+    requestAnimationFrame(() => {
+      const alvo = document.getElementById("v" + first);
+      alvo?.scrollIntoView({ block: "center", behavior: reduceMotion() ? "auto" : "smooth" });
+      focusRouteStart(alvo); // leitor de tela: começa pelo versículo do link
+    });
   } else {
     settleTop();
   }
