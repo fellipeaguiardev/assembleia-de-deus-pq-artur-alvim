@@ -54,7 +54,7 @@
   "rewrites": [
     {
       "source": "/((?!api/|assets/|css/|js/|data/|vendor/|_vercel/).*)",
-      "destination": "/index.html"
+      "destination": "/api/pagina?caminho=/$1"
     }
   ],
   "images": {

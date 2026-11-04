@@ -143,8 +143,10 @@ Cada página tem um endereço próprio: `/cultos`, `/eventos`, `/noticias/<slug>
 `/primeira-visita`, `/biblia`, `/biblia/joao/3`, `/biblia/joao/3/16-18`, `/harpa`, `/harpa/15`,
 `/biblioteca`, `/biblioteca/<id>`, `/podcast/<id>`,
 `/privacidade`, `/admin`. Os links antigos com `#` (ex.: `/#eventos`) continuam funcionando e
-são convertidos sozinhos. Na Vercel, a regra `rewrites` do `vercel.json` faz todos esses endereços
-abrirem o `index.html` (arquivos que existem são servidos antes).
+são convertidos sozinhos. Na Vercel, a regra `rewrites` do `vercel.json` manda todos esses endereços
+para a função `api/pagina.mjs`, que devolve o `index.html` com o título e a descrição da página
+(veja abaixo). Arquivos que existem são servidos antes, inclusive a página inicial (`/` é o próprio
+`index.html`, que já tem o título e a descrição dela).
 
 ### Preview no WhatsApp (título e descrição no HTML)
 
@@ -165,9 +167,10 @@ volta com status **404** (com `noindex` e a mesma página "não encontrada"), as
 existe; o roteador do `js/site.js` usa a mesma lista, e o `scripts/verificar.mjs` confere que cada
 página dela tem o seu `case` no roteador. Se a função falhar ou demorar mais de
 2,5 s, ela devolve o `index.html` original (nunca uma página de erro). Cache curto na Vercel
-(`s-maxage=300, stale-while-revalidate`). Para testar sem a rewrite: `/api/pagina?caminho=/biblia/joao/3/16`.
-**Pendente:** a função só atende as páginas quando o `rewrites` do `vercel.json` apontar para ela
-(`"destination": "/api/pagina?caminho=/$1"`).
+(`s-maxage=300, stale-while-revalidate`). Ligada desde 04/11/2026 (`"destination":
+"/api/pagina?caminho=/$1"` no `rewrites`). Para conferir o que o WhatsApp vê:
+`curl -s -A "WhatsApp/2.23" https://assembleia-de-deus-pq-artur-alvim.vercel.app/biblia/joao/3/16 | grep -i "og:"`.
+Para desligar, volte o `destination` para `/index.html` e publique.
 
 ## Abertura (vinheta)
 
