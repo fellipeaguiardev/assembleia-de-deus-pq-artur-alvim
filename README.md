@@ -156,8 +156,11 @@ o `og:description`, o `og:url` e o `canonical` (montados em `api/_lib/paginas.mj
 | `/noticias/<slug>`, `/eventos`, `/ebd/…` | Supabase com a chave publicável, só leitura (RLS); notícia da sede aponta o `canonical` para o original |
 | Demais rotas | `ROUTE_META` |
 
-O `ROUTE_META`, a lista da Palavra Diária e a lista de páginas que existem ficam em
-`js/compartilhado.js`, lido igual pelo navegador e pelo servidor. Se a função falhar ou demorar mais de
+O `ROUTE_META`, a lista da Palavra Diária e a lista de páginas que existem (`ROUTE_BASES`) ficam em
+`js/compartilhado.js`, lido igual pelo navegador e pelo servidor. **Endereço que o site não conhece**
+volta com status **404** (com `noindex` e a mesma página "não encontrada"), assim como notícia que não
+existe; o roteador do `js/site.js` usa a mesma lista, e o `scripts/verificar.mjs` confere que cada
+página dela tem o seu `case` no roteador. Se a função falhar ou demorar mais de
 2,5 s, ela devolve o `index.html` original (nunca uma página de erro). Cache curto na Vercel
 (`s-maxage=300, stale-while-revalidate`). Para testar sem a rewrite: `/api/pagina?caminho=/biblia/joao/3/16`.
 **Pendente:** a função só atende as páginas quando o `rewrites` do `vercel.json` apontar para ela

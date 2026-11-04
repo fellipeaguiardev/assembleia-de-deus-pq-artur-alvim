@@ -260,6 +260,7 @@ function updateMeta(route) {
       return;
     }
   }
+  if (base === "admin") return setMeta("Painel", ROUTE_META.home[1], "/admin", { noindex: true });
   const meta = ROUTE_META[base];
   if (meta) return setMeta(meta[0], meta[1]);
   setMeta("Página não encontrada", ROUTE_META.home[1], location.pathname, { noindex: true });
@@ -296,6 +297,10 @@ function renderSite() {
 function pageHTML(route) {
   const base = routeBase(route);
   const param = routeParam(route);
+  // Páginas que existem: uma lista só (js/compartilhado.js), a mesma que a função
+  // api/pagina.mjs usa para responder 404. O scripts/verificar.mjs confere que
+  // cada uma tem o seu "case" aqui.
+  if (!SITE_SHARED.ROUTE_BASES.includes(base)) return notFoundPageHTML();
   switch (base) {
     case "eventos":
       return eventsPageHTML();

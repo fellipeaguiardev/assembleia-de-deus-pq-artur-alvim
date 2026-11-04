@@ -9,6 +9,8 @@
 //     também os /js/… e /css/… citados no próprio JS (ex.: o painel,
 //     carregado sob demanda por js/core.js). version.json fica de fora:
 //     é gerado na publicação.
+//  2b. Rotas: as páginas de ROUTE_BASES (js/compartilhado.js) e os "case"
+//     do roteador (pageHTML em js/site.js) são as mesmas.
 //  3. Segredos: chave secreta do Supabase (sb_secret_…), JWT com papel
 //     service_role, "service_role" com valor, blocos -----BEGIN … e
 //     arquivos .env no git.
@@ -104,6 +106,16 @@ for (const arq of readdirSync(join(RAIZ, "js")).filter((n) => n.endsWith(".js"))
   nJs += conferir(`js/${arq}`, valores);
 }
 console.log(`Arquivos citados: ${nHtml} no index.html, ${nSw} no sw.js, ${nManifest} no manifest, ${nJs} no JS.`);
+
+// ---------- 2b) Rotas: a lista única (js/compartilhado.js) bate com o roteador ----------
+await import(new URL("../js/compartilhado.js", import.meta.url));
+const bases = globalThis.SITE_SHARED?.ROUTE_BASES || [];
+const roteador = ler("js/site.js");
+const corpo = roteador.slice(roteador.indexOf("function pageHTML("), roteador.indexOf("function notFoundPageHTML("));
+const casos = new Set([...corpo.matchAll(/case\s+"([^"]+)"/g)].map((m) => m[1]));
+for (const b of bases) if (!casos.has(b)) falhar("rotas", `"${b}" está em ROUTE_BASES (js/compartilhado.js) mas não tem case em pageHTML (js/site.js)`);
+for (const c of casos) if (!bases.includes(c)) falhar("rotas", `pageHTML (js/site.js) tem case "${c}", que falta em ROUTE_BASES (js/compartilhado.js)`);
+console.log(`Rotas: ${bases.length} páginas na lista única, todas no roteador.`);
 
 // ---------- 3) Segredos ----------
 // Os padrões são montados em partes para este arquivo não acusar a si mesmo.
