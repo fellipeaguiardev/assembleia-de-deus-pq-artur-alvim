@@ -23,9 +23,10 @@
 -- Segredos: aparecem como <...> nos blocos 10 e 11; troque só na cópia
 -- colada no SQL Editor (ou deixe para depois: sem eles, nada fica aberto).
 --
--- Diferença intencional em relação à produção: as políticas de podcasts
--- (bloco 6), já na regra de todas as outras tabelas; a produção é corrigida
--- por 20261019_podcasts_admin.sql.
+-- Políticas de podcasts (bloco 6): já na regra de todas as outras tabelas.
+-- Na geração (19/10) a produção ainda estava diferente; a correção
+-- (20261019_podcasts_admin.sql) foi rodada e, conferido em 03/11/2026, a
+-- produção ficou igual a este arquivo.
 --
 -- Num banco criado por este arquivo, as migrations com data até
 -- 20261019_sync_youtube_segredo.sql NÃO precisam ser rodadas: o que elas fazem

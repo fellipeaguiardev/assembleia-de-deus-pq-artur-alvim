@@ -378,9 +378,19 @@ select u.email, a.created_at
  order by u.email;
 ```
 
-**Pendente:** na produção, a tabela `podcasts` ainda grava pela conta de um e-mail fixo, sem a
-liberação por e-mail (políticas criadas pelo painel do Supabase). A correção, que põe podcasts na
-mesma regra das outras tabelas, está em `supabase/migrations/20261019_podcasts_admin.sql`.
+**Podcasts**: até 19/10/2026 a tabela `podcasts` gravava pela conta de um e-mail fixo, sem a
+liberação por e-mail (políticas criadas pelo painel do Supabase). A correção
+(`supabase/migrations/20261019_podcasts_admin.sql`) já foi rodada: conferido em 03/11/2026, a tabela
+tem só "Public can read published podcasts" e "Site admin gerencia" (`is_site_admin()`), e nenhuma
+regra do banco usa e-mail. Para conferir de novo, só leitura, no SQL Editor:
+
+```sql
+select policyname, cmd, roles, qual, with_check
+  from pg_policies where schemaname = 'public' and tablename = 'podcasts';
+-- e nenhuma regra com e-mail fixo (deve voltar vazio):
+select tablename, policyname from pg_policies
+ where coalesce(qual, '') || coalesce(with_check, '') ilike '%auth.email%';
+```
 
 Tirar alguém de `public.admins` não apaga a conta: para impedir também o login, use *Authentication
 → Users → … → Delete user* (ou *Ban*). Quem **recebe** o e-mail de liberação é outra lista: a
