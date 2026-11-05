@@ -840,6 +840,45 @@ npx playwright show-report          # relatório da última execução
 Os testes ficam em `tests/fumaca.spec.mjs` e a configuração em `playwright.config.mjs`. Página nova
 no site: acrescente a rota na lista `ROTAS` do teste.
 
+### Teste de carga (k6) e alerta de lentidão
+
+**Cache do que todo mundo pede igual.** Ao abrir o site, cada visitante fazia 9 consultas ao
+Supabase (configurações, cultos, eventos, vídeos, notícias, podcasts…), todas iguais para todo
+mundo. Agora o site pede um pacote só, `/api/dados` (`api/dados.mjs`), que fica **1 minuto no cache
+da Vercel**: mil pessoas viram ~1 consulta por minuto ao Supabase. Se o pacote falhar, o site faz as
+consultas diretas de sempre. O painel continua lendo tudo fresco; uma mudança feita nele aparece
+para os visitantes em até ~1 minuto. (Também ficam no cache: as páginas, 5 min; o "ao vivo", 1 min;
+as imagens de versículo, sem prazo.)
+
+**O teste** (`tests/carga/visitante.js`): cada "pessoa" abre uma página (mais o início, os cultos e
+a Palavra), busca os dados, confere o "ao vivo" e "lê" de 8 a 20 s antes da próxima. Não grava
+nada. Ele **para sozinho** se passar de 5% de erros ou se 95% das respostas passarem de 5 s.
+
+| Quando | O quê | Onde |
+| --- | --- | --- |
+| **A cada publicação** | 20 pessoas por 30 s no site recém-publicado; se achar lentidão ou erro, o `publicar.sh` avisa em destaque (e mostra como voltar à versão anterior: `npx vercel rollback`). Pule com `SEM_TESTE_CARGA=1`. | `scripts/publicar.sh` |
+| **Quando quiser** (ex.: antes de um evento grande) | Sobe aos poucos até 1000 pessoas (ou o número que escolher) e segura 2 min; relatório com gráfico nos *Artifacts* da execução. | GitHub → **Actions → "Teste de carga" → Run workflow** |
+| **A cada 30 min** | Visita de teste (início, Palavra, dados, ao vivo). Erro ou mais de 2,5 s abre o aviso **"⚠️ Site lento ou fora do ar"** nas *Issues* — o GitHub manda **e-mail**. Quando volta ao normal, ele comenta e fecha sozinho. | `.github/workflows/monitor.yml` + `tests/carga/sonda.js` |
+
+**Cuidado com a cota.** O plano grátis da Vercel tem **1 milhão de requisições** e 100 GB de
+tráfego por mês, e quem estoura fica **até 30 dias** sem o recurso (o site para). O Supabase grátis
+tem 5 GB de saída por mês. Um teste de 1000 pessoas gasta ~5% das requisições da Vercel; o teste de
+cada publicação, ~0,1%; o alerta, ~1,5% por mês. Por isso o teste grande é à mão, e não a cada
+mudança. Veja o consumo em Vercel → projeto → *Usage*.
+
+No computador (o k6 fica em `%LOCALAPPDATA%\k6\k6.exe`; instale de
+https://grafana.com/docs/k6/latest/set-up/install-k6/):
+
+```bash
+k6 run tests/carga/visitante.js                                  # 20 pessoas por 30 s
+k6 run -e PERFIL=rampa -e MAX=300 tests/carga/visitante.js       # sobe até 300
+k6 run -e FONTE=supabase tests/carga/visitante.js                # como era antes do cache
+k6 run tests/carga/sonda.js                                      # a visita do alerta
+```
+
+Do computador, mais de ~300 pessoas medem a sua internet, não o site, e a proteção da Vercel pode
+bloquear o seu IP por um tempo: para o teste grande, use o GitHub.
+
 ## Trocar o domínio
 
 O endereço do site fica em um lugar só:

@@ -30,3 +30,6 @@ desktop.ini
 test-results/
 playwright-report/
 blob-report/
+
+# Teste de carga (k6): relatórios gerados
+tests/carga/resultados/

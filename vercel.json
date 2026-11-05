@@ -33,6 +33,9 @@
     "api/imagem.mjs": {
       "maxDuration": 15,
       "includeFiles": "{api/_fontes/*.ttf,assets/img/brasao.svg,data/bible/blivre/*.json}"
+    },
+    "api/dados.mjs": {
+      "maxDuration": 10
     }
   },
   "crons": [

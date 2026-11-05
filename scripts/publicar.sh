@@ -80,3 +80,24 @@ if ! npx -y vercel@latest "${ARGS[@]}"; then
   npx -y vercel@latest "${ARGS[@]}"
 fi
 echo "Versão publicada: $BUILD"
+
+# Teste de carga pequeno depois de cada publicação em produção: 20 pessoas por
+# 30 s no site recém-publicado (tests/carga/visitante.js). Não bloqueia nada:
+# se achar lentidão ou erro, avisa em destaque. Pule com SEM_TESTE_CARGA=1.
+# O teste grande (até 1000 pessoas) é à mão: GitHub → Actions → "Teste de carga".
+if [ "${1:-}" != "teste" ] && [ -z "${SEM_TESTE_CARGA:-}" ]; then
+  K6="$(command -v k6 || true)"
+  if [ -z "$K6" ] && [ -n "${LOCALAPPDATA:-}" ] && [ -x "$LOCALAPPDATA/k6/k6.exe" ]; then K6="$LOCALAPPDATA/k6/k6.exe"; fi
+  if [ -n "$K6" ]; then
+    echo ""
+    echo "Teste de carga: 20 pessoas por 30 s no site publicado…"
+    mkdir -p "$SRC/tests/carga/resultados"
+    if ! (cd "$SRC" && "$K6" run --quiet -e PERFIL=fumaca ${SITE_URL:+-e BASE="$SITE_URL"} tests/carga/visitante.js); then
+      echo ""
+      echo "⚠️  ATENÇÃO: o teste de carga achou lentidão ou erro no site que acabou de ser publicado."
+      echo "    Veja o resumo acima. Para voltar à versão anterior: npx vercel rollback"
+    fi
+  else
+    echo "(Teste de carga pulado: k6 não instalado — https://grafana.com/docs/k6/latest/set-up/install-k6/)"
+  fi
+fi

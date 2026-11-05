@@ -901,6 +901,30 @@ function ensureFullList(table) {
   return fullListPending[table];
 }
 
+// Pacote dos dados públicos (api/dados.mjs). Só no endereço publicado: no
+// computador (npx serve) não há as funções de api/, e o config.local.json pode
+// apontar para outro banco.
+const USA_DADOS_EM_CACHE = (() => {
+  try {
+    return location.hostname === new URL(window.APP_CONFIG.SITE_URL).hostname;
+  } catch {
+    return false;
+  }
+})();
+
+async function dadosEmCache() {
+  if (!USA_DADOS_EM_CACHE) return null;
+  try {
+    const opcoes = typeof AbortSignal.timeout === "function" ? { signal: AbortSignal.timeout(4000) } : {};
+    const res = await fetch("/api/dados", opcoes);
+    if (!res.ok) return null;
+    const pacote = await res.json();
+    return pacote && typeof pacote === "object" && pacote.services ? pacote : null;
+  } catch {
+    return null; // lento ou fora do ar: o site consulta o Supabase direto
+  }
+}
+
 async function loadData() {
   // Sem conexão: abre na hora com a última cópia salva. (A biblioteca do
   // Supabase tentaria de novo por vários segundos antes de desistir.)
@@ -919,18 +943,24 @@ async function loadData() {
     const fullNow = FULL_LIST_BY_ROUTE[routeBase(currentRoute())];
     const today = localISO();
     const yesterday = localISO(new Date(Date.now() - 864e5));
+    // O que todo visitante pede igual vem num pacote só, do cache da Vercel
+    // (/api/dados, 1 min): o Supabase não recebe 9 consultas por visita. Se o
+    // pacote falhar (ou faltar alguma parte), faz a consulta direta de sempre.
+    const pacote = await dadosEmCache();
+    const doPacote = (chave, consulta) => (pacote?.[chave] && !pacote[chave].error ? Promise.resolve(pacote[chave]) : consulta());
+    const lista = (tabela, chave) => (fullNow === tabela ? listQuery(tabela, true) : doPacote(chave, () => listQuery(tabela, false)));
     const [settings, events, videos, services, announcements, ministries, news, donationTypes, podcasts] =
       await Promise.all([
-        db("settings").select("data").eq("id", "main").maybeSingle(),
+        doPacote("settings", () => db("settings").select("data").eq("id", "main").maybeSingle()),
         // Eventos e avisos que já passaram não aparecem no site (o painel carrega todos).
-        db("events").select("*").gte("date", yesterday).order("date", { ascending: true }),
-        listQuery("videos", fullNow === "videos"),
-        db("services").select("*"),
-        db("announcements").select("*").or(`end_date.is.null,end_date.gte.${today}`),
-        db("ministries").select("*"),
-        listQuery("news", fullNow === "news"),
-        db("donation_types").select("*").order("sort_order", { ascending: true }),
-        listQuery("podcasts", fullNow === "podcasts"),
+        doPacote("events", () => db("events").select("*").gte("date", yesterday).order("date", { ascending: true })),
+        lista("videos", "videos"),
+        doPacote("services", () => db("services").select("*")),
+        doPacote("announcements", () => db("announcements").select("*").or(`end_date.is.null,end_date.gte.${today}`)),
+        doPacote("ministries", () => db("ministries").select("*")),
+        lista("news", "news"),
+        doPacote("donationTypes", () => db("donation_types").select("*").order("sort_order", { ascending: true })),
+        lista("podcasts", "podcasts"),
       ]);
     if (fullNow && !{ videos, news, podcasts }[fullNow].error) fullLists.add(fullNow);
 

@@ -1,0 +1,54 @@
+# Teste de carga grande, rodado à mão (Actions → "Teste de carga" → Run
+# workflow): sobe aos poucos até o número de pessoas escolhido
+# (tests/carga/visitante.js, perfil rampa). Roda nos servidores do GitHub,
+# não no seu computador (a sua internet não vira o gargalo e o seu IP não é
+# bloqueado pela proteção da Vercel).
+# Atenção à cota: o plano grátis da Vercel tem 1 milhão de requisições por
+# mês, e quem estoura fica até 30 dias sem o recurso. Um teste de 1000 pessoas
+# usa ~5% dela. O teste pequeno (20 pessoas) roda sozinho a cada publicação
+# (scripts/publicar.sh); este aqui é só para quando precisar.
+name: Teste de carga
+
+on:
+  workflow_dispatch:
+    inputs:
+      pessoas:
+        description: "Pessoas ao mesmo tempo (máximo)"
+        default: "1000"
+        required: true
+      fonte:
+        description: "De onde vêm os dados: api (cache da Vercel) ou supabase (direto)"
+        default: "api"
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: carga
+  cancel-in-progress: false
+
+jobs:
+  carga:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: grafana/setup-k6-action@v1
+      - name: Teste de carga
+        env:
+          K6_WEB_DASHBOARD: "true"
+          K6_WEB_DASHBOARD_PORT: "-1"
+          K6_WEB_DASHBOARD_EXPORT: relatorio-carga.html
+        run: |
+          mkdir -p tests/carga/resultados
+          k6 run --quiet -e PERFIL=rampa -e MAX="${{ inputs.pessoas }}" -e FONTE="${{ inputs.fonte }}" tests/carga/visitante.js
+      - name: Relatório (gráfico)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-carga
+          path: |
+            relatorio-carga.html
+            tests/carga/resultados/
+          retention-days: 14
