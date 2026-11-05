@@ -11,6 +11,8 @@
 //     é gerado na publicação.
 //  2b. Rotas: as páginas de ROUTE_BASES (js/compartilhado.js) e os "case"
 //     do roteador (pageHTML em js/site.js) são as mesmas.
+//  2d. Funções: no máximo 12 em api/ (limite do plano grátis da Vercel por
+//     publicação; acima disso a Vercel recusa a publicação inteira).
 //  2c. Migrations: supabase/migrations/ só com nomes que o CLI do Supabase
 //     aceita (14 dígitos + _nome.sql, versões sem repetir) e o baseline primeiro.
 //  3. Segredos: chave secreta do Supabase (sb_secret_…), JWT com papel
@@ -131,6 +133,20 @@ for (const f of migs) {
 }
 if (migs[0] !== "00000000000000_baseline.sql") falhar("migrations", `${MIG}: o primeiro arquivo precisa ser o 00000000000000_baseline.sql`);
 console.log(`Migrations: ${migs.length} arquivos no formato do CLI.`);
+
+// ---------- 2d) Funções da Vercel: no máximo 12 (plano grátis) ----------
+const MAX_FUNCOES = 12;
+function funcoes(pasta) {
+  return readdirSync(join(RAIZ, pasta), { withFileTypes: true }).flatMap((e) => {
+    if (e.name.startsWith("_") || e.name.startsWith(".")) return []; // _lib, _fontes: não são funções
+    const rel = `${pasta}/${e.name}`;
+    if (e.isDirectory()) return funcoes(rel);
+    return /\.(mjs|js|ts)$/.test(e.name) ? [rel] : [];
+  });
+}
+const listaFuncoes = funcoes("api");
+if (listaFuncoes.length > MAX_FUNCOES) falhar("funções", `${listaFuncoes.length} funções em api/ (o plano grátis da Vercel aceita ${MAX_FUNCOES}): junte alguma em outra`);
+console.log(`Funções: ${listaFuncoes.length} de ${MAX_FUNCOES} (plano grátis da Vercel).`);
 
 // ---------- 3) Segredos ----------
 // Os padrões são montados em partes para este arquivo não acusar a si mesmo.

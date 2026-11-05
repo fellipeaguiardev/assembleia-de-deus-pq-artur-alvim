@@ -24,9 +24,6 @@
       "maxDuration": 10,
       "includeFiles": "{index.html,data/bible/blivre/*.json}"
     },
-    "api/ao-vivo.mjs": {
-      "maxDuration": 10
-    },
     "api/evento-da-imagem.mjs": {
       "maxDuration": 60
     },

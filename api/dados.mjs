@@ -12,8 +12,16 @@
 // Mudança feita no painel aparece para os visitantes em até ~1 min.
 // Mantenha as consultas iguais às de loadData/LIST_QUERIES em js/core.js.
 // Só leitura, com a chave publicável: o RLS mostra só o que é público.
+//
+// GET /api/dados?o=ao-vivo — a igreja está transmitindo agora? (o botão "Ao
+// vivo" vermelho, conferirAoVivo em js/site.js; leitura em _lib/aovivo.mjs).
+// Fica aqui dentro, e não numa função própria, porque o plano grátis da
+// Vercel aceita no máximo 12 funções por publicação (scripts/verificar.mjs
+// confere). Resposta: { aoVivo: true, videoId, titulo } ou { aoVivo: false };
+// 1 min no cache: o YouTube é consultado no máximo 1 vez por minuto.
 // ============================================================
 import { SUPABASE_URL, SUPABASE_KEY } from "./_lib/fonte.mjs";
+import { statusDoCanal } from "./_lib/aovivo.mjs";
 
 const VIDEOS = "id,title,youtube_url,youtube_id,category,date,description,source,created_at";
 const NEWS = "id,title,slug,summary,content,cover_image,published_at,author,featured,published,created_at,source_id,source_url,source_name,dismissed";
@@ -52,7 +60,22 @@ async function ler(caminho, umaLinha) {
   }
 }
 
-export async function GET() {
+const umMinuto = (corpo, segundos = 60) =>
+  Response.json(corpo, { headers: { "Cache-Control": `public, max-age=0, s-maxage=${segundos}, stale-while-revalidate=${segundos}` } });
+
+async function aoVivo() {
+  try {
+    const { data } = await ler("settings?id=eq.main&select=canal:data->church->>liveChannelId", true);
+    const status = await statusDoCanal(String(data?.canal || "").trim());
+    return umMinuto({ ...status, conferidoEm: new Date().toISOString() });
+  } catch (e) {
+    console.error("ao-vivo:", e.message);
+    return umMinuto({ aoVivo: false, erro: true }, 30); // na dúvida, não acende
+  }
+}
+
+export async function GET(request) {
+  if (new URL(request.url).searchParams.get("o") === "ao-vivo") return aoVivo();
   const lista = Object.entries(consultas());
   const resultados = await Promise.all(lista.map(([, [caminho, umaLinha]]) => ler(caminho, umaLinha)));
   const pacote = Object.fromEntries(lista.map(([chave], i) => [chave, resultados[i]]));

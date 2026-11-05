@@ -6,7 +6,7 @@
 //   2. busca os dados públicos: /api/dados (um pacote só, guardado no cache
 //      da Vercel), ou, com FONTE=supabase, as 9 consultas diretas ao
 //      Supabase que o site fazia antes do cache;
-//   3. confere se há transmissão ao vivo (/api/ao-vivo);
+//   3. confere se há transmissão ao vivo (/api/dados?o=ao-vivo);
 //   4. "lê" de 8 a 20 segundos e abre outra página.
 // Não grava nada, não manda formulário, não usa o painel.
 //
@@ -106,7 +106,7 @@ function consultasSupabase() {
 // Aquecimento: uma visita antes de começar (função "fria" logo depois de
 // publicar não conta como lentidão). Fica de fora dos limites por tipo.
 export function setup() {
-  const alvos = ["/", "/cultos", "/palavra", "/biblia/joao/3", "/videos", "/eventos", "/podcast", "/api/ao-vivo", FONTE === "supabase" ? null : "/api/dados"].filter(Boolean);
+  const alvos = ["/", "/cultos", "/palavra", "/biblia/joao/3", "/videos", "/eventos", "/podcast", "/api/dados?o=ao-vivo", FONTE === "supabase" ? null : "/api/dados"].filter(Boolean);
   http.batch(alvos.map((p) => ["GET", BASE + p, null, { headers: COMPRIME, tags: { tipo: "aquecimento" } }]));
 }
 
@@ -134,7 +134,7 @@ export default function () {
   }
 
   // 3. transmissão ao vivo
-  const aoVivo = http.get(`${BASE}/api/ao-vivo`, { headers: COMPRIME, tags: { tipo: "ao-vivo" } });
+  const aoVivo = http.get(`${BASE}/api/dados?o=ao-vivo`, { headers: COMPRIME, tags: { tipo: "ao-vivo" } });
   anotar(aoVivo);
   check(aoVivo, { "ao vivo (200)": (r) => r.status === 200 && typeof r.json("aoVivo") === "boolean" });
 

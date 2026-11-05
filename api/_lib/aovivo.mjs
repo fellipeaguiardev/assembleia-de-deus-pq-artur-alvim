@@ -1,5 +1,5 @@
 // ============================================================
-// O canal está transmitindo AGORA? (usado por api/ao-vivo.mjs)
+// O canal está transmitindo AGORA? (usado por api/dados.mjs?o=ao-vivo)
 // ------------------------------------------------------------
 // Sem chave de API: abre https://www.youtube.com/channel/<id>/live (em
 // português), a mesma página que qualquer pessoa abre no navegador.

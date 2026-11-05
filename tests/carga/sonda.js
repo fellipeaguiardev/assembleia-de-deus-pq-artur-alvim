@@ -16,7 +16,7 @@ const ALVOS = [
   ["/", "pagina"],
   ["/palavra", "pagina"],
   ["/api/dados", "dados"],
-  ["/api/ao-vivo", "ao-vivo"],
+  ["/api/dados?o=ao-vivo", "ao-vivo"],
 ];
 
 export const options = {

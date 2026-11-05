@@ -1808,7 +1808,7 @@ function openScheduledModal(v) {
 }
 
 /* ---------- Ao vivo agora ----------
-   O site pergunta a /api/ao-vivo (que olha o YouTube) se a igreja está
+   O site pergunta a /api/dados?o=ao-vivo (que olha o YouTube) se a igreja está
    transmitindo. Enquanto estiver, o botão "Ao vivo" do topo fica vermelho e
    pulsando, em todas as páginas. Confere ao abrir o site e a cada 2 min com a
    aba visível (a resposta fica 1 min no cache da Vercel). No computador
@@ -1832,7 +1832,7 @@ async function conferirAoVivo() {
   if (IS_LOCALHOST || document.hidden || !canalAoVivo()) return;
   let s;
   try {
-    const res = await fetch("/api/ao-vivo", { cache: "no-store" });
+    const res = await fetch("/api/dados?o=ao-vivo", { cache: "no-store" });
     if (!res.ok) return;
     s = await res.json();
   } catch {

@@ -551,7 +551,7 @@ em todas as páginas, para quem chega no site sem saber que o culto está no ar.
 botão normal é só o ícone, aparece também o texto "Ao vivo". Tocando nele, abre o vídeo da
 transmissão dentro do site.
 
-- **Como o site sabe:** a função `api/ao-vivo.mjs` abre a página `/live` do canal (o mesmo
+- **Como o site sabe:** `/api/dados?o=ao-vivo` (em `api/dados.mjs`) abre a página `/live` do canal (o mesmo
   `church.liveChannelId` da aba *Igreja & redes*) e lê se o vídeo de lá está no ar
   (`api/_lib/aovivo.mjs`, sem chave de API). Transmissão **agendada**, que já **terminou** ou de
   **outro canal** não acende. Na dúvida (YouTube fora do ar, página diferente), o botão fica normal.
@@ -564,7 +564,7 @@ transmissão dentro do site.
   vivo começou". Branco sobre o vermelho `#c8102e`: contraste 5,9:1.
 - **No computador** (`npx serve`) não consulta: lá não há as funções de `api/`.
 - **Se um dia parar de acender:** o YouTube pode mudar a página. Confira
-  `https://assembleia-de-deus-pq-artur-alvim.vercel.app/api/ao-vivo` durante uma transmissão (deve
+  `https://assembleia-de-deus-pq-artur-alvim.vercel.app/api/dados?o=ao-vivo` durante uma transmissão (deve
   dizer `"aoVivo":true`). A saída mais firme, se precisar, é a API oficial do YouTube (chave
   gratuita no Google Cloud, consulta `videos.list` dos vídeos do feed).
 
@@ -804,6 +804,8 @@ A cada push, o GitHub Actions (`.github/workflows/check.yml`) roda `scripts/veri
 - confere se a lista de páginas de `js/compartilhado.js` bate com o roteador de `js/site.js`;
 - confere os nomes em `supabase/migrations/` (formato do CLI, sem versão repetida, baseline
   primeiro);
+- confere que `api/` tem no máximo **12 funções** (limite do plano grátis da Vercel por publicação;
+  acima disso a Vercel recusa a publicação inteira). Arquivos e pastas com `_` (como `_lib`) não contam;
 - procura segredos nos arquivos do git: chave secreta do Supabase (`sb_secret_…`), JWT com papel
   `service_role`, `service_role` com valor, blocos `-----BEGIN …` e arquivos `.env`.
 
