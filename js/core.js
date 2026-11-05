@@ -912,6 +912,8 @@ const USA_DADOS_EM_CACHE = (() => {
   }
 })();
 
+let pacoteDados = null; // o último pacote (a Lição da semana da home também sai dele: js/ebd.js)
+
 async function dadosEmCache() {
   if (!USA_DADOS_EM_CACHE) return null;
   try {
@@ -946,7 +948,7 @@ async function loadData() {
     // O que todo visitante pede igual vem num pacote só, do cache da Vercel
     // (/api/dados, 1 min): o Supabase não recebe 9 consultas por visita. Se o
     // pacote falhar (ou faltar alguma parte), faz a consulta direta de sempre.
-    const pacote = await dadosEmCache();
+    const pacote = (pacoteDados = await dadosEmCache());
     const doPacote = (chave, consulta) => (pacote?.[chave] && !pacote[chave].error ? Promise.resolve(pacote[chave]) : consulta());
     const lista = (tabela, chave) => (fullNow === tabela ? listQuery(tabela, true) : doPacote(chave, () => listQuery(tabela, false)));
     const [settings, events, videos, services, announcements, ministries, news, donationTypes, podcasts] =

@@ -130,7 +130,7 @@ export default function () {
   } else {
     const d = http.get(`${BASE}/api/dados`, { headers: COMPRIME, tags: { tipo: "dados" } });
     anotar(d);
-    check(d, { "dados (200, com cultos)": (r) => r.status === 200 && Array.isArray(r.json("services")) });
+    check(d, { "dados (200, com cultos)": (r) => r.status === 200 && Array.isArray(r.json("services.data")) });
   }
 
   // 3. transmissão ao vivo

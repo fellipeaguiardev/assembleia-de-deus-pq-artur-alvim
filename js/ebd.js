@@ -132,9 +132,11 @@ const ebdMovedText = (s) =>
 // Lições perto de hoje (3 semanas para trás, 2 para frente), com o trimestre junto.
 async function ebdLoadCurrent() {
   const today = spToday();
+  // O pacote dos dados públicos (/api/dados) já traz estas lições; sem ele, consulta direto.
+  const doPacote = typeof pacoteDados !== "undefined" && pacoteDados?.ebdAtual && !pacoteDados.ebdAtual.error ? pacoteDados.ebdAtual : null;
   const rows =
     (await ebdFetch("current", () =>
-      db("ebd_lessons")
+      doPacote ? Promise.resolve(doPacote) : db("ebd_lessons")
         .select(`${EBD_LIGHT},reading_ref,quarter:ebd_quarters!inner(id,year,quarter,magazine,magazine_slug,theme,start_date,lesson_count,visible)`)
         .gte("lesson_date", isoAddDays(today, -21))
         .lte("lesson_date", isoAddDays(today, 13))

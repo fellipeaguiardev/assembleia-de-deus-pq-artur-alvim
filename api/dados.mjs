@@ -3,7 +3,8 @@
 // ------------------------------------------------------------
 // Ao abrir o site, cada navegador fazia 9 consultas ao Supabase
 // (configurações, eventos, vídeos, cultos, avisos, departamentos, notícias,
-// tipos de oferta e podcasts), todas com o mesmo resultado para todo mundo.
+// tipos de oferta e podcasts), mais a Lição da semana da página inicial,
+// todas com o mesmo resultado para todo mundo.
 // Esta função faz essas 9 consultas uma vez e o pacote fica 1 minuto no
 // cache da Vercel (e até 10 min servindo a cópia anterior enquanto renova):
 // mil pessoas abrindo o site viram ~1 consulta por minuto ao Supabase.
@@ -26,6 +27,8 @@ import { statusDoCanal } from "./_lib/aovivo.mjs";
 const VIDEOS = "id,title,youtube_url,youtube_id,category,date,description,source,created_at";
 const NEWS = "id,title,slug,summary,content,cover_image,published_at,author,featured,published,created_at,source_id,source_url,source_name,dismissed";
 const PODCASTS = "id,title,description,episode_number,cover_url,audio_url,spotify_url,youtube_url,published_at,status,created_at";
+// Lição da semana da página inicial (ebdLoadCurrent em js/ebd.js)
+const EBD = "id,quarter_id,number,lesson_date,title,golden_ref,status,publish_at,reading_ref,quarter:ebd_quarters!inner(id,year,quarter,magazine,magazine_slug,theme,start_date,lesson_count,visible)";
 
 const diaEmSP = (desloc = 0) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date(Date.now() + desloc * 864e5));
 
@@ -42,6 +45,7 @@ function consultas() {
     news: [`news?select=${NEWS}&published=eq.true&order=published_at.desc&limit=20`],
     donationTypes: ["donation_types?select=*&order=sort_order.asc"],
     podcasts: [`podcasts?select=${PODCASTS}&status=eq.Publicado&order=published_at.desc&limit=8`],
+    ebdAtual: [`ebd_lessons?select=${EBD}&lesson_date=gte.${diaEmSP(-21)}&lesson_date=lte.${diaEmSP(13)}&order=lesson_date.asc`],
   };
 }
 
