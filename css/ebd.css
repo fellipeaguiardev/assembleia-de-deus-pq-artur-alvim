@@ -1109,3 +1109,27 @@ body.has-listen main {
   color: var(--c-primary);
 }
 
+
+/* Lição sem conteúdo ainda: a linha vira botão que abre o aviso (ebdAvisoIndisponivel) */
+button.ebd-row {
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.ebd-lesson-head .eyebrow .ebd-chip {
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.ebd-completa {
+  margin-top: 10px;
+  font-size: 14px;
+  color: var(--c-text-soft);
+  max-width: 62ch;
+}
+.ebd-aviso .eyebrow {
+  padding-right: 48px; /* não passar por baixo do botão de fechar */
+}

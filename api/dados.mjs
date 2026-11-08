@@ -28,7 +28,7 @@ const VIDEOS = "id,title,youtube_url,youtube_id,category,date,description,source
 const NEWS = "id,title,slug,summary,content,cover_image,published_at,author,featured,published,created_at,source_id,source_url,source_name,dismissed";
 const PODCASTS = "id,title,description,episode_number,cover_url,audio_url,spotify_url,youtube_url,published_at,status,created_at";
 // Lição da semana da página inicial (ebdLoadCurrent em js/ebd.js)
-const EBD = "id,quarter_id,number,lesson_date,title,golden_ref,status,publish_at,reading_ref,quarter:ebd_quarters!inner(id,year,quarter,magazine,magazine_slug,theme,start_date,lesson_count,visible)";
+const EBD = "id,quarter_id,number,lesson_date,title,golden_ref,reading_ref,source_url,key_idea,status,publish_at,quarter:ebd_quarters!inner(id,year,quarter,magazine,magazine_slug,theme,start_date,lesson_count,visible)";
 
 const diaEmSP = (desloc = 0) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date(Date.now() + desloc * 864e5));
 

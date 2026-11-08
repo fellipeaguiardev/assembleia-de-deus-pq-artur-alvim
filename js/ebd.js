@@ -17,7 +17,10 @@ const EBD = { unavailable: false };
 const EBD_CACHE_KEY = "ebd-cache-v1";
 const EBD_DAILY_KEY = "ebd-daily";
 const EBD_DAYS = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-const EBD_LIGHT = "id,quarter_id,number,lesson_date,title,golden_ref,status,publish_at";
+// Lista do trimestre e da home: o suficiente para saber se a lição já tem
+// conteúdo (referências, link da lição completa ou texto da equipe).
+// Mantenha igual ao EBD de api/dados.mjs.
+const EBD_LIGHT = "id,quarter_id,number,lesson_date,title,golden_ref,reading_ref,source_url,key_idea,status,publish_at";
 
 const ebdQuarterLabel = (q) => `${q.quarter}º Trimestre de ${q.year}`;
 const ebdQuarterPath = (q) => `/ebd/${Number(q.year)}/${Number(q.quarter)}/${encodeURIComponent(q.magazine_slug)}`;
@@ -137,7 +140,7 @@ async function ebdLoadCurrent() {
   const rows =
     (await ebdFetch("current", () =>
       doPacote ? Promise.resolve(doPacote) : db("ebd_lessons")
-        .select(`${EBD_LIGHT},reading_ref,quarter:ebd_quarters!inner(id,year,quarter,magazine,magazine_slug,theme,start_date,lesson_count,visible)`)
+        .select(`${EBD_LIGHT},quarter:ebd_quarters!inner(id,year,quarter,magazine,magazine_slug,theme,start_date,lesson_count,visible)`)
         .gte("lesson_date", isoAddDays(today, -21))
         .lte("lesson_date", isoAddDays(today, 13))
         .order("lesson_date"),
@@ -259,6 +262,38 @@ function renderEbdSoon(root) {
     `<div class="container ebd-body">${emptyState("school", "Em breve", "Os estudos da EBD vão aparecer aqui assim que a equipe publicar a primeira lição.", `<a class="btn btn-primary btn-sm" href="/cultos">Ver os horários</a>`)}</div>`;
 }
 
+/* ---------- Lição sem conteúdo ainda ----------
+   As lições entram no ar assim que são importadas (sem esperar o dia). Se a
+   fonte ainda não publicou a página da lição, ela aparece na lista com
+   "Ainda não disponível" e, ao tocar, um aviso explica. */
+const ebdTemConteudo = (l) =>
+  !!(l && (l.golden_ref || l.reading_ref || safeUrl(l.source_url) || l.key_idea || l.summary || (l.daily_refs || []).some(Boolean) || (Array.isArray(l.questions) && l.questions.length)));
+
+// Número da "Lição de hoje" e da "Próxima lição" (pela data em que é estudada)
+function ebdHojeProxima(q, lessons, today = spToday()) {
+  let hoje = 0;
+  let proxima = 0;
+  for (let n = 1; n <= q.lesson_count; n++) {
+    const d = ebdStudyDate(lessons.find((l) => l.number === n)?.lesson_date || ebdLessonDate(q, n));
+    if (d === today) hoje = n;
+    else if (d > today && !proxima) proxima = n;
+  }
+  return { hoje, proxima };
+}
+
+function ebdAvisoIndisponivel(ds) {
+  const n = Number(ds.n);
+  openModal(
+    `<div class="modal-pad ebd-aviso">
+      <span class="eyebrow">${icon("calendar", 14)} Lição ${n}${ds.data ? ` · ${esc(fmtDateFull(ds.data))}` : ""}</span>
+      <h3>${esc(ds.titulo || `Lição ${n}`)}</h3>
+      <p>O conteúdo desta lição <strong>ainda não está disponível</strong>. Ele aparece aqui sozinho assim que for publicado, normalmente perto do dia da lição.</p>
+      <div class="modal-actions"><button class="btn btn-primary btn-sm" type="button" onclick="closeModal()">Entendi</button></div>
+    </div>`,
+    { label: `Lição ${n}: ainda não disponível` },
+  );
+}
+
 function renderEbdNotFound(root, title, text, back = "/ebd") {
   setMeta(title, ROUTE_META.ebd[1], location.pathname, { noindex: true });
   announce(title);
@@ -269,7 +304,7 @@ function ebdLessonCardHTML(c) {
   const l = c.lesson;
   const q = l.quarter;
   const refs = parseRefList(l.golden_ref);
-  const badge = { hoje: "Hoje", semana: "Lição desta semana", anterior: "Última lição publicada" }[c.kind];
+  const badge = { hoje: "Lição de hoje", semana: "Próxima lição", anterior: "Última lição" }[c.kind];
   const s = ebdStudyInfo(l.lesson_date);
   return `
     <a class="ebd-current" href="${ebdLessonPath(q, l.number)}">
@@ -278,24 +313,28 @@ function ebdLessonCardHTML(c) {
       ${s.moved && c.kind !== "anterior" ? `<span class="ebd-current-moved">${icon("calendar", 15)} ${esc(ebdMovedText(s))}</span>` : ""}
       <strong class="ebd-current-title">${esc(l.title || `Lição ${l.number}`)}</strong>
       ${refs.length ? `<span class="ebd-current-ref">${icon("book", 15)} Texto áureo: ${esc(refListLabel(refs))}</span>` : ""}
-      <span class="ebd-current-cta">Estudar a lição ${icon("arrow", 15)}</span>
+      <span class="ebd-current-cta">${ebdTemConteudo(l) ? `Estudar a lição ${icon("arrow", 15)}` : "Ainda não disponível"}</span>
     </a>`;
 }
 
 function ebdLessonListHTML(q, lessons) {
-  const week = ebdQuarterRunning(q) ? ebdWeekNumber(q, lessons) : 0;
+  const { hoje, proxima } = ebdHojeProxima(q, lessons);
   return `<ol class="ebd-list">${Array.from({ length: q.lesson_count }, (_, k) => {
     const n = k + 1;
     const l = lessons.find((x) => x.number === n);
     const s = ebdStudyInfo(l?.lesson_date || ebdLessonDate(q, n));
+    const pronta = ebdTemConteudo(l);
+    const titulo = l?.title || `Lição ${n}`;
+    const chip = n === hoje ? `<span class="ebd-chip">Lição de hoje</span>` : n === proxima ? `<span class="ebd-chip">Próxima lição</span>` : "";
+    const destaque = n === hoje || (!hoje && n === proxima) ? " is-current" : "";
     const inner = `
       <span class="ebd-num">${n}</span>
-      <span class="ebd-row-main"><strong>${l ? esc(l.title || `Lição ${n}`) : "Em breve"}</strong><small>${esc(fmtDate(s.date))}${s.moved ? ` · ${esc(onWeekday(s.day))}, no ${esc(s.service)} (${esc(s.reason)} ${esc(onWeekday(s.fromDay))})` : ""}</small></span>
-      ${n === week ? `<span class="ebd-chip">Esta semana</span>` : ""}
-      ${l ? icon("right", 16) : ""}`;
-    return l
-      ? `<li><a class="ebd-row${n === week ? " is-current" : ""}" href="${ebdLessonPath(q, n)}">${inner}</a></li>`
-      : `<li><div class="ebd-row is-soon${n === week ? " is-current" : ""}">${inner}</div></li>`;
+      <span class="ebd-row-main"><strong>${esc(titulo)}</strong><small>${esc(fmtDate(s.date))}${s.moved ? ` · ${esc(onWeekday(s.day))}, no ${esc(s.service)} (${esc(s.reason)} ${esc(onWeekday(s.fromDay))})` : ""}${pronta ? "" : " · ainda não disponível"}</small></span>
+      ${chip}
+      ${pronta ? icon("right", 16) : icon("clock", 16)}`;
+    return pronta
+      ? `<li><a class="ebd-row${destaque}" href="${ebdLessonPath(q, n)}">${inner}</a></li>`
+      : `<li><button type="button" class="ebd-row is-soon${destaque}" data-n="${n}" data-titulo="${esc(titulo)}" data-data="${esc(s.date)}" onclick="ebdAvisoIndisponivel(this.dataset)" aria-label="Lição ${n}: ${esc(titulo)} — ainda não disponível">${inner}</button></li>`;
   }).join("")}</ol>`;
 }
 
@@ -407,11 +446,14 @@ async function ebdVersesFor(refs) {
 async function renderEbdLesson(root, q, n, alive) {
   const [lesson, list] = await Promise.all([ebdLoadLesson(q.id, n), ebdLoadQuarterLessons(q.id)]);
   if (!alive()) return;
-  if (!lesson) {
+  if (!lesson || !ebdTemConteudo(lesson)) {
+    const quando = ebdStudyDate(lesson?.lesson_date || ebdLessonDate(q, n));
     return renderEbdNotFound(
       root,
-      `Lição ${n} ainda não publicada`,
-      n >= 1 && n <= q.lesson_count ? `Prevista para ${fmtDateFull(ebdStudyDate(ebdLessonDate(q, n)))}. A equipe publica cada lição depois de revisar.` : "Confira as lições do trimestre.",
+      lesson ? `${lesson.title || `Lição ${n}`}: ainda não disponível` : `Lição ${n} ainda não disponível`,
+      n >= 1 && n <= q.lesson_count
+        ? `Lição ${n}, prevista para ${fmtDateFull(quando)}. O conteúdo dela ainda não foi publicado; ele aparece aqui sozinho assim que sair.`
+        : "Confira as lições do trimestre.",
       ebdQuarterPath(q),
     );
   }
@@ -437,6 +479,9 @@ async function renderEbdLesson(root, q, n, alive) {
   const done = ebdDailyDone(lesson.id);
   const goldenText = goldenV.flatMap((g) => g.verses.map((v) => v.text)).join(" ").replace(/[[\]]/g, "");
   const study = ebdStudyInfo(lesson.lesson_date);
+  const { hoje: nHoje, proxima: nProxima } = ebdHojeProxima(q, list.concat(lesson));
+  const chipLicao = n === nHoje ? "Lição de hoje" : n === nProxima ? "Próxima lição" : "";
+  const completaNoEscola = /escola-ebd\.com\.br/.test(source || "");
 
   root.innerHTML = `
     <article class="ebd-lesson" data-listen-root data-listen-title="Lição ${n}: ${esc(title)}">
@@ -444,15 +489,16 @@ async function renderEbdLesson(root, q, n, alive) {
         <div class="container">
           ${preview ? `<p class="ebd-preview">${icon("user", 15)} Pré-visualização: esta lição está como “${esc({ rascunho: "rascunho", revisao: "em revisão", publicado: "agendada" }[lesson.status] || lesson.status)}” e só administradores conseguem vê-la.</p>` : ""}
           <a class="back-link" href="${ebdQuarterPath(q)}">${icon("arrowBack", 16)} ${esc(ebdQuarterLabel(q))} · ${esc(q.magazine)}</a>
-          <span class="eyebrow">Lição ${n} · ${esc(fmtDateFull(study.date))}</span>
+          <span class="eyebrow">Lição ${n} · ${esc(fmtDateFull(study.date))}${chipLicao ? ` <span class="ebd-chip">${chipLicao}</span>` : ""}</span>
           <h1 data-listen data-listen-text="${esc(`Lição ${n}. ${title}.`)}">${esc(title)}</h1>
           ${q.theme ? `<p class="ebd-theme">Trimestre: ${esc(q.theme)}</p>` : ""}
           ${study.moved ? `<p class="ebd-moved">${icon("calendar", 16)} <span>${esc(ebdMovedText(study))}</span></p>` : ""}
           <div class="ebd-actions">
             ${listenButtonHTML()}
             <button class="btn btn-ghost btn-sm" type="button" onclick="ebdShare()">${icon("share", 15)} Compartilhar</button>
-            ${source ? `<a class="btn btn-ghost btn-sm" href="${esc(source)}" target="_blank" rel="noopener" title="Abre ${esc(ebdHost(source))}">Ler a lição completa ${icon("external", 14)}</a>` : ""}
+            ${source ? `<a class="btn btn-primary btn-sm" href="${esc(source)}" target="_blank" rel="noopener" title="Abre ${esc(ebdHost(source))}">Ler a lição completa${completaNoEscola ? " (aluno e professor)" : ""} ${icon("external", 14)}</a>` : ""}
           </div>
+          ${completaNoEscola ? `<p class="ebd-completa">O texto completo da revista (introdução, tópicos, plano de aula e subsídios para o professor) abre no site Escola EBD. Aqui ficam o texto áureo, a leitura em classe e a leitura diária da Bíblia.</p>` : ""}
         </div>
       </header>
       <div class="container ebd-lesson-grid">
@@ -573,7 +619,11 @@ const ebdHost = (url) => {
 
 function ebdNoteHTML(q) {
   const publisher = q?.publisher || "a editora";
-  const src = /estudantesdabiblia\.com\.br/.test(q?.source_url || "") ? " Títulos e referências conforme o sumário publicado em estudantesdabiblia.com.br." : "";
+  const src = /escola-ebd\.com\.br/.test(q?.source_url || "")
+    ? " Títulos e referências conforme o sumário publicado em escola-ebd.com.br, onde está o texto completo de cada lição."
+    : /estudantesdabiblia\.com\.br/.test(q?.source_url || "")
+      ? " Títulos e referências conforme o sumário publicado em estudantesdabiblia.com.br."
+      : "";
   return `<p class="ebd-note">Estudo preparado pela equipe da EBD da igreja, como apoio à revista. A lição completa está na revista publicada por ${esc(publisher)}.${src} Textos bíblicos: Bíblia Livre (CC BY 4.0).</p>`;
 }
 

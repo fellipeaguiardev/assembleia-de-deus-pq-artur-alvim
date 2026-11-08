@@ -215,21 +215,35 @@ Como usar (Painel → EBD):
 Direitos autorais: a estrutura é automática, o conteúdo não. Não copie o texto da revista (CPAD)
 nem de sites que a reproduzem; use referências, textos da equipe e links para a fonte oficial.
 
-### Importação automática do sumário
+### Importação automática do sumário (escola-ebd.com.br)
 
 Todo dia às 06:00 (Brasília) a função `api/ebd-sync-diario.mjs` (Vercel Cron) confere o sumário das
-Lições Bíblicas em estudantesdabiblia.com.br (robots.txt permite) para as revistas marcadas no painel
-(Adultos e/ou Jovens) e completa o trimestre atual — e o próximo, perto da virada: **tema,
-comentarista, títulos, datas e referências bíblicas** (texto áureo, leitura em classe e leitura
-diária) e o link de cada lição. Nunca copia o texto da lição e nunca sobrescreve o que a equipe
-escreveu (só preenche campos vazios). O botão **Sincronizar agora** (Painel → EBD) faz o mesmo na hora
-(`ebd-sincronizar.mjs`, só para admin). Por padrão as lições entram como rascunho; com **Publicar
-sozinho** ligado, cada lição com texto áureo entra no ar na segunda-feira da semana dela.
+Lições Bíblicas em **escola-ebd.com.br** (robots.txt permite; até nov/2026 era estudantesdabiblia.com.br)
+para as revistas marcadas no painel (Adultos e/ou Jovens) e completa o trimestre atual — e o
+próximo, perto da virada: **tema, comentarista, títulos, datas e referências bíblicas** (texto
+áureo, leitura em classe e leitura diária) e o **link de cada lição**. O botão **Sincronizar agora**
+(Painel → EBD) faz o mesmo na hora (`ebd-sincronizar.mjs`, só para admin). Nunca sobrescreve o que a
+equipe escreveu (só preenche campos vazios; o link do site antigo é trocado pelo do escola-ebd).
+
+**Liberação:** com **Publicar sozinho** ligado, a lição entra no ar **assim que é importada**, sem
+esperar o dia. Na lista do trimestre, a lição do domingo leva a etiqueta **"Lição de hoje"** e a
+seguinte, **"Próxima lição"**. Lição cujo conteúdo a fonte ainda não publicou aparece com **"ainda não
+disponível"**: tocar nela abre um aviso, e o endereço direto mostra a mesma mensagem. Para segurar
+uma lição, marque **"Em revisão"** no painel.
+
+**Conteúdo completo (aluno e professor):** o texto da revista é da CPAD (introdução, tópicos, plano de
+aula, subsídios), e o escola-ebd o publica inteiro. Reproduzir isso no site da igreja seria copiar a
+obra sem autorização (a Lei 9.610/98, art. 46, só permite citar trechos, com crédito). Por isso a
+página da lição tem o botão **"Ler a lição completa (aluno e professor)"**, que abre a lição no
+escola-ebd, e o site mostra o texto áureo, a leitura em classe e a leitura diária pela Bíblia Livre.
+Com autorização por escrito da CPAD, dá para mostrar mais.
 
 O leitor da página de origem fica em `api/_lib/fonte.mjs` — se o layout de lá mudar, é ali que se
-ajusta. Precisa do SQL `supabase/historico/20261010_ebd_sync.sql` e da variável `EBD_SYNC_TOKEN` no
-Vercel (a chave do servidor; no banco fica só o hash dela). Educado com a origem: identifica-se no
-User-Agent, uma requisição por vez, e só baixa a página de uma lição quando faltam dados dela.
+ajusta (o endereço de cada revista vem da busca do próprio site, porque não segue um padrão fixo).
+Precisa da migration `supabase/migrations/20261108150314_ebd_escola_ebd.sql` (aceita os links do
+escola-ebd e libera as lições na hora) e da variável `EBD_SYNC_TOKEN` no Vercel (a chave do servidor;
+no banco fica só o hash dela). Educado com a origem: identifica-se no User-Agent, uma requisição por
+vez, e só baixa a página de uma lição quando faltam dados dela.
 
 ## Notícias da AD Belém – Sede
 

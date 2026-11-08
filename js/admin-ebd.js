@@ -464,7 +464,7 @@ async function ebdSaveLesson(status) {
 }
 
 /* ============================================================
-   IMPORTAÇÃO AUTOMÁTICA DO SUMÁRIO (estudantesdabiblia.com.br)
+   IMPORTAÇÃO AUTOMÁTICA DO SUMÁRIO (escola-ebd.com.br)
    ------------------------------------------------------------
    Todo dia às 06:00 uma função da Vercel confere o sumário sozinha.
    Aqui ficam as opções e o botão "Sincronizar agora". Só títulos,
@@ -500,13 +500,13 @@ function ebdSyncCardHTML() {
   const last = ebdSyncLast();
   return `<div class="admin-card ebd-sync">
     <h3>Importação automática</h3>
-    <label class="check"><input type="checkbox" ${cfg.enabled ? "checked" : ""} onchange="ebdSyncSet('enabled', this.checked)"> Importar as lições sozinho, todo dia às 06:00, do sumário em estudantesdabiblia.com.br</label>
+    <label class="check"><input type="checkbox" ${cfg.enabled ? "checked" : ""} onchange="ebdSyncSet('enabled', this.checked)"> Importar as lições sozinho, todo dia às 06:00, do sumário em escola-ebd.com.br</label>
     <div class="ebd-sync-mags">
       <span>Revistas:</span>
       ${EBD_SYNC_MAGAZINES.map(([slug, name]) => `<label class="check"><input type="checkbox" ${cfg.magazines.includes(slug) ? "checked" : ""} onchange="ebdSyncMagazine('${slug}', this.checked)"> ${name}</label>`).join("")}
     </div>
-    <label class="check"><input type="checkbox" ${cfg.autoPublish ? "checked" : ""} onchange="ebdSyncSet('autoPublish', this.checked)"> Publicar sozinho: cada lição importada entra no ar na segunda-feira da semana dela (para segurar uma lição, marque “Em revisão”)</label>
-    <p class="admin-note">Vêm do sumário só o tema, o comentarista, os títulos, as datas e as referências bíblicas (texto áureo, leitura em classe e leitura diária). O texto da revista não é copiado, e o que a equipe escrever nunca é substituído.</p>
+    <label class="check"><input type="checkbox" ${cfg.autoPublish ? "checked" : ""} onchange="ebdSyncSet('autoPublish', this.checked)"> Publicar sozinho: cada lição importada entra no ar na hora, sem esperar o dia (sem conteúdo ainda, o site mostra “ainda não disponível”; para segurar uma lição, marque “Em revisão”)</label>
+    <p class="admin-note">Vêm do sumário só o tema, o comentarista, os títulos, as datas, as referências bíblicas (texto áureo, leitura em classe e leitura diária) e o link de cada lição. O texto da revista (CPAD) não é copiado: o site mostra o botão “Ler a lição completa”, que abre a lição no escola-ebd. O que a equipe escrever nunca é substituído.</p>
     <div class="admin-card-foot">
       <span class="ebd-sync-status" id="ebdSyncStatus" role="status">${esc(ebdAdmin.syncMsg || (last ? `Última sincronização: ${new Date(last.at).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })} — ${last.summary}` : "Ainda não sincronizado neste aparelho."))}</span>
       <button class="btn btn-primary btn-sm" type="button" onclick="ebdSyncNow()" ${ebdAdmin.syncing ? "disabled" : ""}>${ebdAdmin.syncing ? "Sincronizando…" : "Sincronizar agora"}</button>
