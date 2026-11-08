@@ -186,7 +186,12 @@ begin
 end;
 $function$;
 
+-- Igual ao baseline: tira tudo e devolve só o EXECUTE (a função confere a
+-- chave EBD_SYNC_TOKEN antes de qualquer coisa; as funções de api/ chamam com
+-- a chave publicável). Sem o grant, a importação dá "permission denied"
+-- (aconteceu na 1ª versão deste arquivo; consertado em 20261108152500).
 revoke all on function public.ebd_sync_apply(text, jsonb) from public, anon, authenticated, service_role;
+grant execute on function public.ebd_sync_apply(text, jsonb) to anon, authenticated, service_role;
 
 -- ---------- Uma vez: libera o que estava preso ----------
 -- Lições já publicadas, mas agendadas para depois: no ar agora.
