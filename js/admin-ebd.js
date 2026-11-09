@@ -537,14 +537,14 @@ function ebdSyncPaint(msg) {
   if (el) el.textContent = msg;
 }
 
-async function ebdSyncCall(year, quarter, magazine) {
+async function ebdSyncCall(year, quarter, magazine, after = 0) {
   const { data: s } = await supabaseClient.auth.getSession();
   const jwt = s?.session?.access_token;
   if (!jwt) throw new Error("Sessão expirada. Entre de novo no painel.");
   const res = await fetch("/api/ebd-sincronizar", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${jwt}` },
-    body: JSON.stringify({ year, quarter, magazine }),
+    body: JSON.stringify({ year, quarter, magazine, after }),
   });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(body.error || `Erro ${res.status}`);
@@ -566,9 +566,9 @@ async function ebdSyncNow({ targets, quiet = false } = {}) {
   try {
     for (const t of list) {
       const label = `${t.quarter}º trimestre de ${t.year} (${t.magazine})`;
-      let before = Infinity;
+      let after = 0; // cursor: cada chamada continua depois da última lição baixada
       for (let i = 0; i < 8; i++) {
-        const r = await ebdSyncCall(t.year, t.quarter, t.magazine);
+        const r = await ebdSyncCall(t.year, t.quarter, t.magazine, after);
         if (r.skipped) {
           notes.push(`${label}: ${r.skipped}`);
           break;
@@ -577,8 +577,8 @@ async function ebdSyncNow({ targets, quiet = false } = {}) {
         total.created += r.created || 0;
         total.filled += r.filled || 0;
         total.published += r.published || 0;
-        if (!r.remaining || r.remaining >= before) break;
-        before = r.remaining;
+        if (!r.remaining || !(r.next > after)) break;
+        after = r.next;
         ebdSyncPaint(`Importando ${label}… faltam ${r.remaining} lições`);
       }
     }

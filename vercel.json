@@ -51,7 +51,7 @@
   ],
   "redirects": [
     {
-      "source": "/:caminho((?!api/|_vercel/).*)",
+      "source": "/:caminho((?!api/|_vercel/|sw\\.js$).*)",
       "has": [
         {
           "type": "host",

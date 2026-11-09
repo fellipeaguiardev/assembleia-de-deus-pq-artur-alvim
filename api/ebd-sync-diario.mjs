@@ -37,6 +37,9 @@ export async function GET(request) {
   }
   const results = [];
   let budget = 10;
+  // Cada dia começa de uma lição diferente (syncQuarter dá a volta): uma lição
+  // sem as três referências no escola-ebd não trava as outras para sempre.
+  const GIRO = (Math.floor(Date.now() / 864e5) * 5) % 14;
   for (const slug of cfg.magazines) {
     for (const { year, quarter } of quartersToSync()) {
       if (budget <= 0 || Date.now() - started > TIME_BUDGET_MS) {
@@ -44,7 +47,7 @@ export async function GET(request) {
         return done({ ok: true, results, partial: true });
       }
       try {
-        const r = await syncQuarter({ year, quarter, slug, token, autoPublish: cfg.autoPublish, maxLessons: Math.min(budget, 5), log: console.log });
+        const r = await syncQuarter({ year, quarter, slug, token, autoPublish: cfg.autoPublish, maxLessons: Math.min(budget, 5), after: GIRO, log: console.log });
         budget -= r.fetched || 0;
         console.log(JSON.stringify(r));
         results.push({ slug, year, quarter, ...r });

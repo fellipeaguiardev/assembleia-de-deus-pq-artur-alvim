@@ -39,13 +39,14 @@ export async function POST(req) {
   const year = Number(body?.year);
   const quarter = Number(body?.quarter);
   const slug = String(body?.magazine || "");
+  const after = Math.max(0, Math.min(20, Math.trunc(Number(body?.after) || 0))); // cursor (syncQuarter)
   if (!Number.isInteger(year) || year < 2015 || year > 2100 || ![1, 2, 3, 4].includes(quarter) || !Object.hasOwn(MAGAZINES, slug)) {
     return json(400, { error: "Ano, trimestre ou revista inválidos." });
   }
 
   try {
     const cfg = await readSyncConfig();
-    const result = await syncQuarter({ year, quarter, slug, token, autoPublish: cfg.autoPublish, maxLessons: 3, pauseMs: 500 });
+    const result = await syncQuarter({ year, quarter, slug, token, autoPublish: cfg.autoPublish, maxLessons: 3, pauseMs: 500, after });
     return json(200, result);
   } catch (e) {
     console.error("ebd-sincronizar:", e.message);

@@ -243,7 +243,10 @@ ajusta (o endereço de cada revista vem da busca do próprio site, porque não s
 Precisa da migration `supabase/migrations/20261108150314_ebd_escola_ebd.sql` (aceita os links do
 escola-ebd e libera as lições na hora) e da variável `EBD_SYNC_TOKEN` no Vercel (a chave do servidor;
 no banco fica só o hash dela). Educado com a origem: identifica-se no User-Agent, uma requisição por
-vez, e só baixa a página de uma lição quando faltam dados dela.
+vez, e só baixa a página de uma lição quando faltam dados dela. Cada chamada baixa poucas lições
+e anda por um **cursor** (`after` em `syncQuarter`): o botão continua de onde parou e a rotina
+diária começa cada dia de uma lição diferente, então uma lição cuja página nunca traz as três
+referências não trava as outras.
 
 ## Notícias da AD Belém – Sede
 
@@ -911,8 +914,9 @@ redireciona para o `www`). Ele já é o padrão no código (`js/config.js`, `api
 O endereço antigo, `assembleia-de-deus-pq-artur-alvim.vercel.app`, **redireciona de vez (308)**
 para o domínio novo, mesmo caminho, com `?mudou=1` (o site mostra uma vez o aviso "o site mudou de
 endereço", com o botão de reinstalar o app). É uma regra em `redirects` do `vercel.json`, por
-host; ela **não pega `/api/` nem `/_vercel/`** (crons, funções e Analytics seguem respondendo no
-endereço antigo) e não afeta as publicações de prévia. O Netlify antigo manda para o vercel.app,
+host; ela **não pega `/api/`, `/_vercel/` nem `/sw.js`** (crons, funções e Analytics seguem respondendo no
+endereço antigo; o `sw.js`, aberto lá, apaga as cópias guardadas e se desliga, e o app instalado
+pelo endereço antigo passa a seguir o redirect) e não afeta as publicações de prévia. O Netlify antigo manda para o vercel.app,
 que manda para cá (dois pulos, os dois permanentes). Assim o Google troca o endereço que mostra na
 busca. As imagens passam pelo redutor da Vercel em qualquer domínio publicado lá (só no
 `localhost` não).

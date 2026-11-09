@@ -15,6 +15,11 @@
    CACHE_VERSION é carimbado pelo scripts/publicar.sh a cada versão.
    ============================================================ */
 const CACHE_VERSION = "adbelem-v13-2026-10-11";
+// Endereço antigo (…vercel.app): as páginas de lá redirecionam para o domínio
+// próprio (vercel.json), menos este arquivo, para que o app instalado por lá
+// receba esta versão. Nele o service worker não guarda nada: apaga as cópias,
+// se desliga e recarrega as abas, que então seguem o redirect.
+const ENDERECO_ANTIGO = self.location.hostname === "assembleia-de-deus-pq-artur-alvim.vercel.app";
 const SHELL = [
   "/index.html",
   "/manifest.webmanifest",
@@ -56,6 +61,7 @@ const SHELL = [
 ];
 
 self.addEventListener("install", (event) => {
+  if (ENDERECO_ANTIGO) return event.waitUntil(self.skipWaiting());
   event.waitUntil(
     caches
       .open(CACHE_VERSION)
@@ -65,6 +71,16 @@ self.addEventListener("install", (event) => {
 });
 
 self.addEventListener("activate", (event) => {
+  if (ENDERECO_ANTIGO) {
+    return event.waitUntil(
+      caches
+        .keys()
+        .then((keys) => Promise.all(keys.map((k) => caches.delete(k))))
+        .then(() => self.registration.unregister())
+        .then(() => self.clients.matchAll({ type: "window" }))
+        .then((abas) => Promise.all(abas.map((a) => a.navigate(a.url).catch(() => {})))),
+    );
+  }
   event.waitUntil(
     caches
       .keys()
@@ -74,6 +90,7 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
+  if (ENDERECO_ANTIGO) return; // (ver ENDERECO_ANTIGO): tudo direto da rede
   const req = event.request;
   if (req.method !== "GET") return;
   const url = new URL(req.url);

@@ -20,7 +20,9 @@ const EBD_DAYS = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 // Lista do trimestre e da home: o suficiente para saber se a lição já tem
 // conteúdo (referências, link da lição completa ou texto da equipe).
 // Mantenha igual ao EBD de api/dados.mjs.
-const EBD_LIGHT = "id,quarter_id,number,lesson_date,title,golden_ref,reading_ref,source_url,key_idea,status,publish_at";
+// (summary, daily_refs e questions entram porque ebdTemConteudo olha para eles:
+// lição escrita à mão só com pontos e perguntas também conta como pronta)
+const EBD_LIGHT = "id,quarter_id,number,lesson_date,title,golden_ref,reading_ref,source_url,key_idea,summary,daily_refs,questions,status,publish_at";
 
 const ebdQuarterLabel = (q) => `${q.quarter}º Trimestre de ${q.year}`;
 const ebdQuarterPath = (q) => `/ebd/${Number(q.year)}/${Number(q.quarter)}/${encodeURIComponent(q.magazine_slug)}`;
@@ -169,15 +171,6 @@ async function ebdLoadCurrent() {
 function ebdQuarterRunning(q, today = spToday()) {
   const end = isoAddDays(q.start_date, 7 * (q.lesson_count - 1) + 6);
   return q.start_date <= isoAddDays(today, 6) && today <= end;
-}
-
-// Número da lição desta semana dentro do trimestre (pelas datas previstas).
-function ebdWeekNumber(q, lessons = [], today = spToday()) {
-  for (let n = 1; n <= q.lesson_count; n++) {
-    const date = lessons.find((l) => l.number === n)?.lesson_date || ebdLessonDate(q, n);
-    if (ebdStudyDate(date) >= today) return n;
-  }
-  return 0;
 }
 
 // Horário da EBD tirado da programação de cultos (nada é inventado aqui).
@@ -446,7 +439,8 @@ async function ebdVersesFor(refs) {
 async function renderEbdLesson(root, q, n, alive) {
   const [lesson, list] = await Promise.all([ebdLoadLesson(q.id, n), ebdLoadQuarterLessons(q.id)]);
   if (!alive()) return;
-  if (!lesson || !ebdTemConteudo(lesson)) {
+  // Admin pré-visualizando um rascunho vê a página mesmo sem conteúdo ainda.
+  if (!lesson || (!ebdTemConteudo(lesson) && ebdLive(lesson))) {
     const quando = ebdStudyDate(lesson?.lesson_date || ebdLessonDate(q, n));
     return renderEbdNotFound(
       root,

@@ -122,14 +122,18 @@ export function parseQuarter(html) {
   const theme = limit((h2Titulo || "").replace(/^T[íi]tulo\s*:\s*/i, ""), 300);
   const commentator = limit(textOf(corpo.match(/Comentarista\s*:?\s*(?:<\/strong>)?\s*([^<]{2,120})</i)?.[1] || ""), 120);
   // Só o trecho do sumário (do "SUMÁRIO" até o "VEJA TAMBÉM" ou o fim do texto)
-  const ini = html.search(/SUM(?:Á|&Aacute;|A)RIO/i);
-  let trecho = ini >= 0 ? html.slice(ini) : "";
+  // (procura só no corpo: o <head> e o menu também podem dizer "sumário")
+  const ini = corpo.search(/SUM(?:Á|&Aacute;|A)RIO/i);
+  let trecho = ini >= 0 ? corpo.slice(ini) : "";
   const fim = trecho.search(/VEJA\s+TAMB|<\/article>|<footer/i);
   if (fim > 0) trecho = trecho.slice(0, fim);
   const lessons = [];
   const titulo = (t) => limit(textOf(t).replace(/^[–—\-\s]+/, ""), 200);
   // lição já publicada: <a href=".../ebd/licao-07-....html">07 – Título</a>
-  for (const m of trecho.matchAll(/<a\s[^>]*href="([^"]+)"[^>]*>\s*(\d{1,2})\s*[–—-]\s*([\s\S]*?)<\/a>/gi)) {
+  // (o WordPress troca " - " por &#8211;: o traço pode vir como entidade)
+  const TRACO = String.raw`(?:[–—-]|&#821[12];|&#x201[34];|&[nm]dash;)`;
+  const LINK = new RegExp(String.raw`<a\s[^>]*href="([^"]+)"[^>]*>\s*(?:<[^>]+>\s*)*(\d{1,2})\s*${TRACO}\s*([\s\S]*?)<\/a>`, "gi");
+  for (const m of trecho.matchAll(LINK)) {
     const number = Number(m[2]);
     const url = m[1].trim();
     if (number < 1 || number > 20 || !doSite(url) || !/\/ebd\//.test(url) || lessons.some((l) => l.number === number)) continue;
@@ -273,8 +277,13 @@ export async function readSyncConfig() {
    Busca o sumário, pergunta ao banco quais lições ainda estão sem
    referências, baixa só essas (até maxLessons por chamada) e grava
    pela função ebd_sync_apply — que só preenche campos vazios e nunca
-   apaga nem sobrescreve o que a equipe escreveu. */
-export async function syncQuarter({ year, quarter, slug, token, autoPublish = false, maxLessons = 3, pauseMs = 700, log = () => {} }) {
+   apaga nem sobrescreve o que a equipe escreveu.
+   "after" é um cursor: começa pelas lições de número maior que ele (e dá a
+   volta). Sem isso, uma lição cuja página nunca traz as três referências
+   ficaria sempre entre as primeiras da lista e travaria as seguintes.
+   Devolve "next" (a última baixada, para passar como "after" na próxima
+   chamada) e "remaining" (quantas faltam nesta volta, depois do cursor). */
+export async function syncQuarter({ year, quarter, slug, token, autoPublish = false, maxLessons = 3, pauseMs = 700, after = 0, log = () => {} }) {
   const mag = MAGAZINES[slug];
   if (!mag) throw new Error("revista desconhecida");
   const qUrl = await quarterUrl(slug, year, quarter);
@@ -286,8 +295,10 @@ export async function syncQuarter({ year, quarter, slug, token, autoPublish = fa
 
   const needs = (await rpc("ebd_sync_needs", { p_token: token, p_year: year, p_quarter: quarter, p_slug: slug })) || [];
   const wanted = info.lessons.filter((l) => l.url && needs.includes(l.number));
+  const depois = wanted.filter((l) => l.number > after);
+  const lote = [...depois, ...wanted.filter((l) => l.number <= after)].slice(0, maxLessons);
   const details = {};
-  for (const l of wanted.slice(0, maxLessons)) {
+  for (const l of lote) {
     await sleep(pauseMs);
     try {
       const lh = await getPage(l.url);
@@ -313,6 +324,7 @@ export async function syncQuarter({ year, quarter, slug, token, autoPublish = fa
     lessons: info.lessons.map((l) => ({ number: l.number, title: l.title, source_url: l.url, ...(details[l.number] || {}) })),
   };
   const result = await rpc("ebd_sync_apply", { p_token: token, p_data: payload });
-  const fetched = Math.min(wanted.length, maxLessons);
-  return { year, quarter, slug, ...result, fetched, remaining: Math.max(0, wanted.length - fetched) };
+  const next = lote.length ? lote[lote.length - 1].number : after;
+  const remaining = lote.length && lote[lote.length - 1].number > after ? depois.filter((l) => l.number > next).length : 0;
+  return { year, quarter, slug, ...result, fetched: lote.length, next, remaining };
 }
