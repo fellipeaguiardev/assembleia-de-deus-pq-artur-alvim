@@ -605,13 +605,17 @@ transmissão dentro do site.
 envio rápido demais, limite por endereço), monta o e-mail com o modelo `api/_lib/pedido-oracao.mjs`
 (texto e versículo conforme o assunto, botão de WhatsApp) e envia pelo Resend (resend.com).
 Variáveis na Vercel (*Settings → Environment Variables*): `RESEND_API_KEY`, `NOTIFY_TO`
-(e-mails separados por vírgula), `EBD_SYNC_TOKEN`, `CRON_SECRET`, `ADMIN_ACCESS_TOKEN` e, opcionais,
-`NOTIFY_FROM` e `ADMIN_APROVADORES`.
+(e-mails separados por vírgula: a secretaria), `EBD_SYNC_TOKEN`, `CRON_SECRET`, `ADMIN_ACCESS_TOKEN` e,
+opcionais, `NOTIFY_PASTOR` (o assunto **"Quero conversar com um pastor" vai só para ele**; sem a
+variável, vai para `NOTIFY_TO`), `NOTIFY_FROM` e `ADMIN_APROVADORES`.
 O brasão vai anexado ao e-mail (imagem `cid:`, arquivo
 `assets/img/logo-email.png`) para aparecer mesmo quando o Gmail bloqueia imagens de fora. O assunto
 leva data e hora para o Gmail não juntar pedidos diferentes na mesma conversa.
-Sem domínio próprio verificado no Resend, ele só entrega para o e-mail da conta Resend;
-para avisar outras pessoas, verifique um domínio da igreja no Resend e mude `NOTIFY_FROM`.
+O domínio `adbelemparquealvim.org.br` está **verificado no Resend** (09/11/2026; registros
+`resend._domainkey`, `send`, `rsend` e `_dmarc` no registro.br): os e-mails saem de
+`site@adbelemparquealvim.org.br` (`REMETENTE` em `api/_lib/site.mjs`) e chegam para qualquer
+endereço. Para trocar a secretaria ou o pastor, mude `NOTIFY_TO` / `NOTIFY_PASTOR` na Vercel e
+publique de novo.
 
 ## Recriar o banco do zero
 

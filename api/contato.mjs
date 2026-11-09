@@ -8,11 +8,18 @@
 //
 // Variáveis de ambiente (Vercel → Settings → Environment Variables):
 //   RESEND_API_KEY  chave do Resend (obrigatória)
-//   NOTIFY_TO       e-mail(s) que recebem, separados por vírgula
-//   NOTIFY_FROM     remetente (opcional). Padrão: "AD Belém - Site <onboarding@resend.dev>"
+//   NOTIFY_TO       e-mail(s) que recebem, separados por vírgula (a secretaria)
+//   NOTIFY_PASTOR   e-mail(s) do pastor (opcional): o assunto "Quero conversar
+//                   com um pastor" vai SÓ para ele. Sem esta variável, vai
+//                   para NOTIFY_TO, como os outros assuntos.
+//   NOTIFY_FROM     remetente (opcional). Padrão: REMETENTE em _lib/site.mjs
 // ============================================================
-import { origemDeFora } from "./_lib/site.mjs";
+import { origemDeFora, REMETENTE } from "./_lib/site.mjs";
 import { buildPrayerEmail, FORM_TYPES as TYPES, LOGO_CID, LOGO_URL } from "./_lib/pedido-oracao.mjs";
+
+// Assunto que vai só para o pastor (NOTIFY_PASTOR), quando configurado.
+const ASSUNTO_PASTOR = "Quero conversar com um pastor";
+if (!TYPES.includes(ASSUNTO_PASTOR)) console.warn("contato: o assunto do pastor mudou de nome em _lib/pedido-oracao.mjs");
 
 const json = (status, body) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" } });
 
@@ -60,7 +67,9 @@ export async function POST(request) {
   if (tooMany(ip)) return json(429, { error: "Muitas mensagens seguidas. Tente de novo daqui a alguns minutos." });
 
   const apiKey = process.env.RESEND_API_KEY;
-  const to = String(process.env.NOTIFY_TO || "").split(",").map((s) => s.trim()).filter(Boolean);
+  const lista = (v) => String(v || "").split(",").map((s) => s.trim()).filter(Boolean);
+  const paraPastor = data.tipo === ASSUNTO_PASTOR ? lista(process.env.NOTIFY_PASTOR) : [];
+  const to = paraPastor.length ? paraPastor : lista(process.env.NOTIFY_TO);
   if (!apiKey || !to.length) {
     console.error("RESEND_API_KEY ou NOTIFY_TO não configurados; e-mail não enviado.");
     return json(500, { error: "Envio indisponível agora." });
@@ -69,7 +78,7 @@ export async function POST(request) {
   const createdAt = new Date().toISOString();
   const email = buildPrayerEmail(data, createdAt);
   const message = {
-    from: process.env.NOTIFY_FROM || "AD Belém - Site <onboarding@resend.dev>",
+    from: REMETENTE,
     to,
     subject: email.subject,
     html: email.html,
@@ -90,6 +99,6 @@ export async function POST(request) {
     console.error("Resend recusou o envio:", r.status, r.body.slice(0, 300));
     return json(502, { error: "Não foi possível enviar agora." });
   }
-  console.log("E-mail enviado para", to.length, "destinatário(s)");
+  console.log("E-mail enviado para", to.length, "destinatário(s)", paraPastor.length ? "(pastor)" : "");
   return json(200, { ok: true });
 }

@@ -12,7 +12,7 @@
 // Sem domínio próprio no Resend, ele só entrega para o e-mail da conta
 // Resend — por isso o padrão é esse endereço.
 // ============================================================
-import { origemDeFora } from "./_lib/site.mjs";
+import { origemDeFora, REMETENTE } from "./_lib/site.mjs";
 import { randomBytes } from "node:crypto";
 import { SUPABASE_URL, SUPABASE_KEY, rpc } from "./_lib/fonte.mjs";
 import { sha256, buildAccessEmail, deviceLabel, maskEmail } from "./_lib/acesso.mjs";
@@ -80,7 +80,7 @@ export async function POST(request) {
 
   const email = buildAccessEmail({ email: r.email, info, token, createdAt: new Date().toISOString() });
   const message = {
-    from: process.env.NOTIFY_FROM || "AD Belém - Site <onboarding@resend.dev>",
+    from: REMETENTE,
     to,
     subject: email.subject,
     html: email.html,

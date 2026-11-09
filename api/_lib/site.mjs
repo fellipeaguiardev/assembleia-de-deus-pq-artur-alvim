@@ -34,3 +34,8 @@ export function origemDeFora(request, { aceitaNull = false } = {}) {
     return true;
   }
 }
+
+// Remetente dos e-mails do site (Resend). O domínio está verificado no Resend
+// desde 09/11/2026, então os e-mails chegam para qualquer endereço. A variável
+// NOTIFY_FROM na Vercel, se existir, tem prioridade.
+export const REMETENTE = process.env.NOTIFY_FROM || "AD Belém - Parque Artur Alvim <site@adbelemparquealvim.org.br>";
