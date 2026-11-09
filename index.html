@@ -127,11 +127,12 @@
             <!-- Brasão desenhado em vetor (formas geométricas): fica nítido em
                  qualquer tela. Cada peça entra separada na vinheta e o conjunto
                  forma o brasão final — não há troca por imagem. -->
+            <!-- Degradês e padrões compartilhados. Os RECORTES (clipPath) ficam dentro
+                 de cada peça: o Safari do iPhone às vezes não acha um clipPath que
+                 está em outro <svg> (ainda mais neste, de tamanho zero) e deixa a
+                 peça sem desenhar (o escudo sumia ao recarregar). -->
             <svg class="intro-defs" viewBox="0 0 402 497" width="0" height="0" focusable="false">
               <defs>
-                <clipPath id="bShield"><path d="M60 136H342V316C342 396 274 446 201 454C128 446 60 396 60 316Z"/></clipPath>
-                <linearGradient id="bGray" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9dadc"/><stop offset="1" stop-color="#cbccce"/></linearGradient>
-                <linearGradient id="bSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0aa0ff"/><stop offset="1" stop-color="#0090f0"/></linearGradient>
                 <linearGradient id="bFlameBack" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff9a1a"/><stop offset=".55" stop-color="#ff6410"/><stop offset="1" stop-color="#f23c0c"/></linearGradient>
                 <linearGradient id="bFlameMid" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb12a"/><stop offset="1" stop-color="#ff7414"/></linearGradient>
                 <linearGradient id="bFlameLeft" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb63a"/><stop offset="1" stop-color="#ff8418"/></linearGradient>
@@ -141,14 +142,7 @@
                 <pattern id="bStripes" patternUnits="userSpaceOnUse" x="36.25" width="71" height="200" patternTransform="skewX(-33)">
                 <rect width="71" height="200" fill="#00923f"/><rect width="35.5" height="200" fill="#f7c100"/>
                 </pattern>
-                <clipPath id="bCrest">
-                  <path d="M60 136H342V316C342 396 274 446 201 454C128 446 60 396 60 316Z" />
-                  <path d="M16 322C16 430 110 496 201 496C292 496 386 430 386 322L355 296C355 398 290 466 201 466C112 466 47 398 47 296Z" />
-                  <path d="M193 0C216 10 240 30 248 54C254 72 251 90 239 99L234 102H175C172 97 171 92 171 86C171 72 176 60 183 52C190 45 199 39 203 31C207 23 206 10 193 0Z" />
-                  <path d="M174 22C176 14 184 10 192 11C199 13 202 20 201 27C199 36 190 44 183 52C176 60 171 72 171 86C171 92 172 97 175 102H166C159 98 154 90 154 79C154 67 160 58 168 52C176 46 182 40 183 33C184 27 180 23 174 22Z" />
-                  <rect x="97" y="114" width="207" height="21" rx="6" />
-                  <rect x="171" y="100" width="64" height="14" />
-                </clipPath>
+                
                 <linearGradient id="bSheen" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0" /><stop offset=".5" stop-color="#fff" stop-opacity=".75" /><stop offset="1" stop-color="#fff" stop-opacity="0" /></linearGradient>
               </defs>
             </svg>
@@ -189,13 +183,16 @@
               </g>
             </svg>
             <svg class="piece p-r" viewBox="0 0 402 497">
-              <g clip-path="url(#bShield)"><rect x="200" y="136" width="142" height="320" fill="url(#bGray)" /></g>
+              <defs><linearGradient id="bGray" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9dadc"/><stop offset="1" stop-color="#cbccce"/></linearGradient><clipPath id="bShieldR"><path d="M60 136H342V316C342 396 274 446 201 454C128 446 60 396 60 316Z"/></clipPath></defs>
+              <g clip-path="url(#bShieldR)"><rect x="200" y="136" width="142" height="320" fill="url(#bGray)" /></g>
             </svg>
             <svg class="piece p-lt" viewBox="0 0 402 497">
-              <g clip-path="url(#bShield)"><rect x="60" y="136" width="141" height="140" fill="#2f2d2e" /></g>
+              <defs><clipPath id="bShieldLT"><path d="M60 136H342V316C342 396 274 446 201 454C128 446 60 396 60 316Z"/></clipPath></defs>
+              <g clip-path="url(#bShieldLT)"><rect x="60" y="136" width="141" height="140" fill="#2f2d2e" /></g>
             </svg>
             <svg class="piece p-lb" viewBox="0 0 402 497">
-              <g clip-path="url(#bShield)">
+              <defs><linearGradient id="bSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0aa0ff"/><stop offset="1" stop-color="#0090f0"/></linearGradient><clipPath id="bShieldLB"><path d="M60 136H342V316C342 396 274 446 201 454C128 446 60 396 60 316Z"/></clipPath></defs>
+              <g clip-path="url(#bShieldLB)">
                 <rect x="60" y="275" width="141" height="180" fill="url(#bSky)" />
                 <path fill="#2f2d2e" d="M60 380L132 378L178 352L201 350V460H60Z" />
                 <path fill="#fff" d="M84 380L89 326L131 317V381Z"/>
@@ -255,6 +252,14 @@
             </svg>
             <!-- Brilho que varre o brasão (recortado no formato dele) -->
             <svg class="p-sheen" viewBox="0 0 402 497">
+              <defs><clipPath id="bCrest">
+                  <path d="M60 136H342V316C342 396 274 446 201 454C128 446 60 396 60 316Z" />
+                  <path d="M16 322C16 430 110 496 201 496C292 496 386 430 386 322L355 296C355 398 290 466 201 466C112 466 47 398 47 296Z" />
+                  <path d="M193 0C216 10 240 30 248 54C254 72 251 90 239 99L234 102H175C172 97 171 92 171 86C171 72 176 60 183 52C190 45 199 39 203 31C207 23 206 10 193 0Z" />
+                  <path d="M174 22C176 14 184 10 192 11C199 13 202 20 201 27C199 36 190 44 183 52C176 60 171 72 171 86C171 92 172 97 175 102H166C159 98 154 90 154 79C154 67 160 58 168 52C176 46 182 40 183 33C184 27 180 23 174 22Z" />
+                  <rect x="97" y="114" width="207" height="21" rx="6" />
+                  <rect x="171" y="100" width="64" height="14" />
+                </clipPath></defs>
               <g clip-path="url(#bCrest)"><g transform="skewX(-14)"><rect class="sheen-bar" x="-150" y="-20" width="110" height="540" fill="url(#bSheen)" /></g></g>
             </svg>
             <!-- Contornos desenhados pela luz -->
