@@ -287,6 +287,22 @@ function ebdAvisoIndisponivel(ds) {
   );
 }
 
+// Botão "lição anterior/próxima" do fim da lição. A que ainda não tem conteúdo
+// não leva a uma página vazia: fica apagada, com "ainda não disponível", e ao
+// tocar mostra o mesmo aviso da lista do trimestre (ebdAvisoIndisponivel).
+function ebdNavLink(q, l, lado) {
+  const seta = icon(lado === "prev" ? "left" : "right", 18);
+  const titulo = l.title || (lado === "prev" ? "Anterior" : "Próxima");
+  if (ebdTemConteudo(l)) {
+    const texto = `<span><small>Lição ${l.number}</small>${esc(titulo)}</span>`;
+    return `<a class="bible-nav-link ${lado}" href="${ebdLessonPath(q, l.number)}">${lado === "prev" ? seta + texto : texto + seta}</a>`;
+  }
+  const data = ebdStudyInfo(l.lesson_date || ebdLessonDate(q, l.number)).date;
+  const texto = `<span><small>Lição ${l.number} · ainda não disponível</small>${esc(titulo)}</span>`;
+  const relogio = icon("clock", 18);
+  return `<button type="button" class="bible-nav-link ${lado} is-soon" data-n="${l.number}" data-titulo="${esc(titulo)}" data-data="${esc(data)}" onclick="ebdAvisoIndisponivel(this.dataset)" aria-label="Lição ${l.number}: ${esc(titulo)}, ainda não disponível">${lado === "prev" ? relogio + texto : texto + relogio}</button>`;
+}
+
 function renderEbdNotFound(root, title, text, back = "/ebd") {
   setMeta(title, ROUTE_META.ebd[1], location.pathname, { noindex: true });
   announce(title);
@@ -593,8 +609,8 @@ async function renderEbdLesson(root, q, n, alive) {
         </aside>
       </div>
       <nav class="container ebd-lesson-nav" aria-label="Outras lições">
-        ${prev ? `<a class="bible-nav-link prev" href="${ebdLessonPath(q, prev.number)}">${icon("left", 18)}<span><small>Lição ${prev.number}</small>${esc(prev.title || "Anterior")}</span></a>` : "<span></span>"}
-        ${next ? `<a class="bible-nav-link next" href="${ebdLessonPath(q, next.number)}"><span><small>Lição ${next.number}</small>${esc(next.title || "Próxima")}</span>${icon("right", 18)}</a>` : "<span></span>"}
+        ${prev ? ebdNavLink(q, prev, "prev") : "<span></span>"}
+        ${next ? ebdNavLink(q, next, "next") : "<span></span>"}
       </nav>
     </article>`;
   root.dataset.title = title;

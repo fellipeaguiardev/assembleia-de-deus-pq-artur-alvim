@@ -32,7 +32,7 @@ lições, livros, vídeos, cores) é editado pela equipe num **painel administra
 
 | | |
 | --- | --- |
-| **Cultos e agenda** | Programação semanal com o **próximo culto calculado sozinho** (inclusive a Ceia do Senhor no 3º domingo do mês, quando a lição da EBD passa para o Culto de Ensino de terça), eventos, avisos e notícias. Qualquer culto ou evento vai para a agenda do celular (.ics / Google Agenda) com um toque. |
+| **Cultos e agenda** | Programação semanal com o **próximo culto calculado sozinho** (inclusive a Ceia do Senhor no 3º domingo do mês, quando a lição da EBD passa para o Culto de Ensino de terça; o aviso "na terça após o 3º domingo do mês, com a lição da EBD" só aparece na segunda e na terça depois desse domingo, até 23:59 de Brasília: `movedNoteActive` em `js/core.js`), eventos, avisos e notícias. Qualquer culto ou evento vai para a agenda do celular (.ics / Google Agenda) com um toque. |
 | **Bíblia Sagrada** | Bíblia completa no site (Bíblia Livre), busca por livro ou referência ("Jo 3.16", "Sl 23"), seleção de versículos para copiar, compartilhar ou gerar link, tamanho de letra e tema escuro, "continuar de onde parei" e leitura offline. O botão **Outras versões** abre a mesma passagem na ARC, ARA, NVI, NTLH, BKJ e outras. |
 | **Palavra Diária** | Um versículo por dia para meditar, com os dias anteriores. |
 | **Modo ouvir** | Lê em voz alta a Bíblia, a lição da EBD, a Palavra Diária e as notícias com a voz do próprio aparelho, com velocidade, destaque do trecho e continuação no próximo capítulo. |
@@ -228,7 +228,9 @@ equipe escreveu (só preenche campos vazios; o link do site antigo é trocado pe
 **Liberação:** com **Publicar sozinho** ligado, a lição entra no ar **assim que é importada**, sem
 esperar o dia. Na lista do trimestre, a lição do domingo leva a etiqueta **"Lição de hoje"** e a
 seguinte, **"Próxima lição"**. Lição cujo conteúdo a fonte ainda não publicou aparece com **"ainda não
-disponível"**: tocar nela abre um aviso, e o endereço direto mostra a mesma mensagem. Para segurar
+disponível"**: tocar nela abre um aviso, e o endereço direto mostra a mesma mensagem. No fim de cada
+lição, o botão da lição anterior/próxima que ainda não tem conteúdo fica apagado (tracejado, com
+"ainda não disponível") e abre o mesmo aviso, sem sair da página (`ebdNavLink` em `js/ebd.js`). Para segurar
 uma lição, marque **"Em revisão"** no painel.
 
 **Conteúdo completo (aluno e professor):** o texto da revista é da CPAD (introdução, tópicos, plano de

@@ -228,6 +228,19 @@ a.ebd-row:active {
   font-weight: 600;
 }
 
+/* Lição anterior/próxima ainda sem conteúdo (ebdNavLink): apagada e tracejada */
+button.bible-nav-link {
+  width: 100%;
+  background: transparent;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.bible-nav-link.is-soon {
+  border-style: dashed;
+  color: var(--c-text-faint);
+}
+
 /* ---------- Arquivo ---------- */
 .ebd-archive {
   margin-top: 56px;

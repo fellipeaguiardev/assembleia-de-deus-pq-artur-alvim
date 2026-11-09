@@ -443,6 +443,18 @@ function movedInto(day, item, date) {
 
 const movedLabel = (name) => (isEbdService(name) ? "a lição da EBD" : name);
 
+// O aviso "na terça após o 3º domingo do mês, com a lição da EBD" só aparece
+// quando vale: do dia seguinte ao da troca até o fim do dia do horário que
+// recebe o conteúdo, no horário de Brasília. Ex.: 3º domingo no dia 15 →
+// aparece na segunda 16 e na terça 17 (até 23:59) e some na quarta.
+function movedNoteActive(day, s, hoje = SITE_SHARED.spToday()) {
+  const diaDaSemana = (iso) => new Date(iso + "T12:00:00Z").getUTCDay();
+  const somaDias = (iso, n) => new Date(Date.parse(iso + "T12:00:00Z") + n * 864e5).toISOString().slice(0, 10);
+  const alvo = somaDias(hoje, (weekdayIndex(day) - diaDaSemana(hoje) + 7) % 7); // o próximo "day" (hoje conta)
+  const origem = somaDias(alvo, -moveOffset(s.day, day)); // o domingo da troca
+  return origem < hoje && weekOfMonth(new Date(origem + "T12:00:00")) === s.rule.week;
+}
+
 // Nome do culto naquela data, já com a troca mensal.
 function serviceNameOn(item, date) {
   const m = monthlyRule(item);
@@ -464,6 +476,7 @@ function serviceLines(d) {
   (d.items || []).forEach((it) => {
     const m = monthlyRule(it);
     const extra = movedSources(d.day, it)
+      .filter((s) => movedNoteActive(d.day, s))
       .map((s) => `${onWeekday(d.day)} após o ${nthWeekdayLabel(s.rule.week, s.day)} do mês, com ${movedLabel(s.src.name)}`)
       .join("; ");
     lines.push({ item: it, time: it.time, name: it.name, note: m ? `exceto no ${nthWeekdayLabel(m.week, d.day)} do mês` : "", extra });
