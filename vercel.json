@@ -51,6 +51,17 @@
   ],
   "redirects": [
     {
+      "source": "/:caminho((?!api/|_vercel/).*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "assembleia-de-deus-pq-artur-alvim.vercel.app"
+        }
+      ],
+      "destination": "https://www.adbelemparquealvim.org.br/:caminho?mudou=1",
+      "permanent": true
+    },
+    {
       "source": "/ministerios",
       "destination": "/departamentos",
       "permanent": true

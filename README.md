@@ -908,9 +908,23 @@ O endereço do site fica em um lugar só:
 **Domínio atual: `https://www.adbelemparquealvim.org.br`** (desde 09/11/2026; `adbelemparquealvim.org.br`
 redireciona para o `www`). Ele já é o padrão no código (`js/config.js`, `api/_lib/site.mjs`,
 `scripts/publicar.sh`, `index.html`, `sitemap.xml`, `robots.txt`): publicar não precisa de variável.
-O endereço antigo, `assembleia-de-deus-pq-artur-alvim.vercel.app`, continua funcionando (apps já
-instalados por ele seguem abrindo), com o `canonical` apontando para o domínio novo. As
-imagens passam pelo redutor da Vercel em qualquer domínio publicado lá (só no `localhost` não).
+O endereço antigo, `assembleia-de-deus-pq-artur-alvim.vercel.app`, **redireciona de vez (308)**
+para o domínio novo, mesmo caminho, com `?mudou=1` (o site mostra uma vez o aviso "o site mudou de
+endereço", com o botão de reinstalar o app). É uma regra em `redirects` do `vercel.json`, por
+host; ela **não pega `/api/` nem `/_vercel/`** (crons, funções e Analytics seguem respondendo no
+endereço antigo) e não afeta as publicações de prévia. O Netlify antigo manda para o vercel.app,
+que manda para cá (dois pulos, os dois permanentes). Assim o Google troca o endereço que mostra na
+busca. As imagens passam pelo redutor da Vercel em qualquer domínio publicado lá (só no
+`localhost` não).
+
+**Busca do Google mostrando o endereço antigo:** o redirect resolve sozinho, mas leva de dias a
+semanas. Para acelerar, no [Google Search Console](https://search.google.com/search-console):
+(1) adicione a propriedade **Domínio** `adbelemparquealvim.org.br` (o Google dá um registro TXT
+para criar no DNS do registro.br); (2) em *Sitemaps*, envie `https://www.adbelemparquealvim.org.br/sitemap.xml`;
+(3) em *Inspeção de URL*, cole `https://www.adbelemparquealvim.org.br/` e clique em *Solicitar
+indexação*. A ferramenta *Alteração de endereço* exige o endereço antigo verificado também (pela
+meta tag `google-site-verification` no `index.html`); como o `vercel.app` é subdomínio da
+Vercel, ela pode não aceitar, e não é obrigatória: o 308 já basta.
 
 Passo a passo (troque `xxx.org.br` pelo domínio escolhido):
 
