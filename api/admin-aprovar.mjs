@@ -5,6 +5,7 @@
 //                        robôs de e-mail que "abrem" links não liberam acesso)
 // POST t=...&acao=...    decide: liberar (12 h) ou "não fui eu"
 // ============================================================
+import { origemDeFora } from "./_lib/site.mjs";
 import { rpc, sha256, esc, page, when } from "./_lib/acesso.mjs";
 
 const tokenOk = (t) => /^[A-Za-z0-9_-]{40,64}$/.test(String(t || ""));
@@ -58,8 +59,7 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  const origin = request.headers.get("origin");
-  if (origin && origin !== "null" && new URL(origin).host !== new URL(request.url).host) return page("Não permitido", `<h1>Não permitido</h1>`, 403);
+  if (origemDeFora(request, { aceitaNull: true })) return page("Não permitido", `<h1>Não permitido</h1>`, 403);
   const form = new URLSearchParams(await request.text().catch(() => ""));
   const t = form.get("t");
   const acao = form.get("acao");

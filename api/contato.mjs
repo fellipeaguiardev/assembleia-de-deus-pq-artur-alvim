@@ -11,6 +11,7 @@
 //   NOTIFY_TO       e-mail(s) que recebem, separados por vírgula
 //   NOTIFY_FROM     remetente (opcional). Padrão: "AD Belém - Site <onboarding@resend.dev>"
 // ============================================================
+import { origemDeFora } from "./_lib/site.mjs";
 import { buildPrayerEmail, FORM_TYPES as TYPES, LOGO_CID, LOGO_URL } from "./_lib/pedido-oracao.mjs";
 
 const json = (status, body) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" } });
@@ -38,8 +39,7 @@ async function sendEmail(apiKey, message) {
 }
 
 export async function POST(request) {
-  const origin = request.headers.get("origin");
-  if (origin && new URL(origin).host !== new URL(request.url).host) return json(403, { error: "Origem não permitida." });
+  if (origemDeFora(request)) return json(403, { error: "Origem não permitida." });
   if (Number(request.headers.get("content-length") || 0) > 12000) return json(413, { error: "Mensagem grande demais." });
 
   let d;
@@ -50,7 +50,8 @@ export async function POST(request) {
   }
   const str = (v, n) => String(v ?? "").trim().slice(0, n);
   // Robô: preencheu o campo escondido ou enviou rápido demais. Responde "ok" sem enviar nada.
-  if (str(d["bot-field"], 200) || Number(d.t) < 2500) return json(200, { ok: true });
+  // (sem o tempo "t", que o formulário do site sempre manda, também é robô)
+  if (str(d["bot-field"], 200) || !(Number(d.t) >= 2500)) return json(200, { ok: true });
 
   const data = { nome: str(d.nome, 80), contato: str(d.contato, 120), tipo: TYPES.includes(d.tipo) ? d.tipo : TYPES[0], mensagem: str(d.mensagem, 2000) };
   if (data.mensagem.length < 3) return json(400, { error: "Escreva a sua mensagem." });

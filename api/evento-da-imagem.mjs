@@ -11,6 +11,7 @@
 // descricao, link, avisos[] }, modelo } ou { error }.
 // Nada é gravado aqui: quem cria ou altera o evento é o painel.
 // ============================================================
+import { origemDeFora } from "./_lib/site.mjs";
 import { rpc } from "./_lib/fonte.mjs";
 import { lerCartaz, ErroCartaz } from "./_lib/cartaz.mjs";
 
@@ -21,8 +22,7 @@ const json = (status, body) => new Response(JSON.stringify(body), { status, head
 const hojeEmSP = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date());
 
 export async function POST(request) {
-  const origin = request.headers.get("origin");
-  if (origin && new URL(origin).host !== new URL(request.url).host) return json(403, { error: "Origem não permitida." });
+  if (origemDeFora(request)) return json(403, { error: "Origem não permitida." });
   const jwt = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "").trim();
   if (!jwt || jwt.length > 4096) return json(401, { error: "Faça login no painel." });
   const isAdmin = await rpc("is_site_admin", {}, jwt).catch((e) => (e.status === 401 ? "expirou" : null));

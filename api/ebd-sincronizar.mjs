@@ -9,6 +9,7 @@
 // ebd_sync_apply com a chave do servidor (EBD_SYNC_TOKEN), que nunca
 // sai daqui.
 // ============================================================
+import { origemDeFora } from "./_lib/site.mjs";
 import { syncQuarter, readSyncConfig, MAGAZINES, rpc } from "./_lib/fonte.mjs";
 
 const env = (key) => process.env[key];
@@ -18,8 +19,7 @@ const json = (status, body) =>
 export async function POST(req) {
   if (req.method !== "POST") return json(405, { error: "Use POST." });
   // Só aceita chamadas do próprio site (o navegador sempre manda Origin no POST).
-  const origin = req.headers.get("origin");
-  if (origin && new URL(origin).host !== new URL(req.url).host) return json(403, { error: "Origem não permitida." });
+  if (origemDeFora(req)) return json(403, { error: "Origem não permitida." });
 
   const jwt = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "").trim();
   if (!jwt || jwt.length > 4096) return json(401, { error: "Faça login no painel." });

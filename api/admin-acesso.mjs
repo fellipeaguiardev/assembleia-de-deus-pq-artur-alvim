@@ -12,6 +12,7 @@
 // Sem domínio próprio no Resend, ele só entrega para o e-mail da conta
 // Resend — por isso o padrão é esse endereço.
 // ============================================================
+import { origemDeFora } from "./_lib/site.mjs";
 import { randomBytes } from "node:crypto";
 import { SUPABASE_URL, SUPABASE_KEY, rpc } from "./_lib/fonte.mjs";
 import { sha256, buildAccessEmail, deviceLabel, maskEmail } from "./_lib/acesso.mjs";
@@ -38,8 +39,7 @@ async function sendEmail(apiKey, message) {
 }
 
 export async function POST(request) {
-  const origin = request.headers.get("origin");
-  if (origin && new URL(origin).host !== new URL(request.url).host) return json(403, { error: "Origem não permitida." });
+  if (origemDeFora(request)) return json(403, { error: "Origem não permitida." });
   const jwt = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "").trim();
   if (!jwt || jwt.length > 4096) return json(401, { error: "Faça login no painel." });
 

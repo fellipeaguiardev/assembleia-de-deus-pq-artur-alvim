@@ -14,6 +14,7 @@
 // Variáveis na Vercel: NEWS_SYNC_TOKEN e CRON_SECRET.
 // No banco: supabase/migrations/20261019120000_noticias_sede.sql.
 // ============================================================
+import { origemDeFora } from "./_lib/site.mjs";
 import { timingSafeEqual } from "node:crypto";
 import { rpc } from "./_lib/fonte.mjs";
 import { lerNoticiasSede } from "./_lib/noticias-sede.mjs";
@@ -61,8 +62,7 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  const origin = request.headers.get("origin");
-  if (origin && new URL(origin).host !== new URL(request.url).host) return json(403, { error: "Origem não permitida." });
+  if (origemDeFora(request)) return json(403, { error: "Origem não permitida." });
   const jwt = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "").trim();
   if (!jwt || jwt.length > 4096) return json(401, { error: "Faça login no painel." });
   const isAdmin = await rpc("is_site_admin", {}, jwt).catch((e) => (e.status === 401 ? "expirou" : null));

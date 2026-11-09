@@ -18,6 +18,7 @@
 // ela tem nomes), LIB_SYNC_TOKEN, LIB_TRIGGER_KEY, CRON_SECRET e, opcional,
 // GOOGLE_BOOKS_KEY. No banco: supabase/historico/20261015_biblioteca_planilha.sql.
 // ============================================================
+import { origemDeFora } from "./_lib/site.mjs";
 import { timingSafeEqual } from "node:crypto";
 import { rpc } from "./_lib/fonte.mjs";
 import { readSheet, downloadCover, findCoverOnline } from "./_lib/planilha.mjs";
@@ -127,8 +128,7 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  const origin = request.headers.get("origin");
-  if (origin && new URL(origin).host !== new URL(request.url).host) return json(403, { error: "Origem não permitida." });
+  if (origemDeFora(request)) return json(403, { error: "Origem não permitida." });
   const jwt = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "").trim();
   if (!jwt || jwt.length > 4096) return json(401, { error: "Faça login no painel." });
   const isAdmin = await rpc("is_site_admin", {}, jwt).catch((e) => (e.status === 401 ? "expirou" : null));
