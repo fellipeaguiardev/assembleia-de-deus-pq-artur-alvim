@@ -901,16 +901,10 @@ function ensureFullList(table) {
   return fullListPending[table];
 }
 
-// Pacote dos dados públicos (api/dados.mjs). Só no endereço publicado: no
-// computador (npx serve) não há as funções de api/, e o config.local.json pode
-// apontar para outro banco.
-const USA_DADOS_EM_CACHE = (() => {
-  try {
-    return location.hostname === new URL(window.APP_CONFIG.SITE_URL).hostname;
-  } catch {
-    return false;
-  }
-})();
+// Pacote dos dados públicos (api/dados.mjs). Em qualquer endereço publicado (o
+// domínio da igreja e o antigo da Vercel); no computador (npx serve) não há as
+// funções de api/, e o config.local.json pode apontar para outro banco.
+const USA_DADOS_EM_CACHE = !IS_LOCALHOST;
 
 let pacoteDados = null; // o último pacote (a Lição da semana da home também sai dele: js/ebd.js)
 

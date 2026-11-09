@@ -7,7 +7,7 @@
 <p align="center">
   Site e app da igreja: cultos, Bíblia, Escola Bíblica, Harpa Cristã, biblioteca, vídeos, pedidos de oração<br>
   e um painel para a equipe cuidar de tudo sem precisar de programador.<br><br>
-  <a href="https://assembleia-de-deus-pq-artur-alvim.vercel.app"><strong>assembleia-de-deus-pq-artur-alvim.vercel.app</strong></a>
+  <a href="https://www.adbelemparquealvim.org.br"><strong>adbelemparquealvim.org.br</strong></a>
 </p>
 
 <p align="center">
@@ -171,7 +171,7 @@ página dela tem o seu `case` no roteador. Se a função falhar ou demorar mais 
 2,5 s, ela devolve o `index.html` original (nunca uma página de erro). Cache curto na Vercel
 (`s-maxage=300, stale-while-revalidate`). Ligada desde 03/11/2026 (`"destination":
 "/api/pagina?caminho=/$1"` no `rewrites`). Para conferir o que o WhatsApp vê:
-`curl -s -A "WhatsApp/2.23" https://assembleia-de-deus-pq-artur-alvim.vercel.app/biblia/joao/3/16 | grep -i "og:"`.
+`curl -s -A "WhatsApp/2.23" https://www.adbelemparquealvim.org.br/biblia/joao/3/16 | grep -i "og:"`.
 Para desligar, volte o `destination` para `/index.html` e publique.
 
 ## Abertura (vinheta)
@@ -499,7 +499,7 @@ update private.admin_access
      site sem framework (o mesmo que o pacote `@vercel/analytics` usa quando não há build). As
      instruções de `npm i @vercel/analytics` que a aba Analytics mostra são para projetos com
      framework e **não se aplicam** aqui: não há nada para instalar.
-  3. Conferir: `curl -sI https://assembleia-de-deus-pq-artur-alvim.vercel.app/_vercel/insights/script.js`
+  3. Conferir: `curl -sI https://www.adbelemparquealvim.org.br/_vercel/insights/script.js`
      responde `content-type: application/javascript`. O caminho `_vercel/` já fica fora do rewrite
      do `vercel.json`, o service worker não guarda nada de lá e o CSP já permite (`script-src 'self'`
      e `connect-src 'self'`: o script e o envio das visitas ficam no próprio endereço do site).
@@ -578,7 +578,7 @@ transmissão dentro do site.
   vivo começou". Branco sobre o vermelho `#c8102e`: contraste 5,9:1.
 - **No computador** (`npx serve`) não consulta: lá não há as funções de `api/`.
 - **Se um dia parar de acender:** o YouTube pode mudar a página. Confira
-  `https://assembleia-de-deus-pq-artur-alvim.vercel.app/api/dados?o=ao-vivo` durante uma transmissão (deve
+  `https://www.adbelemparquealvim.org.br/api/dados?o=ao-vivo` durante uma transmissão (deve
   dizer `"aoVivo":true`). A saída mais firme, se precisar, é a API oficial do YouTube (chave
   gratuita no Google Cloud, consulta `videos.list` dos vídeos do feed).
 
@@ -905,7 +905,11 @@ O endereço do site fica em um lugar só:
 | Funções de `api/` (links do e-mail "Liberar acesso", logo dos e-mails, User-Agent) | variável `SITE_URL`, lida em `api/_lib/site.mjs` (sem ela, o endereço da Vercel) |
 | `index.html`, `sitemap.xml`, `robots.txt` (arquivos estáticos) | trocados pelo `scripts/publicar.sh` na hora de publicar |
 
-Sem a variável `SITE_URL`, tudo continua com `assembleia-de-deus-pq-artur-alvim.vercel.app`. As
+**Domínio atual: `https://www.adbelemparquealvim.org.br`** (desde 09/11/2026; `adbelemparquealvim.org.br`
+redireciona para o `www`). Ele já é o padrão no código (`js/config.js`, `api/_lib/site.mjs`,
+`scripts/publicar.sh`, `index.html`, `sitemap.xml`, `robots.txt`): publicar não precisa de variável.
+O endereço antigo, `assembleia-de-deus-pq-artur-alvim.vercel.app`, continua funcionando (apps já
+instalados por ele seguem abrindo), com o `canonical` apontando para o domínio novo. As
 imagens passam pelo redutor da Vercel em qualquer domínio publicado lá (só no `localhost` não).
 
 Passo a passo (troque `xxx.org.br` pelo domínio escolhido):

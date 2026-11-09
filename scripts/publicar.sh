@@ -23,7 +23,7 @@ SRC="$(cd "$(dirname "$0")/.." && pwd)"
 DIST="${DIST:-$(mktemp -d)}"
 BUILD="$(date -u +%Y%m%d-%H%M)" # horário UTC
 
-PADRAO="https://assembleia-de-deus-pq-artur-alvim.vercel.app"
+PADRAO="https://www.adbelemparquealvim.org.br"
 SITE_URL="${SITE_URL:-}"
 SITE_URL="${SITE_URL%/}"
 if [ -n "$SITE_URL" ] && ! [[ "$SITE_URL" =~ ^https://[a-z0-9.-]+\.[a-z]{2,}$ ]]; then

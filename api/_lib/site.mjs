@@ -4,7 +4,7 @@
 // ou passada pelo scripts/publicar.sh). Sem ela, usa o endereço da Vercel.
 // Veja "Trocar o domínio" no README.
 // ============================================================
-const PADRAO = "https://assembleia-de-deus-pq-artur-alvim.vercel.app";
+const PADRAO = "https://www.adbelemparquealvim.org.br";
 
 // Aceita só "https://dominio" (sem caminho); qualquer outra coisa volta ao padrão.
 function lerEndereco(valor) {

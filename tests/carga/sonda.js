@@ -10,7 +10,7 @@
 import http from "k6/http";
 import { check } from "k6";
 
-const BASE = (__ENV.BASE || "https://assembleia-de-deus-pq-artur-alvim.vercel.app").replace(/\/+$/, "");
+const BASE = (__ENV.BASE || "https://www.adbelemparquealvim.org.br").replace(/\/+$/, "");
 const LIMITE_MS = Number(__ENV.LIMITE_MS || 2500);
 const ALVOS = [
   ["/", "pagina"],

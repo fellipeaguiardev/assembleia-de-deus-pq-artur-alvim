@@ -55,7 +55,7 @@ console.log(`Sintaxe: ${paraChecar.length} arquivos conferidos.`);
 
 // ---------- 2) Arquivos citados ----------
 // Endereços do próprio site (absolutos) também contam, ex.: og:image.
-const DOMINIOS = [/^https:\/\/assembleia-de-deus-pq-artur-alvim\.vercel\.app/];
+const DOMINIOS = [/^https:\/\/(www\.)?adbelemparquealvim\.org\.br/, /^https:\/\/assembleia-de-deus-pq-artur-alvim\.vercel\.app/];
 const GERADOS = new Set(["/version.json"]);
 function caminhoLocal(valor) {
   let v = String(valor).trim();

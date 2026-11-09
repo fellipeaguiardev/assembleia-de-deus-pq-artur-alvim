@@ -25,7 +25,7 @@ import http from "k6/http";
 import { check, sleep } from "k6";
 import { Counter } from "k6/metrics";
 
-const BASE = (__ENV.BASE || "https://assembleia-de-deus-pq-artur-alvim.vercel.app").replace(/\/+$/, "");
+const BASE = (__ENV.BASE || "https://www.adbelemparquealvim.org.br").replace(/\/+$/, "");
 const SUPABASE = "https://rtludbkopxbhiwlwycid.supabase.co/rest/v1";
 const CHAVE = "sb_publishable_eRsl3xo3p7Qe_DanIB4Z7A_5V6Q0p9m"; // pública (a mesma do site)
 const PERFIL = __ENV.PERFIL || "fumaca";
