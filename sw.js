@@ -50,7 +50,8 @@ const SHELL = [
   "/data/harpa/indice.json",
   "/assets/img/brasao.svg",
   "/assets/img/logo-adbelem.png",
-  "/assets/img/favicon-64.png",
+  "/assets/img/favicon-48.png",
+  "/assets/img/favicon-96.png",
   "/assets/img/icon-192.png",
 ];
 

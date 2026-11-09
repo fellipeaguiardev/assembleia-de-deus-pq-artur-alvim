@@ -33,7 +33,7 @@ fi
 
 mkdir -p "$DIST"
 cd "$SRC"
-cp index.html manifest.webmanifest sw.js robots.txt sitemap.xml vercel.json "$DIST/"
+cp index.html manifest.webmanifest sw.js robots.txt sitemap.xml favicon.ico vercel.json "$DIST/"
 cp -r css js vendor assets data api "$DIST/"
 # Dependências das funções de api/ (imagem dos versículos): só o "dependencies" do
 # package.json; o Playwright e o serve (testes) ficam fora. A Vercel instala sozinha.

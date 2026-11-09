@@ -13,8 +13,13 @@
     <meta name="referrer" content="strict-origin-when-cross-origin" />
 
     <!-- Ícones e app instalável (PWA) -->
+    <!-- O Google mostra o ícone ao lado do resultado da busca: pede tamanho
+         múltiplo de 48 px (48, 96, 192) ou SVG, e também lê o /favicon.ico. -->
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="icon" type="image/svg+xml" href="/assets/img/brasao.svg" />
-    <link rel="icon" type="image/png" sizes="64x64" href="/assets/img/favicon-64.png" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/assets/img/favicon-48.png" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/assets/img/favicon-96.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/assets/img/icon-192.png" />
     <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png" />
     <!-- O Samsung Internet monta um "app" desatualizado e o Google Play Protect
          bloqueia a instalação ("App de risco bloqueado") — defeito do navegador,
@@ -35,7 +40,7 @@
     <!-- Compartilhamento (WhatsApp, Facebook etc.) -->
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="pt_BR" />
-    <meta property="og:site_name" content="AD Belém - Parque Artur Alvim" />
+    <meta property="og:site_name" content="Assembleia de Deus Belém - Parque Artur Alvim" />
     <meta property="og:title" content="Assembleia de Deus Belém - Parque Artur Alvim" />
     <meta property="og:description" content="Horários dos cultos, eventos, departamentos, podcast e localização." />
     <meta property="og:url" content="https://www.adbelemparquealvim.org.br/" />
@@ -43,6 +48,17 @@
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
+    <!-- Nome do site na busca do Google (acima do endereço, ao lado do ícone).
+         Fica no HTML (e não só no JS) para o Google ler já na primeira passada. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Assembleia de Deus Belém - Parque Artur Alvim",
+        "alternateName": ["AD Belém Parque Artur Alvim", "AD Belém Artur Alvim"],
+        "url": "https://www.adbelemparquealvim.org.br/"
+      }
+    </script>
 
     <link rel="preconnect" href="https://rtludbkopxbhiwlwycid.supabase.co" crossorigin />
     <link rel="preload" as="image" href="/assets/img/brasao.svg" type="image/svg+xml" />
