@@ -391,6 +391,7 @@ function headerHTML(route) {
       <div class="header-cta">
         <a class="btn btn-ghost btn-sm hide-md" href="${href(c.mapsUrl)}" target="_blank" rel="noopener">Como chegar</a>
         ${liveButtonHTML()}
+        <button class="a11y-btn" type="button" onclick="openA11yPanel()" aria-label="Acessibilidade: tamanho da letra, contraste e Libras" title="Acessibilidade">${icon("acessibilidade", 22)}</button>
         <button class="hamburger" type="button" onclick="toggleMobileMenu(true)" aria-label="Abrir menu" aria-controls="mobileMenu" aria-expanded="false"><span></span><span></span><span></span></button>
       </div>
     </div>
@@ -456,11 +457,11 @@ function footerHTML() {
         </div>
       </div>
       <div>
-        <h4>Navegue</h4>
+        <h2>Navegue</h2>
         <ul>${NAV_LINKS.slice(1).map(([r, l]) => `<li><a href="${routePath(r)}">${l}</a></li>`).join("")}</ul>
       </div>
       <div>
-        <h4>Cultos</h4>
+        <h2>Cultos</h2>
         <ul class="footer-schedule">
           ${services
             .map((d) => `<li><strong>${esc(d.day)}</strong>${serviceLines(d).map((l) => `<span>${esc(l.time)} · ${esc(l.name)}${l.monthly ? ` <small>(${esc(l.note)})</small>` : ""}</span>`).join("")}</li>`)
@@ -473,6 +474,7 @@ function footerHTML() {
       <nav class="footer-legal" aria-label="Privacidade">
         <a href="/privacidade">Política de privacidade</a>
         <button type="button" onclick="openCookiePreferences()">Preferências de cookies</button>
+        <button type="button" onclick="openA11yPanel()">Acessibilidade</button>
         <button type="button" class="install-btn" onclick="installApp()">Instalar o app</button>
       </nav>
     </div>
@@ -731,7 +733,7 @@ function newsSlideHTML(n) {
     </div>
     <div class="card-body">
       <span class="card-kicker">${newsKicker(n)}</span>
-      <h4>${esc(n.title)}</h4>
+      <h3>${esc(n.title)}</h3>
       <p class="clamp-3">${esc(n.summary)}</p>
     </div>
   </a>`;
@@ -756,18 +758,18 @@ function eventsHomeHTML() {
 function eventCardHTML(ev) {
   const d = parseISODate(ev.date);
   return `
-  <article class="card event-card" ${pressable("openEventModal", ev.id, "Ver detalhes de " + ev.name)}>
+  <div class="card event-card" ${pressable("openEventModal", ev.id, "Ver detalhes de " + ev.name)}>
     <div class="card-media" style="${bgImage(ev.image)}">
       <span class="badge">${esc(ev.category || "Evento")}</span>
       ${d ? `<span class="date-chip"><b>${d.getDate()}</b>${esc(d.toLocaleDateString("pt-BR", { month: "short" }).replace(".", ""))}</span>` : ""}
     </div>
     <div class="card-body">
       <span class="card-kicker">${esc(capitalize(fmtDateFull(ev.date).split(",")[0]))}${ev.time ? " · " + esc(ev.time) : ""}</span>
-      <h4>${esc(ev.name)}</h4>
+      <h3>${esc(ev.name)}</h3>
       ${ev.location ? `<div class="card-meta">${icon("pin", 15)} ${esc(ev.location)}</div>` : ""}
       <span class="card-link">Ver detalhes ${icon("arrow", 15)}</span>
     </div>
-  </article>`;
+  </div>`;
 }
 
 /* ---------------- Sobre ---------------- */
@@ -809,17 +811,17 @@ function ministriesHomeHTML() {
 
 function ministryCardHTML(m, slide = false) {
   return `
-  <article class="card ministry-card ${slide ? "carousel-slide" : ""}" ${pressable("openMinistryModal", m.id, "Ver " + m.name)}>
+  <div class="card ministry-card ${slide ? "carousel-slide" : ""}" ${pressable("openMinistryModal", m.id, "Ver " + m.name)}>
     <div class="card-media" style="${bgImage(m.image)}">
       <span class="card-hint">Ver departamento ${icon("external", 13)}</span>
     </div>
     <div class="card-body">
       <span class="card-kicker">Departamento</span>
-      <h4>${esc(m.name)}</h4>
+      <h3>${esc(m.name)}</h3>
       ${m.responsible ? `<div class="who">${esc(m.responsible)}</div>` : ""}
       <p class="clamp-3">${esc(m.description)}</p>
     </div>
-  </article>`;
+  </div>`;
 }
 
 function ministriesPageHTML() {
@@ -829,7 +831,7 @@ function ministriesPageHTML() {
     `
   <section class="block">
     <div class="container">
-      ${items.length ? `<div class="card-grid" data-stagger>${items.map((m) => ministryCardHTML(m)).join("")}</div>` : emptyState("user", "Nenhum departamento cadastrado")}
+      ${items.length ? `<h2 class="sr-only">Nossos departamentos</h2><div class="card-grid" data-stagger>${items.map((m) => ministryCardHTML(m)).join("")}</div>` : emptyState("user", "Nenhum departamento cadastrado")}
     </div>
   </section>`
   );
@@ -899,12 +901,13 @@ function schedulePageHTML() {
     `
   <section class="block">
     <div class="container">
+      <h2 class="sr-only">Cultos da semana</h2>
       <div class="schedule-grid" data-stagger>
         ${data.services
           .map(
             (d, di) => `
           <div class="schedule-day">
-            <h4>${esc(d.day)}</h4>
+            <h3>${esc(d.day)}</h3>
             ${serviceLines(d)
               .map((l) => {
                 const ii = d.items.indexOf(l.item);
@@ -1073,6 +1076,7 @@ function videosPageHTML() {
           : ""
       }
       ${cats.length > 2 ? filterChipsHTML(cats, activeVideoFilter, "setVideoFilter") : ""}
+      <h2 class="sr-only">Vídeos</h2>
       <p class="video-count" id="videosCount" aria-live="polite">${esc(videoCountText())}</p>
       <div id="videosList">${videosListHTML()}</div>
     </div>
@@ -1135,12 +1139,12 @@ function videosListHTML() {
     .map((v) => {
       const agendada = videoAgendado(v);
       return `
-    <article class="video-card${agendada ? " is-scheduled" : ""}" ${pressable("openVideoModal", v.id, (agendada ? "Transmissão agendada: " : "Assistir ") + v.title)}>
+    <div class="video-card${agendada ? " is-scheduled" : ""}" ${pressable("openVideoModal", v.id, (agendada ? "Transmissão agendada: " : "Assistir ") + v.title)}>
       <div class="thumb" style="${bgImage(ytThumb(v.youtubeUrl))}">${agendada ? `<span class="scheduled-tag">${icon("clock", 14)} Agendada</span>` : `<span class="play-btn sm">${icon("play", 18)}</span>`}</div>
       <span class="card-kicker">${esc(v.category)}</span>
-      <h4>${esc(v.title)}</h4>
+      <h3>${esc(v.title)}</h3>
       <span class="date">${agendada ? "Começa " + esc(quandoComeca(v)) : fmtDateLong(v.date)}</span>
-    </article>`;
+    </div>`;
     })
     .join("")}</div>`;
 }
@@ -1186,7 +1190,7 @@ function newsCardHTML(n) {
     <div ${newsMediaAttrs(n)}>${newsSourceTag(n)}</div>
     <div class="card-body">
       <span class="card-kicker">${newsKicker(n)}</span>
-      <h4>${esc(n.title)}</h4>
+      <h3>${esc(n.title)}</h3>
       <p class="clamp-3">${esc(n.summary)}</p>
       <span class="card-link">Leia mais ${icon("arrow", 15)}</span>
     </div>
@@ -1453,6 +1457,7 @@ function firstVisitPageHTML() {
     `
   <section class="block">
     <div class="container fv-grid" data-stagger>
+      <h2 class="sr-only">Planeje a sua visita</h2>
       <div class="fv-card">
         <span class="fv-icon">${icon("clock", 20)}</span>
         <h3>Horários dos cultos</h3>
@@ -1483,6 +1488,7 @@ function firstVisitPageHTML() {
     topics.length
       ? `<section class="block tight on-surface">
     <div class="container fv-topics" data-stagger>
+      <h2 class="sr-only">Bom saber</h2>
       ${topics.map(([title, text, ic]) => `<article class="fv-topic"><span class="fv-icon">${icon(ic, 18)}</span><div><h3>${esc(title)}</h3><p class="pre-line">${esc(text)}</p></div></article>`).join("")}
     </div>
   </section>`
@@ -1627,6 +1633,7 @@ function donationsPageHTML() {
             : ""
         }
       </div>
+      <h2 class="sr-only">Formas de contribuir</h2>
       <div class="donations-list" data-stagger>
         ${
           types.length
@@ -1729,7 +1736,7 @@ function closeModal({ instant = false } = {}) {
     // Fecha o deep link do episódio sem criar entrada nova no histórico.
     if (/^\/podcast\/.+/.test(location.pathname)) history.replaceState(null, "", "/podcast");
   };
-  if (instant || matchMedia("(prefers-reduced-motion: reduce)").matches) return finish();
+  if (instant || reduceMotion()) return finish();
   backdrop.classList.add("closing");
   setTimeout(finish, 160);
 }
@@ -1773,7 +1780,7 @@ function openVideoModal(id) {
   openModal(
     `
     <div class="modal-video-frame">
-      ${vid ? embedGate("youtube", `https://www.youtube-nocookie.com/embed/${vid}?autoplay=1&rel=0`, v.title, { allow: "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture", openUrl: v.youtubeUrl }) : ""}
+      ${vid ? embedGate("youtube", `https://www.youtube-nocookie.com/embed/${vid}?autoplay=1&rel=0${ytLegendas()}`, v.title, { allow: "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture", openUrl: v.youtubeUrl }) : ""}
     </div>
     <div class="modal-pad">
       <span class="eyebrow">${esc(v.category)}${v.date ? " · " + fmtDateLong(v.date) : ""}</span>
@@ -1868,8 +1875,8 @@ function openLive() {
   // No ar: abre o próprio vídeo da transmissão; senão, o player "ao vivo" do canal.
   const vivo = AO_VIVO.aoVivo && AO_VIVO.videoId;
   const src = vivo
-    ? `https://www.youtube-nocookie.com/embed/${encodeURIComponent(AO_VIVO.videoId)}?autoplay=1`
-    : `https://www.youtube-nocookie.com/embed/live_stream?channel=${encodeURIComponent(channel)}&autoplay=1`;
+    ? `https://www.youtube-nocookie.com/embed/${encodeURIComponent(AO_VIVO.videoId)}?autoplay=1${ytLegendas()}`
+    : `https://www.youtube-nocookie.com/embed/live_stream?channel=${encodeURIComponent(channel)}&autoplay=1${ytLegendas()}`;
   openModal(
     `
     <div class="modal-video-frame">
@@ -2016,7 +2023,8 @@ function closePhotoLightbox() {
 /* ============================================================
    MOVIMENTO — revelar ao rolar + header que reage ao scroll
    ============================================================ */
-const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+// "Reduzir movimento" do aparelho ou "Parar animações" do painel Acessibilidade.
+const reduceMotion = () => document.documentElement.classList.contains("a11y-sem-animacao") || matchMedia("(prefers-reduced-motion: reduce)").matches;
 let revealObserver = null;
 
 // Cada item aparece assim que a ponta dele entra na tela (threshold 0).

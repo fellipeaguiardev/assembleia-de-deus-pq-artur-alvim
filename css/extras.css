@@ -52,12 +52,12 @@ body.has-player .cookie-banner {
 .cookie-text strong {
   display: block;
   font-family: var(--font-heading);
-  font-size: 18px;
+  font-size: calc(18px * var(--fs));
   font-weight: 600;
   margin-bottom: 4px;
 }
 .cookie-text p {
-  font-size: 14px;
+  font-size: calc(14px * var(--fs));
   line-height: 1.55;
 }
 .cookie-text a {
@@ -118,7 +118,7 @@ body.has-player .cookie-banner {
   display: block;
 }
 .pref-row span {
-  font-size: 14px;
+  font-size: calc(14px * var(--fs));
   color: var(--c-text-soft);
 }
 .pref-switch {
@@ -139,7 +139,7 @@ body.has-player .cookie-banner {
   position: absolute;
   inset: 0;
   border-radius: 999px;
-  background: var(--c-line-strong);
+  background: color-mix(in srgb, var(--c-text) 45%, var(--c-surface)); /* desligado bem visível (contraste ≥ 3) */
   transition: background-color 0.2s ease;
 }
 .pref-switch span::after {
@@ -167,6 +167,122 @@ body.has-player .cookie-banner {
 .pref-switch.is-locked {
   cursor: not-allowed;
   opacity: 0.6;
+}
+
+/* ============================================================
+   ACESSIBILIDADE (js/acessibilidade.js) — botão do topo e painel
+   ============================================================ */
+.a11y-btn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--c-line-strong);
+  background: var(--c-surface);
+  color: var(--c-primary);
+  transition: background-color 0.2s ease;
+}
+@media (hover: hover) {
+  .a11y-btn:hover {
+    background: var(--c-tint);
+  }
+}
+.a11y-btn:active {
+  transform: scale(0.96);
+}
+.a11y-panel .a11y-title {
+  font-size: calc(26px * var(--fs-titulo));
+  margin: 4px 0 8px;
+}
+.a11y-sizes {
+  border: 0;
+  margin: 20px 0 4px;
+  padding: 0;
+  min-width: 0;
+}
+.a11y-sizes legend {
+  font-weight: 700;
+  padding: 0;
+  margin-bottom: 10px;
+}
+.a11y-size-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.a11y-size {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  min-height: 72px;
+  padding: 8px 4px;
+  border: 2px solid var(--c-line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--c-surface);
+  cursor: pointer;
+  text-align: center;
+}
+.a11y-size input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: inherit;
+}
+.a11y-size-a {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  line-height: 1;
+}
+.a11y-size-nome {
+  font-size: calc(12.5px * var(--fs));
+  line-height: 1.2;
+  color: var(--c-text-soft);
+}
+.a11y-size:has(input:checked) {
+  border-color: var(--c-primary);
+  background: var(--c-tint);
+  color: var(--c-primary);
+}
+.a11y-size:has(input:checked) .a11y-size-nome {
+  color: var(--c-primary);
+  font-weight: 700;
+}
+.a11y-size:has(input:focus-visible) {
+  outline: 3px solid var(--c-primary);
+  outline-offset: 2px;
+}
+.a11y-panel .pref-row:first-of-type {
+  margin-top: 16px;
+}
+.a11y-dicas {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 14px 16px;
+  display: grid;
+  gap: 10px;
+  border-radius: var(--radius-sm);
+  background: var(--c-tint);
+  font-size: calc(14px * var(--fs));
+}
+.a11y-dicas li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  color: var(--c-text-soft);
+}
+.a11y-dicas .ic {
+  margin-top: 3px;
+  color: var(--c-primary);
+}
+@media (max-width: 380px) {
+  .a11y-size-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 /* ---------- Conteúdo de terceiros bloqueado ---------- */
@@ -201,7 +317,7 @@ body.has-player .cookie-banner {
 }
 .embed-gate p {
   color: rgba(255, 255, 255, 0.82);
-  font-size: 14.5px;
+  font-size: calc(14.5px * var(--fs));
 }
 .embed-gate strong {
   color: #fff;
@@ -283,12 +399,12 @@ body.has-player .cookie-banner {
   align-items: center;
 }
 .prayer-copy h2 {
-  font-size: clamp(30px, 4vw, 42px);
+  font-size: calc(clamp(30px, 4vw, 42px) * var(--fs-titulo));
   letter-spacing: -0.025em;
   margin: 10px 0 16px;
 }
 .prayer-copy p {
-  font-size: 16.5px;
+  font-size: calc(16.5px * var(--fs));
   line-height: 1.75;
 }
 .prayer-points {
@@ -334,7 +450,7 @@ body.has-player .cookie-banner {
   gap: 6px;
 }
 .pf-field > span {
-  font-size: 13.5px;
+  font-size: calc(13.5px * var(--fs));
   font-weight: 600;
   color: var(--c-text);
 }
@@ -353,7 +469,7 @@ body.has-player .cookie-banner {
   border: 1.5px solid var(--c-line-strong);
   background: var(--c-bg);
   color: var(--c-text);
-  font-size: 16px; /* evita zoom automático no iPhone */
+  font-size: calc(16px * var(--fs)); /* evita zoom automático no iPhone */
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease,
@@ -376,7 +492,7 @@ body.has-player .cookie-banner {
   display: flex;
   gap: 10px;
   align-items: flex-start;
-  font-size: 13.5px;
+  font-size: calc(13.5px * var(--fs));
   line-height: 1.5;
   color: var(--c-text-soft);
   cursor: pointer;
@@ -395,7 +511,7 @@ body.has-player .cookie-banner {
   text-underline-offset: 2px;
 }
 .pf-error {
-  font-size: 14px;
+  font-size: calc(14px * var(--fs));
   font-weight: 600;
   color: #b42318;
 }
@@ -430,7 +546,7 @@ body.has-player .cookie-banner {
     visibility 0s linear 280ms;
 }
 .prayer-done h3 {
-  font-size: 24px;
+  font-size: calc(24px * var(--fs-titulo));
 }
 .prayer-done p {
   max-width: 340px;
@@ -489,18 +605,18 @@ body.has-player .cookie-banner {
   max-width: 760px;
 }
 .legal-updated {
-  font-size: 14px;
+  font-size: calc(14px * var(--fs));
   font-weight: 600;
   color: var(--c-text-faint);
   margin-bottom: 8px;
 }
 .legal h2 {
-  font-size: clamp(22px, 3vw, 26px);
+  font-size: calc(clamp(22px, 3vw, 26px) * var(--fs-titulo));
   margin: 36px 0 12px;
 }
 .legal p,
 .legal li {
-  font-size: 16px;
+  font-size: calc(16px * var(--fs));
   line-height: 1.75;
   color: color-mix(in srgb, var(--c-text) 85%, var(--c-bg));
 }
@@ -528,7 +644,7 @@ body.has-player .cookie-banner {
   border: 1px solid var(--c-line);
   border-radius: var(--radius);
   overflow: hidden;
-  font-size: 14.5px;
+  font-size: calc(14.5px * var(--fs));
 }
 .legal-table > div {
   display: grid;
@@ -547,7 +663,7 @@ body.has-player .cookie-banner {
 }
 .legal-table span:first-child {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 13px;
+  font-size: calc(13px * var(--fs));
   overflow-wrap: anywhere;
 }
 .legal-table .lt-head span:first-child {
@@ -563,7 +679,7 @@ body.has-player .cookie-banner {
     display: none;
   }
   .legal-table span:last-child {
-    font-size: 12.5px;
+    font-size: calc(12.5px * var(--fs));
     font-weight: 700;
     color: var(--c-accent-ink);
     text-transform: uppercase;
@@ -580,7 +696,7 @@ body.has-player .cookie-banner {
 .footer-legal a,
 .footer-legal button {
   color: rgba(255, 255, 255, 0.7);
-  font-size: 13.5px;
+  font-size: calc(13.5px * var(--fs));
   transition: color 0.2s ease;
 }
 @media (hover: hover) {
@@ -637,7 +753,7 @@ body.can-install .install-btn {
 /* Instalar o app: explicação para o Samsung Internet */
 .install-lead {
   margin: 8px 0 18px;
-  font-size: 15px;
+  font-size: calc(15px * var(--fs));
   line-height: 1.55;
   color: var(--c-text-soft);
 }
@@ -645,7 +761,7 @@ body.can-install .install-btn {
   margin: 20px 0 0;
   padding-top: 16px;
   border-top: 1px solid var(--c-line);
-  font-size: 14px;
+  font-size: calc(14px * var(--fs));
 }
 .install-alt .ic {
   vertical-align: -2px;
@@ -666,7 +782,7 @@ body.can-install .install-btn {
   border-radius: 999px;
   background: var(--c-deep);
   color: #fff;
-  font-size: 14px;
+  font-size: calc(14px * var(--fs));
   font-weight: 600;
   box-shadow: var(--shadow-lg);
   opacity: 0;
@@ -699,7 +815,7 @@ body.can-install .install-btn {
 }
 @media (max-width: 420px) {
   .app-update {
-    font-size: 13px;
+    font-size: calc(13px * var(--fs));
     gap: 6px;
     padding-left: 12px;
   }

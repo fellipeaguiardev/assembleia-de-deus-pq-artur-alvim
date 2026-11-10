@@ -81,15 +81,28 @@
           s.setProperty("--c-bg", t.background);
         }
       } catch (e) {}
+      // Painel Acessibilidade (js/acessibilidade.js): tamanho da letra, contraste
+      // e "parar animações" valem já na primeira pintura. Mesma lista de lá.
+      var a11yParar = false;
+      try {
+        var a = JSON.parse(localStorage.getItem("acessibilidade") || "null");
+        if (a) {
+          var fs = [1, 1.15, 1.3, 1.5][a.texto];
+          if (fs > 1) document.documentElement.style.setProperty("--fs", fs);
+          if (a.contraste) document.documentElement.classList.add("a11y-contraste");
+          if (a.movimento) document.documentElement.classList.add("a11y-sem-animacao");
+          a11yParar = !!a.movimento;
+        }
+      } catch (e) {}
       // full    primeira visita do aparelho (vinheta de 6 s, uma vez só)
       // short   reabertura na página inicial (~1,2 s, termina antes se os dados chegarem)
       // none    link direto (/biblia/joao/3/16, /palavra…): sem vinheta, só um fade rápido
-      // reduced "reduzir movimento" ligado: tela final parada, como sempre foi
+      // reduced "reduzir movimento" (ou "parar animações" do painel): tela final parada
       (function () {
         var home = (location.pathname.replace(/\/+$/, "") || "/") === "/";
         var mode = home ? "short" : "none";
         try {
-          if (matchMedia("(prefers-reduced-motion: reduce)").matches) mode = "reduced";
+          if (a11yParar || matchMedia("(prefers-reduced-motion: reduce)").matches) mode = "reduced";
           // O próprio site recarregou para entrar a versão nova: abertura curta.
           else if (sessionStorage.getItem("intro-curta")) {
             mode = "short";
@@ -322,6 +335,7 @@
     <script src="/js/ebd.js"></script>
     <script src="/js/harpa.js"></script>
     <script src="/js/biblioteca.js"></script>
+    <script src="/js/acessibilidade.js"></script>
     <!-- O painel (js/admin*.js e css/admin.css) é carregado só em /admin: loadAdminAssets em js/core.js -->
     <script src="/js/main.js"></script>
   </body>

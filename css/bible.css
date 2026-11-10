@@ -46,13 +46,13 @@
 }
 .bible-hero h1 {
   margin: 12px 0 10px;
-  font-size: clamp(38px, 6vw, 60px);
+  font-size: calc(clamp(38px, 6vw, 60px) * var(--fs-titulo));
   letter-spacing: -0.03em;
 }
 .bible-hero .lead {
   max-width: 560px;
   color: var(--c-text-soft);
-  font-size: 17px;
+  font-size: calc(17px * var(--fs));
 }
 .bible-search {
   display: flex;
@@ -84,7 +84,7 @@
   outline: 0;
   background: transparent;
   font: inherit;
-  font-size: 16px; /* 16px evita o zoom automático do iPhone */
+  font-size: calc(16px * var(--fs)); /* 16px evita o zoom automático do iPhone */
   color: var(--c-text);
 }
 .bible-search input::-webkit-search-cancel-button {
@@ -92,7 +92,7 @@
 }
 .bible-search-error {
   margin-top: 10px;
-  font-size: 14px;
+  font-size: calc(14px * var(--fs));
   color: #b42318;
 }
 .bible-continue {
@@ -108,13 +108,13 @@
 }
 .bible-continue span {
   display: grid;
-  font-size: 13px;
+  font-size: calc(13px * var(--fs));
   font-weight: 600;
   color: var(--c-text-soft);
 }
 .bible-continue strong {
   font-family: var(--font-heading);
-  font-size: 18px;
+  font-size: calc(18px * var(--fs));
   color: var(--c-secondary);
 }
 .bible-continue:active {
@@ -129,7 +129,7 @@
 }
 .bible-testament h2 {
   margin-bottom: 18px;
-  font-size: 24px;
+  font-size: calc(24px * var(--fs-titulo));
 }
 .bible-books {
   display: grid;
@@ -149,11 +149,11 @@
     transform 160ms var(--ease-out);
 }
 .bible-book strong {
-  font-size: 15.5px;
+  font-size: calc(15.5px * var(--fs));
   color: var(--c-secondary);
 }
 .bible-book span {
-  font-size: 12.5px;
+  font-size: calc(12.5px * var(--fs));
   color: var(--c-text-faint);
 }
 .bible-book:active {
@@ -173,7 +173,7 @@
   margin-top: 48px;
   padding-top: 20px;
   border-top: 1px solid var(--c-line);
-  font-size: 12.5px;
+  font-size: calc(12.5px * var(--fs));
   line-height: 1.6;
   color: var(--c-text-faint);
 }
@@ -191,7 +191,7 @@
 }
 .bible-book-head h1 {
   margin: 10px 0 8px;
-  font-size: clamp(36px, 5.5vw, 54px);
+  font-size: calc(clamp(36px, 5.5vw, 54px) * var(--fs-titulo));
   letter-spacing: -0.03em;
 }
 .bible-book-head p {
@@ -284,7 +284,7 @@
   margin-left: -12px;
   border-radius: 10px;
   font-family: var(--font-heading);
-  font-size: 18px;
+  font-size: calc(18px * var(--fs));
   font-weight: 600;
   color: var(--r-text);
   white-space: nowrap;
@@ -306,11 +306,11 @@
 }
 .bible-size-btn {
   font-family: var(--font-heading);
-  font-size: 16px;
+  font-size: calc(16px * var(--fs));
   font-weight: 600;
 }
 .bible-size-btn small {
-  font-size: 12px;
+  font-size: calc(12px * var(--fs));
 }
 @media (hover: hover) and (pointer: fine) {
   .bible-title-btn:hover {
@@ -330,7 +330,7 @@
     gap: 4px;
   }
   .bible-title-btn {
-    font-size: 16.5px;
+    font-size: calc(16.5px * var(--fs));
   }
 }
 .bible-text {
@@ -340,7 +340,7 @@
 }
 .bible-chapter-title {
   margin-bottom: 26px;
-  font-size: clamp(34px, 5vw, 46px);
+  font-size: calc(clamp(34px, 5vw, 46px) * var(--fs-titulo));
   letter-spacing: -0.03em;
   color: var(--r-text);
 }
@@ -348,7 +348,7 @@
   display: block;
   margin-bottom: 4px;
   font-family: var(--font-body);
-  font-size: 13px;
+  font-size: calc(13px * var(--fs));
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -357,7 +357,7 @@
 .bible-verses {
   margin: 0;
   font-family: var(--font-heading);
-  font-size: var(--bible-size, 19px);
+  font-size: calc(var(--bible-size, 19px) * var(--fs));
   font-weight: 400;
   line-height: 1.85;
   color: var(--r-text);
@@ -423,7 +423,7 @@
   min-width: 0;
 }
 .bible-nav-link small {
-  font-size: 12px;
+  font-size: calc(12px * var(--fs));
   font-weight: 600;
   color: var(--r-faint);
 }
@@ -479,7 +479,7 @@
 }
 .bible-sel-label {
   font-family: var(--font-heading);
-  font-size: 15px;
+  font-size: calc(15px * var(--fs));
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
@@ -498,7 +498,7 @@
   min-height: 40px;
   padding: 0 12px;
   border-radius: 12px;
-  font-size: 13.5px;
+  font-size: calc(13.5px * var(--fs));
   font-weight: 600;
   color: #fff;
   background: rgba(255, 255, 255, 0.1);
@@ -544,7 +544,7 @@
 }
 .bible-home-copy h2 {
   margin: 8px 0 6px;
-  font-size: clamp(28px, 3.6vw, 38px);
+  font-size: calc(clamp(28px, 3.6vw, 38px) * var(--fs-titulo));
   letter-spacing: -0.025em;
 }
 .bible-home-copy p {
@@ -565,7 +565,7 @@
   padding: 7px 13px;
   border-radius: 999px;
   border: 1px solid var(--c-line-strong);
-  font-size: 13.5px;
+  font-size: calc(13.5px * var(--fs));
   font-weight: 600;
   color: var(--c-secondary);
   transition:

@@ -34,7 +34,7 @@
   border-radius: 999px;
   background: var(--c-accent);
   color: var(--c-secondary);
-  font-size: 12px;
+  font-size: calc(12px * var(--fs));
   font-weight: 800;
   letter-spacing: 0.06em;
 }
@@ -51,7 +51,7 @@
 }
 .podcast-featured-info h3 {
   color: #fff;
-  font-size: clamp(26px, 3.6vw, 40px);
+  font-size: calc(clamp(26px, 3.6vw, 40px) * var(--fs-titulo));
   letter-spacing: -0.025em;
   margin: 12px 0 12px;
 }
@@ -137,11 +137,22 @@
   color: rgba(255, 255, 255, 0.7);
 }
 .ep-info h3 {
-  font-size: 18px;
+  font-size: calc(18px * var(--fs));
   margin: 4px 0;
 }
+/* O título é o botão de abrir (teclado e leitor de tela); a linha inteira
+   continua clicável com o mouse/dedo. */
+.ep-title-btn {
+  all: unset;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.ep-title-btn:focus-visible {
+  outline: 2px solid var(--focus-ring, var(--c-primary));
+  outline-offset: 3px;
+}
 .ep-info p {
-  font-size: 14.5px;
+  font-size: calc(14.5px * var(--fs));
 }
 .ep-actions {
   display: flex;
@@ -245,7 +256,7 @@
     padding: 10px 12px 10px 10px;
   }
   .ep-info h3 {
-    font-size: 16.5px;
+    font-size: calc(16.5px * var(--fs));
   }
   .ep-info p {
     display: none;
@@ -286,7 +297,7 @@
   min-width: 0;
 }
 .episode-meta h3 {
-  font-size: clamp(21px, 3vw, 27px);
+  font-size: calc(clamp(21px, 3vw, 27px) * var(--fs));
   margin: 6px 0 4px;
 }
 .modal-episode .modal-close {
@@ -310,7 +321,7 @@
   min-height: 38px;
   padding: 0 16px;
   border-radius: 999px;
-  font-size: 14px;
+  font-size: calc(14px * var(--fs));
   font-weight: 600;
   color: var(--c-text-soft);
   transition:
@@ -355,10 +366,10 @@
 }
 .embed-audio strong {
   display: block;
-  font-size: 16px;
+  font-size: calc(16px * var(--fs));
 }
 .embed-audio span {
-  font-size: 14px;
+  font-size: calc(14px * var(--fs));
   color: var(--c-text-soft);
 }
 .episode-desc {
@@ -366,7 +377,7 @@
   padding-top: 20px;
   border-top: 1px solid var(--c-line);
   color: var(--c-text-soft);
-  font-size: 15.5px;
+  font-size: calc(15.5px * var(--fs));
   line-height: 1.7;
 }
 .episode-soon {
@@ -459,14 +470,14 @@
   flex-direction: column;
 }
 .player-ep {
-  font-size: 11px;
+  font-size: calc(11px * var(--fs));
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--c-accent);
 }
 .player-title {
-  font-size: 14.5px;
+  font-size: calc(14.5px * var(--fs));
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
@@ -503,7 +514,7 @@
   display: grid;
   place-items: center;
   padding-top: 2px;
-  font-size: 8px;
+  font-size: calc(8px * var(--fs));
   font-style: normal;
   font-weight: 800;
 }
@@ -525,7 +536,7 @@
   min-width: 0;
 }
 .player-time {
-  font-size: 12px;
+  font-size: calc(12px * var(--fs));
   color: rgba(255, 255, 255, 0.7);
   font-variant-numeric: tabular-nums;
   min-width: 34px;
@@ -568,7 +579,7 @@
   padding: 0 8px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.25);
-  font-size: 12.5px;
+  font-size: calc(12.5px * var(--fs));
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   transition: background-color 0.2s ease;
@@ -615,7 +626,7 @@
 }
 .podcast-count {
   margin: 0 0 12px;
-  font-size: 14px;
+  font-size: calc(14px * var(--fs));
   font-weight: 600;
   color: var(--c-text-soft);
 }

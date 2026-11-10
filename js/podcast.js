@@ -43,11 +43,11 @@ function epPlatformLinks(p) {
 /* Linha de episódio (lista estilo app de podcast) */
 function episodeRowHTML(p) {
   return `
-  <article class="ep-row" ${pressable("openPodcastModal", p.id, "Abrir episódio " + p.title)}>
+  <article class="ep-row" data-id="${esc(p.id)}" onclick="openPodcastModal(this.dataset.id)">
     <div class="ep-cover" style="${coverStyle(p, 160)}">${safeUrl(p.cover_url) ? "" : icon("mic", 22)}</div>
     <div class="ep-info">
       <span class="card-kicker">${esc(epLabel(p))}${p.published_at ? " · " + epDate(p) : ""}</span>
-      <h3>${esc(p.title)}</h3>
+      <h3><button type="button" class="ep-title-btn" onclick="event.stopPropagation(); openPodcastModal(this.closest('.ep-row').dataset.id)">${esc(p.title)}</button></h3>
       <p class="clamp-2">${esc(p.description)}</p>
     </div>
     <div class="ep-actions">
@@ -148,7 +148,7 @@ function podcastShowMore() {
   const from = podcastUI.shown;
   podcastUI.shown += PODCAST_PAGE_SIZE * 2;
   renderPodcastList();
-  document.querySelectorAll("#podcastList .ep-row")[from]?.focus({ preventScroll: true });
+  document.querySelectorAll("#podcastList .ep-title-btn")[from]?.focus({ preventScroll: true });
 }
 
 function podcastPageHTML() {
@@ -166,7 +166,7 @@ function podcastPageHTML() {
     <div class="container">
       ${
         featured
-          ? featuredEpisodeHTML(featured, "Episódio mais recente") +
+          ? `<h2 class="sr-only">Episódio mais recente</h2>` + featuredEpisodeHTML(featured, "Episódio mais recente") +
             (items.length > 1
               ? `${sectionHead("Biblioteca", `Todos os episódios (${items.length})`, follow)}
               ${
@@ -203,7 +203,7 @@ function episodeSourceHTML(p, source) {
     return `<div class="embed-spotify">${embedGate("spotify", spotifyEmbed(p.spotify_url), "Spotify — " + p.title, { allow: "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture", openUrl: p.spotify_url, compact: true })}</div>`;
   }
   if (source === "youtube") {
-    return `<div class="embed-video">${embedGate("youtube", `https://www.youtube-nocookie.com/embed/${ytId(p.youtube_url)}?rel=0`, "YouTube — " + p.title, { allow: "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture", openUrl: p.youtube_url })}</div>`;
+    return `<div class="embed-video">${embedGate("youtube", `https://www.youtube-nocookie.com/embed/${ytId(p.youtube_url)}?rel=0${ytLegendas()}`, "YouTube — " + p.title, { allow: "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture", openUrl: p.youtube_url })}</div>`;
   }
   return `<div class="embed-audio">
       ${epPlayButton(p, "lg")}

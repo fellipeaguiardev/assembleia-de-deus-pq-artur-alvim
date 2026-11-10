@@ -50,6 +50,7 @@ const SHELL = [
   "/js/ebd.js",
   "/js/harpa.js",
   "/js/biblioteca.js",
+  "/js/acessibilidade.js",
   "/js/main.js",
   "/data/bible/blivre/index.json",
   "/data/harpa/indice.json",

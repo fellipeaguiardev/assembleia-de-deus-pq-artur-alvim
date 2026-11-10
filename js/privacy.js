@@ -11,7 +11,7 @@
    carregam depois que a pessoa permite.
    ============================================================ */
 const CONSENT_KEY = "cookie-consent-v1";
-const PRIVACY_UPDATED = "2026-11-04";
+const PRIVACY_UPDATED = "2026-11-09";
 
 let consent = readConsent();
 
@@ -215,11 +215,13 @@ function privacyPageHTML() {
         <div role="row"><span role="cell">listen-prefs, listen-pos</span><span role="cell">Velocidade, voz e onde você parou no modo ouvir (o texto é lido pela voz do próprio aparelho, nada é enviado)</span><span role="cell">Essencial</span></div>
         <div role="row"><span role="cell">ebd-cache-v1, ebd-daily</span><span role="cell">Cópia das lições da EBD já abertas, para ler sem internet, e as leituras diárias que você marcou</span><span role="cell">Essencial</span></div>
         <div role="row"><span role="cell">biblioteca-pedidos, biblioteca-contato</span><span role="cell">Lembra quais livros você pediu neste aparelho e o nome e WhatsApp que você digitou, para não precisar digitar de novo</span><span role="cell">Essencial</span></div>
+        <div role="row"><span role="cell">acessibilidade</span><span role="cell">Suas escolhas do painel Acessibilidade (tamanho da letra, contraste, animações, Libras e legendas)</span><span role="cell">Essencial</span></div>
         <div role="row"><span role="cell">intro-curta</span><span role="cell">Quando o site recarrega sozinho para atualizar, mostra a abertura curta em vez da vinheta (apagado logo em seguida)</span><span role="cell">Essencial</span></div>
         <div role="row"><span role="cell">prayer-last-sent</span><span role="cell">Evita envios repetidos do formulário (guarda só o horário do último envio, até fechar a aba)</span><span role="cell">Essencial</span></div>
         <div role="row"><span role="cell">Cópia do app (service worker)</span><span role="cell">Guarda as páginas, imagens e textos públicos já abertos para o site funcionar sem internet e abrir mais rápido</span><span role="cell">Essencial</span></div>
         <div role="row"><span role="cell">sb-*-auth-token, admin-email</span><span role="cell">Sessão do painel e o último e-mail usado para entrar, só para administradores</span><span role="cell">Essencial</span></div>
         <div role="row"><span role="cell">YouTube, Spotify, Google Maps</span><span role="cell">Exibir vídeos, o player do Spotify e o mapa dentro do site. Só carregam com a sua permissão</span><span role="cell">Terceiros</span></div>
+        <div role="row"><span role="cell">VLibras (@vlibras-widget)</span><span role="cell">Tradutor de Libras do Governo Federal. Só carrega se você ligar “Tradutor de Libras” no painel Acessibilidade</span><span role="cell">Terceiros</span></div>
       </div>
       <p>Os itens essenciais ficam apenas no seu navegador e não identificam você. Você pode mudar sua escolha sobre conteúdos de
       terceiros a qualquer momento: <button type="button" class="link-btn" onclick="openCookiePreferences()">abrir preferências de cookies</button>.</p>
@@ -229,7 +231,8 @@ function privacyPageHTML() {
       <strong>Vercel</strong> (hospedagem do site, envio do formulário, redução das imagens das capas${stats ? " e estatísticas de visitas" : ""}), <strong>Resend</strong>
       (entrega do e-mail do formulário à equipe, nos Estados Unidos), <strong>Spotify for Creators</strong> (áudio dos episódios do
       podcast, quando você aperta play), <strong>Google Gemini</strong> (lê os cartazes de eventos que a equipe envia no painel, para
-      preencher os dados do evento; nenhum dado de visitante passa por ele) e, quando você permite, <strong>YouTube/Google</strong> e <strong>Spotify</strong>.
+      preencher os dados do evento; nenhum dado de visitante passa por ele) e, quando você permite, <strong>YouTube/Google</strong> e <strong>Spotify</strong>. Se você ligar o tradutor de Libras no painel
+      Acessibilidade, o <strong>VLibras</strong> (Governo Federal, vlibras.gov.br) recebe o texto em que você tocar, para fazer a tradução.
       As miniaturas (imagens) dos vídeos vêm dos servidores do YouTube, que recebem o endereço IP e o navegador de quem abre a página, sem cookies.
       As fontes de texto ficam no próprio site.
       Alguns desses serviços podem processar dados fora do Brasil, com as garantias previstas no art. 33 da LGPD.</p>

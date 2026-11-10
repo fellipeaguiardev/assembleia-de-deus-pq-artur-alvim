@@ -41,6 +41,7 @@ lições, livros, vídeos, cores) é editado pela equipe num **painel administra
 | **Biblioteca dos Jovens** | Acervo com busca e categorias, situação de cada livro (disponível, emprestado com data de volta, reservado), sinopse e pedido "Quero este livro" ou "Entrar na fila de espera". |
 | **Vídeos e podcast** | Cultos e lives do YouTube atualizados sozinhos, busca e filtros, botão "Ao vivo" e player de podcast que continua tocando enquanto se navega. |
 | **Comunidade** | Pedido de oração e contato (chega por e-mail à equipe), primeira visita (horários, endereço, como chegar), departamentos, história e liderança da igreja e ofertas por PIX com QR Code. |
+| **Acessibilidade** | Botão com o bonequinho no topo (e link no rodapé): **tamanho da letra** em 4 níveis, **alto contraste**, **parar animações**, **tradutor de Libras** (VLibras, do Governo Federal) e **legendas** automáticas nos vídeos do YouTube. As escolhas ficam no aparelho. Detalhes em [Acessibilidade](#acessibilidade). |
 | **App e privacidade** | App instalável (PWA) com atalhos, abertura animada com o brasão montado em formas geométricas (na primeira visita), aviso de versão nova, política de privacidade (LGPD) e conteúdos de terceiros (YouTube, Spotify, Maps) só com permissão. |
 
 <p align="center">
@@ -123,6 +124,7 @@ js/
   extras.js   pedido de oração, “adicionar à agenda”, SEO, instalar o app
   bible.js    leitor da Bíblia, referências ("Jo 3.16") e Palavra Diária
   listen.js   modo ouvir: leitura em voz alta com a voz do aparelho
+  acessibilidade.js  painel Acessibilidade (letra, contraste, animações, Libras, legendas)
   ebd.js      Escola Bíblica Dominical (páginas públicas)
   harpa.js    Harpa Cristã (índice e hinos)
   biblioteca.js  Biblioteca dos Jovens (acervo e pedidos)
@@ -460,6 +462,56 @@ update private.admin_access
 
 ## Acessibilidade
 
+### Painel Acessibilidade (`js/acessibilidade.js`)
+
+Aberto pelo botão do bonequinho no topo (ao lado do "Ao vivo") e pelo link "Acessibilidade" do rodapé.
+As escolhas ficam só no aparelho (`localStorage` "acessibilidade") e o `<head>` do `index.html` já as
+aplica antes da primeira pintura (a página não "pula"). Pensado para os irmãos idosos, com baixa visão,
+surdos e cegos:
+
+- **Tamanho da letra** (Normal, Grande, Maior, Muito grande = 1; 1,15; 1,3; 1,5): todo `font-size` do
+  CSS público é `calc(Npx * var(--fs))`. Os títulos grandes usam `--fs-titulo`, que cresce menos de
+  propósito, para não estourar a tela do celular. A barra do topo não cresce, mas o menu do celular
+  cresce. Testado sem rolagem lateral a 375 e 1280 px. **CSS novo:** escreva o tamanho como
+  `font-size: calc(15px * var(--fs));` (ou `--fs-titulo` para títulos de 22 px ou mais).
+- **Alto contraste** (`html.a11y-contraste`): textos cinza viram a cor do texto, bordas mais fortes,
+  links do texto sublinhados e contorno de foco mais grosso.
+- **Parar animações** (`html.a11y-sem-animacao`): o mesmo efeito do "reduzir movimento" do aparelho,
+  inclusive a vinheta (fica parada) e as rolagens suaves (`reduceMotion()` em `js/site.js`).
+- **Tradutor de Libras (VLibras)**: o plugin do Governo Federal (vlibras.gov.br) só é baixado quando
+  a pessoa liga a opção. A partir daí, o botão azul da mãozinha aparece em todas as páginas.
+  - Ao ligar, o painel fecha e o intérprete abre.
+  - **Com a janela do VLibras aberta, ele segura os toques do site:** tocar num link traduz em
+    vez de abrir. É assim em todo site que usa o VLibras. A janela fecha no X dele, ou no próprio
+    botão de acessibilidade do topo, que continua funcionando e fecha a janela.
+  - Ao desligar a opção, a janela é fechada (`data-active="false"`) antes de ser escondida, para
+    os toques voltarem ao site.
+  - Os endereços dele estão liberados no Content-Security-Policy do `vercel.json`: `vlibras.gov.br`,
+    `*.vlibras.gov.br` e só a pasta `cdn.jsdelivr.net/gh/spbgovbr-vlibras/`.
+  - No Safari, alguns ícones da janela do VLibras não aparecem (falha de CORS do próprio VLibras,
+    que acontece também numa página vazia); o intérprete funciona.
+- **Legendas nos vídeos**: os vídeos do YouTube (vídeos, ao vivo e episódio do podcast) abrem com
+  `cc_load_policy=1&cc_lang_pref=pt` (`ytLegendas()`).
+- O painel lembra o **Modo ouvir** (leitura em voz alta) e que o site funciona com TalkBack e VoiceOver.
+- Os avisos rápidos (toast) ficam na tela o tempo de ler com calma: no mínimo 3 s, mais quanto
+  maior a mensagem.
+
+### Auditoria (axe-core, WCAG 2.2 AA)
+
+Em 09/11/2026, as 19 páginas públicas passaram sem nenhum alerta do axe-core, a 375 e a 1280 px,
+tanto no modo normal quanto com alto contraste e letra "Muito grande". Para isso:
+
+- O cinza dos textos miúdos (`--c-text-faint`) foi escurecido para contraste ≥ 4,5.
+- Os títulos não pulam mais de nível:
+  - rodapé em `h2`;
+  - cartões em `h3`;
+  - `h2` escondido (`sr-only`) nas listas que vinham logo depois do `h1`.
+- Os cartões clicáveis (`pressable`) são `div` com `role="button"`.
+- No podcast, o título do episódio é o botão; antes havia botão dentro de botão. A linha inteira
+  continua clicável.
+
+### Outros cuidados
+
 - **Foco ao trocar de página**: depois de cada navegação interna, o foco vai para o `h1` da página
   (sem contorno), para o leitor de tela anunciar a página nova; sem `h1`, para o `<main>`. Em link de
   versículo ou de doação, vai para o alvo da rolagem. Páginas que carregam o conteúdo depois (Bíblia,
@@ -491,6 +543,8 @@ update private.admin_access
   `/privacidade` ganha o item "Estatísticas de visitas" sozinha quando elas estão ligadas.
 - YouTube, Spotify e Google Maps só carregam depois que o visitante permite
   (aviso de cookies; dá para mudar depois em “Preferências de cookies”, no rodapé).
+- O **VLibras** (tradutor de Libras, Governo Federal) só carrega quando o visitante liga a opção no
+  painel Acessibilidade; a política cita o serviço e o item `acessibilidade` do aparelho.
 - A política fica em `/privacidade`. Preencha em **Painel → Igreja & redes** o
   “E-mail para assuntos de privacidade”, que aparece na política.
 - **Prazos de guarda automáticos:** `supabase/historico/20261014_lgpd_limpeza.sql` agenda no pg_cron uma

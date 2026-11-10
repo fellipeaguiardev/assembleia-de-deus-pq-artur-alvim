@@ -12,7 +12,7 @@
   padding: 6px 14px;
   border-radius: 999px;
   background: var(--c-tint);
-  font-size: 14px;
+  font-size: calc(14px * var(--fs));
   color: var(--c-text-soft);
 }
 .lib-stats b {
@@ -40,7 +40,7 @@
   border: 1px solid var(--c-line-strong);
   background: var(--c-surface);
   font: inherit;
-  font-size: 14px;
+  font-size: calc(14px * var(--fs));
   font-weight: 600;
   color: var(--c-text);
   cursor: pointer;
@@ -50,7 +50,7 @@
     color 0.15s ease;
 }
 .lib-chip small {
-  font-size: 12px;
+  font-size: calc(12px * var(--fs));
   font-weight: 600;
   color: var(--c-text-faint);
 }
@@ -82,7 +82,7 @@
   align-items: center;
   gap: 8px;
   margin-bottom: 18px;
-  font-size: 14.5px;
+  font-size: calc(14.5px * var(--fs));
   font-weight: 600;
   color: var(--c-text-soft);
   cursor: pointer;
@@ -94,7 +94,7 @@
 }
 .lib-count {
   margin-bottom: 12px;
-  font-size: 14px;
+  font-size: calc(14px * var(--fs));
   font-weight: 600;
   color: var(--c-text-soft);
 }
@@ -151,7 +151,7 @@
   align-content: start;
 }
 .lib-card-body strong {
-  font-size: 15px;
+  font-size: calc(15px * var(--fs));
   line-height: 1.3;
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -159,7 +159,7 @@
   overflow: hidden;
 }
 .lib-card-author {
-  font-size: 13.5px;
+  font-size: calc(13.5px * var(--fs));
   color: var(--c-text-soft);
 }
 .lib-card .lib-status {
@@ -181,7 +181,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 12.5px;
+  font-size: calc(12.5px * var(--fs));
   font-weight: 600;
   color: var(--c-primary);
 }
@@ -209,7 +209,7 @@
   color: #fff;
 }
 .lib-cover-art small {
-  font-size: 9.5px;
+  font-size: calc(9.5px * var(--fs));
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -217,7 +217,7 @@
 }
 .lib-cover-art b {
   font-family: var(--font-heading);
-  font-size: clamp(14px, 1.3vw, 17px);
+  font-size: calc(clamp(14px, 1.3vw, 17px) * var(--fs));
   font-weight: 600;
   line-height: 1.2;
   display: -webkit-box;
@@ -227,7 +227,7 @@
 }
 .lib-cover-art i {
   margin-top: auto;
-  font-size: 11.5px;
+  font-size: calc(11.5px * var(--fs));
   font-style: normal;
   opacity: 0.85;
 }
@@ -244,13 +244,13 @@
   border-radius: 6px 14px 14px 6px;
 }
 .lib-cover.lg .lib-cover-art b {
-  font-size: 22px;
+  font-size: calc(22px * var(--fs-titulo));
 }
 .lib-cover.lg .lib-cover-art small {
-  font-size: 11px;
+  font-size: calc(11px * var(--fs));
 }
 .lib-cover.lg .lib-cover-art i {
-  font-size: 14px;
+  font-size: calc(14px * var(--fs));
 }
 .lib-cover.xs {
   flex: none;
@@ -268,7 +268,7 @@
   gap: 6px;
   padding: 3px 10px;
   border-radius: 999px;
-  font-size: 12.5px;
+  font-size: calc(12.5px * var(--fs));
   font-weight: 700;
 }
 .lib-status::before {
@@ -301,7 +301,7 @@
 }
 .lib-rules h2 {
   margin-bottom: 18px;
-  font-size: 26px;
+  font-size: calc(26px * var(--fs-titulo));
 }
 .lib-facts {
   display: grid;
@@ -317,11 +317,11 @@
 }
 .lib-facts b {
   font-family: var(--font-heading);
-  font-size: 22px;
+  font-size: calc(22px * var(--fs-titulo));
   color: var(--c-primary);
 }
 .lib-facts span {
-  font-size: 14px;
+  font-size: calc(14px * var(--fs));
   color: var(--c-text-soft);
 }
 @media (max-width: 640px) {
@@ -376,12 +376,12 @@
 }
 .lib-book-info h1 {
   margin: 8px 0 6px;
-  font-size: clamp(28px, 4.5vw, 44px);
+  font-size: calc(clamp(28px, 4.5vw, 44px) * var(--fs-titulo));
   letter-spacing: -0.02em;
   line-height: 1.12;
 }
 .lib-book-author {
-  font-size: 17px;
+  font-size: calc(17px * var(--fs));
   color: var(--c-text-soft);
 }
 .lib-book-state {
@@ -392,14 +392,14 @@
   margin-top: 16px;
 }
 .lib-book-state .lib-status {
-  font-size: 14px;
+  font-size: calc(14px * var(--fs));
   padding: 5px 12px;
 }
 .lib-waiting {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 14px;
+  font-size: calc(14px * var(--fs));
   color: var(--c-text-soft);
 }
 .lib-mine-note {
@@ -409,7 +409,7 @@
   padding: 10px 14px;
   border-radius: 12px;
   background: var(--c-tint);
-  font-size: 14.5px;
+  font-size: calc(14.5px * var(--fs));
 }
 .lib-mine-note .ic {
   flex: none;
@@ -427,7 +427,7 @@
 }
 .lib-synopsis h2 {
   margin-bottom: 8px;
-  font-size: 20px;
+  font-size: calc(20px * var(--fs));
 }
 .lib-synopsis p {
   max-width: 70ch;
@@ -439,7 +439,7 @@
 }
 .lib-related h2 {
   margin-bottom: 18px;
-  font-size: 24px;
+  font-size: calc(24px * var(--fs-titulo));
 }
 @media (max-width: 720px) {
   .lib-book {
@@ -466,18 +466,18 @@
   box-shadow: var(--shadow-sm);
 }
 .lib-form h2 {
-  font-size: 20px;
+  font-size: calc(20px * var(--fs));
 }
 .lib-form-lead {
   margin: 6px 0 16px;
-  font-size: 14.5px;
+  font-size: calc(14.5px * var(--fs));
   color: var(--c-text-soft);
 }
 .lib-form label {
   display: grid;
   gap: 6px;
   margin-bottom: 12px;
-  font-size: 14px;
+  font-size: calc(14px * var(--fs));
   font-weight: 600;
 }
 .lib-form input[type="text"],
@@ -545,7 +545,7 @@
   border-radius: 10px;
   background: #fde8e8;
   color: #9b1c1c;
-  font-size: 14px;
+  font-size: calc(14px * var(--fs));
 }
 .lib-sent {
   display: flex;
@@ -563,7 +563,7 @@
   color: #146c3c;
 }
 .lib-sent strong {
-  font-size: 17px;
+  font-size: calc(17px * var(--fs));
 }
 .lib-sent p {
   margin-top: 4px;
@@ -586,7 +586,7 @@
   border-radius: 999px;
   background: var(--c-tint);
   color: var(--c-primary);
-  font-size: 11.5px;
+  font-size: calc(11.5px * var(--fs));
   font-weight: 700;
 }
 .lib-count-badge.hot {
@@ -608,12 +608,12 @@
   border: 1px solid rgba(15, 23, 42, 0.06);
 }
 .lib-kpi b {
-  font-size: 28px;
+  font-size: calc(28px * var(--fs-titulo));
   line-height: 1.1;
   color: var(--c-primary);
 }
 .lib-kpi span {
-  font-size: 13px;
+  font-size: calc(13px * var(--fs));
   color: #5b6475;
 }
 .lib-kpi.bad b {
@@ -668,7 +668,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 4px;
-  font-size: 13.5px;
+  font-size: calc(13.5px * var(--fs));
   color: #5b6475;
 }
 .lib-sub a {
@@ -677,13 +677,13 @@
   text-underline-offset: 2px;
 }
 .lib-msg {
-  font-size: 13.5px;
+  font-size: calc(13.5px * var(--fs));
   font-style: italic;
   color: #3d4555;
 }
 .lib-why {
   flex-basis: 100%;
-  font-size: 12.5px;
+  font-size: calc(12.5px * var(--fs));
   color: #6b7280;
   text-align: right;
 }
@@ -696,7 +696,7 @@
   background: var(--c-tint);
   color: var(--c-primary);
   font-weight: 700;
-  font-size: 13px;
+  font-size: calc(13px * var(--fs));
 }
 .ebd-badge.lib-st-late {
   background: #fde8e8;
@@ -715,7 +715,7 @@
   margin: 6px 0;
   padding: 9px 12px;
   border-radius: 10px;
-  font-size: 14px;
+  font-size: calc(14px * var(--fs));
 }
 .lib-check .ic {
   flex: none;
@@ -739,7 +739,7 @@
   align-items: center;
   gap: 8px;
   margin: 8px 0 4px;
-  font-size: 14px;
+  font-size: calc(14px * var(--fs));
   font-weight: 600;
 }
 .lib-force input,
@@ -758,7 +758,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 13.5px;
+  font-size: calc(13.5px * var(--fs));
   font-weight: 600;
 }
 .lib-inline-date input {
@@ -782,7 +782,7 @@
   border: 1.5px solid #e1e3ea;
   background: #fff;
   font: inherit;
-  font-size: 14px;
+  font-size: calc(14px * var(--fs));
 }
 .lib-search {
   flex: 1 1 220px;
@@ -832,7 +832,7 @@
   border: 1.5px solid #e1e3ea;
   background: #fff;
   font: inherit;
-  font-size: 11.5px;
+  font-size: calc(11.5px * var(--fs));
   color: #3d4555;
   text-align: left;
   cursor: pointer;
@@ -986,7 +986,7 @@
     flex: 1;
     max-width: 60%;
     min-height: 44px;
-    font-size: 16px;
+    font-size: calc(16px * var(--fs));
   }
   .lib-why {
     text-align: left;

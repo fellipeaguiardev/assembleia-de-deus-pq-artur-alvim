@@ -565,6 +565,7 @@ const ICONS = {
   external: '<path d="M7 7h10v10"/><path d="M7 17 17 7"/>',
   x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
   calendar: '<rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+  acessibilidade: '<circle cx="12" cy="4.6" r="1.9"/><path d="M4.5 8.6c2.5.8 5 1.2 7.5 1.2s5-.4 7.5-1.2"/><path d="M12 9.8v4.6"/><path d="m8.6 21 3.4-6.6 3.4 6.6"/>',
   heart:
     '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>',
   copy: '<rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
@@ -656,7 +657,8 @@ function showToast(msg, type = "info") {
   t.dataset.type = type;
   t.classList.add("show");
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove("show"), 2200);
+  // Fica na tela o tempo de ler com calma: mais texto, mais tempo (mínimo 3 s).
+  toastTimer = setTimeout(() => t.classList.remove("show"), Math.max(3000, msg.length * 75));
 }
 
 /* ============================================================
