@@ -714,10 +714,11 @@ function tabEvents() {
       "Eventos",
       `<div class="item-actions">
         <label class="btn btn-ghost btn-sm upload-label" data-cartaz-btn>${icon("image", 15)} Novo evento pela imagem<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden onchange="novoEventoPelaImagem(this)"></label>
+        <button class="btn btn-ghost btn-sm" type="button" data-cartaz-btn onclick="abrirEventoPeloTexto()">${icon("megaphone", 15)} Novo evento pelo texto</button>
         <button class="btn btn-primary btn-sm" type="button" onclick="addEvent()">+ Novo evento</button>
       </div>`,
     )}
-    <p class="admin-note">Envie o cartaz do evento e o site preenche os campos sozinho (leitura pelo Gemini, do Google). O evento é criado <strong>desativado</strong>: confira tudo e marque <strong>Ativo</strong> para aparecer no site.</p>
+    <p class="admin-note">Envie o cartaz do evento, ou cole a mensagem de divulgação (a do WhatsApp, por exemplo), e o site preenche os campos sozinho (leitura pelo Gemini, do Google). Pelo texto, o site também cria a <strong>arte do evento</strong> com o brasão. O evento é criado <strong>desativado</strong>: confira tudo e marque <strong>Ativo</strong> para aparecer no site. Em qualquer evento, <strong>Gerar arte</strong> faz uma imagem nova com os dados atuais.</p>
     ${
       data.events.length
         ? data.events
@@ -740,6 +741,7 @@ function tabEvents() {
         <div class="admin-card-foot">
           <label class="check"><input type="checkbox" ${ev.active !== false ? "checked" : ""} onchange="updateEvent(${i},'active',this.checked)"> Ativo</label>
           ${safeUrl(ev.image) ? `<button class="btn btn-ghost btn-sm" type="button" data-cartaz-btn onclick="preencherPeloCartaz(${i})">${icon("image", 14)} Preencher pelo cartaz</button>` : ""}
+          <button class="btn btn-ghost btn-sm" type="button" data-cartaz-btn onclick="gerarArteDoEvento(${i})">${icon("image", 14)} Gerar arte</button>
           <button class="btn btn-danger btn-sm" type="button" onclick="removeEvent(${i})">Excluir evento</button>
         </div>
       </div>`,
@@ -811,7 +813,8 @@ function avisoCartazHTML(ev) {
   if (cartazLido.erro)
     return `<p class="admin-note admin-warn" role="status">${icon("x", 14)}<span>Não deu para ler o cartaz: ${esc(cartazLido.erro)} O evento ficou com a imagem; preencha os campos à mão.</span></p>`;
   const avisos = cartazLido.avisos?.length ? `<br>${cartazLido.avisos.map((a) => `• ${esc(a)}`).join("<br>")}` : "";
-  return `<p class="admin-note admin-ok" role="status">${icon("check", 15)}<span><strong>Preenchido pelo cartaz.</strong> Confira tudo${ev.active === false ? " e marque <strong>Ativo</strong> para aparecer no site" : ""}.${avisos}</span></p>`;
+  const como = cartazLido.origem === "texto" ? `Preenchido pela mensagem${cartazLido.semArte ? " (a arte não saiu: toque em Gerar arte)" : ", com a arte gerada"}.` : "Preenchido pelo cartaz.";
+  return `<p class="admin-note admin-ok" role="status">${icon("check", 15)}<span><strong>${como}</strong> Confira tudo${ev.active === false ? " e marque <strong>Ativo</strong> para aparecer no site" : ""}.${avisos}</span></p>`;
 }
 
 function marcarBotoesCartaz(ocupado) {
@@ -846,13 +849,15 @@ async function reduzirImagem(blob, lado = 1600) {
   return { imagem, tipo: "image/jpeg" };
 }
 
-async function lerCartazNoServidor(blob) {
+async function lerCartazNoServidor(blob, texto) {
   let corpo;
-  try {
-    corpo = await reduzirImagem(blob);
-  } catch {
-    throw Object.assign(new Error("imagem"), { userMessage: "não consegui abrir essa imagem (use JPG, PNG ou WEBP)." });
-  }
+  if (texto) corpo = { texto };
+  else
+    try {
+      corpo = await reduzirImagem(blob);
+    } catch {
+      throw Object.assign(new Error("imagem"), { userMessage: "não consegui abrir essa imagem (use JPG, PNG ou WEBP)." });
+    }
   const { data: s } = await supabaseClient.auth.getSession();
   let res;
   try {
@@ -923,6 +928,130 @@ async function novoEventoPelaImagem(input) {
   } catch (e) {
     console.error("Novo evento pela imagem:", e);
     showToast(e.userMessage || "Erro ao enviar a imagem.", "error");
+  } finally {
+    lendoCartaz = false;
+    marcarBotoesCartaz(false);
+  }
+}
+
+/* ---- EVENTOS: pelo texto (mensagem do WhatsApp) e arte gerada (POST /api/imagem) ----
+   A mensagem vai para a mesma leitura do cartaz (api/evento-da-imagem.mjs, com
+   { texto }). A arte é desenhada pelo site com o brasão e os dados do evento
+   (sem IA no desenho: o texto sai sempre certo) e vai para o armazenamento
+   como a imagem do evento. */
+function abrirEventoPeloTexto() {
+  if (lendoCartaz) return;
+  openModal(
+    `<div class="modal-pad">
+      <span class="eyebrow">Eventos</span>
+      <h3>Novo evento pelo texto</h3>
+      <p class="admin-note">Cole a mensagem de divulgação (a que foi para o grupo do WhatsApp, por exemplo). O site preenche o evento e cria a arte com o brasão. Ele nasce <strong>desativado</strong> para você conferir.</p>
+      <label class="sr-only" for="eventoTexto">Mensagem do evento</label>
+      <textarea id="eventoTexto" rows="8" maxlength="4000" style="width:100%;margin-top:12px" placeholder="Ex.: A paz do Senhor! Sábado, dia 22, às 19h30, teremos o Culto de Jovens com o cantor…"></textarea>
+      <div class="modal-actions" style="margin-top:14px">
+        <button class="btn btn-ghost btn-sm" type="button" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-primary btn-sm" type="button" data-cartaz-btn onclick="criarEventoPeloTexto()">Criar evento</button>
+      </div>
+    </div>`,
+    { label: "Novo evento pelo texto" },
+  );
+  setTimeout(() => document.getElementById("eventoTexto")?.focus(), 60);
+}
+
+// Pede a arte ao servidor e envia para o armazenamento; devolve o endereço da imagem.
+async function gerarArteNoServidor(campos) {
+  const { data: s } = await supabaseClient.auth.getSession();
+  let res;
+  try {
+    res = await fetch("/api/imagem", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${s?.session?.access_token || ""}` },
+      body: JSON.stringify(campos),
+    });
+  } catch {
+    throw Object.assign(new Error("rede"), { userMessage: "Sem conexão com o site agora." });
+  }
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw Object.assign(new Error(body.error || `HTTP ${res.status}`), { userMessage: body.error || "Não deu para gerar a arte agora." });
+  }
+  const blob = await res.blob();
+  return uploadFile(new File([blob], "arte-evento.jpg", { type: "image/jpeg" }), "eventos");
+}
+
+async function criarEventoPeloTexto() {
+  const texto = (document.getElementById("eventoTexto")?.value || "").trim();
+  if (texto.length < 10) return showToast("Cole a mensagem do evento (pelo menos uma frase).", "error");
+  if (lendoCartaz) return;
+  if (!(await adminEnsureAccess())) return;
+  lendoCartaz = true;
+  marcarBotoesCartaz(true);
+  showToast("Lendo a mensagem… pode levar até 1 minuto.");
+  try {
+    const c = await lerCartazNoServidor(null, texto);
+    if (!c.nome) throw Object.assign(new Error("vazio"), { userMessage: c.avisos?.[0] || "Não achei um evento nessa mensagem. Confira o texto." });
+    closeModal({ instant: true });
+    const campos = { nome: c.nome, data: c.data || localISO(), hora: c.horario || "", local: c.local || "", categoria: c.categoria || "" };
+    let url = "";
+    try {
+      showToast("Criando a arte do evento…");
+      url = await gerarArteNoServidor(campos);
+    } catch (e) {
+      console.error("Arte do evento:", e);
+    }
+    const created = await dbWrite(
+      db("events")
+        .insert({
+          name: c.nome,
+          date: campos.data,
+          time: c.horario || "19:00",
+          category: c.categoria || "Culto",
+          location: c.local || "",
+          address: c.endereco || "",
+          description: c.descricao || "",
+          image: url,
+          link: c.link || "",
+          maps_url: mapsDoEndereco(c.endereco),
+          active: false,
+        })
+        .select()
+        .single(),
+      null,
+      "Erro ao criar evento.",
+    );
+    if (!created) return;
+    data.events.unshift(mapEvent(created));
+    cartazLido = { id: created.id, avisos: c.avisos || [], erro: "", origem: "texto", semArte: !url };
+    renderAdmin();
+    renderSite();
+    rolarAteEvento(created.id);
+    showToast(url ? "Evento criado pela mensagem, com a arte! Confira e marque Ativo." : "Evento criado pela mensagem (sem arte: toque em Gerar arte).", url ? "success" : "info");
+  } catch (e) {
+    console.error("Novo evento pelo texto:", e);
+    showToast(e.userMessage ? (/^[A-ZÁÉÍÓÚ]/.test(e.userMessage) ? e.userMessage : `Não deu para ler a mensagem: ${e.userMessage}`) : "Não deu para ler a mensagem agora.", "error");
+  } finally {
+    lendoCartaz = false;
+    marcarBotoesCartaz(false);
+  }
+}
+
+async function gerarArteDoEvento(i) {
+  const ev = data.events[i];
+  if (!ev || lendoCartaz) return;
+  if (!String(ev.name || "").trim()) return showToast("Dê um nome ao evento antes de gerar a arte.", "error");
+  if (safeUrl(ev.image) && !confirm("Trocar a imagem atual deste evento pela arte gerada com o nome, a data e o local?")) return;
+  if (!(await adminEnsureAccess())) return;
+  lendoCartaz = true;
+  marcarBotoesCartaz(true);
+  showToast("Criando a arte do evento…");
+  try {
+    const url = await gerarArteNoServidor({ nome: ev.name, data: ev.date, hora: ev.time, local: ev.location, categoria: ev.category });
+    await updateEvent(i, "image", url);
+    renderAdmin();
+    showToast("Arte criada e colocada no evento!", "success");
+  } catch (e) {
+    console.error("Gerar arte:", e);
+    showToast(e.userMessage || "Não deu para gerar a arte agora.", "error");
   } finally {
     lendoCartaz = false;
     marcarBotoesCartaz(false);
@@ -1893,12 +2022,42 @@ function tabChurch() {
       <p class="admin-note">Com o ID do canal preenchido, o botão “Ao vivo” abre a transmissão dentro do site. Sem ele, o botão leva para a biblioteca de vídeos.</p>
     </div>
     <div class="admin-card">
+      <h3>Resumo semanal e alertas por e-mail</h3>
+      <p class="admin-note">Toda <strong>segunda de manhã</strong> a equipe recebe um e-mail com os eventos e avisos da semana, os livros atrasados (com o botão para cobrar no WhatsApp), os pedidos da biblioteca, as notícias da sede esperando aprovação e as lições da EBD de domingo. E, se alguma coisa automática parar (vídeos do YouTube, lições da EBD, biblioteca, notícias da sede), chega um <strong>aviso</strong> no mesmo dia.</p>
+      <p class="admin-note">Para não cair no spam: adicione <strong>site@adbelemparquealvim.org.br</strong> aos contatos e, se o primeiro e-mail cair lá, marque “Não é spam”.</p>
+      <div class="item-actions">
+        <button class="btn btn-ghost btn-sm" type="button" data-rotina-btn onclick="rotinaAgora('resumo')">${icon("calendar", 14)} Enviar o resumo agora</button>
+        <button class="btn btn-ghost btn-sm" type="button" data-rotina-btn onclick="rotinaAgora('alertas')">${icon("megaphone", 14)} Testar o alerta</button>
+      </div>
+    </div>
+    <div class="admin-card">
       <h3>Redes sociais</h3>
       ${socialRow("Instagram", "instagram", c.instagramUrl, s.instagram?.enabled)}
       ${socialRow("YouTube", "youtube", c.youtubeUrl, s.youtube?.enabled)}
       ${socialRow("Facebook", "facebook", c.facebookUrl, s.facebook?.enabled)}
       ${socialRow("WhatsApp", "whatsapp", c.whatsapp, s.whatsapp?.enabled)}
     </div>`;
+}
+
+// Botões do cartão "Resumo semanal e alertas" (api/rotina/[tarefa].mjs).
+async function rotinaAgora(tarefa) {
+  if (!(await adminEnsureAccess())) return;
+  const botoes = document.querySelectorAll("[data-rotina-btn]");
+  botoes.forEach((b) => (b.disabled = true));
+  showToast("Enviando…");
+  try {
+    const { data: s } = await supabaseClient.auth.getSession();
+    const res = await fetch(`/api/rotina/${tarefa}`, { method: "POST", headers: { Authorization: `Bearer ${s?.session?.access_token || ""}` } });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+    if (tarefa === "resumo") showToast(`Resumo enviado para ${body.para} pessoa(s). Confira a caixa de entrada (e o spam).`, "success");
+    else showToast(body.problemas?.length ? `Alerta de teste enviado: ${body.problemas.length} problema(s) agora.` : "Alerta de teste enviado: nenhum problema agora.", "success");
+  } catch (e) {
+    console.error("rotina:", e);
+    showToast(`Não deu para enviar: ${e.message}`, "error");
+  } finally {
+    botoes.forEach((b) => (b.disabled = false));
+  }
 }
 
 function socialRow(label, key, url, enabled) {

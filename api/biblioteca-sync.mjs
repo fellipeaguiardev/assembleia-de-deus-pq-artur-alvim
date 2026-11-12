@@ -23,6 +23,7 @@ import { timingSafeEqual } from "node:crypto";
 import { rpc } from "./_lib/fonte.mjs";
 import { readSheet, downloadCover, findCoverOnline } from "./_lib/planilha.mjs";
 import { esc, page } from "./_lib/acesso.mjs";
+import { registrarRotina } from "./_lib/rotina.mjs";
 
 const TIME_BUDGET_MS = 48000; // a função pode rodar até 60 s (vercel.json)
 const MAX_ONLINE = 12; // buscas na internet por vez
@@ -117,6 +118,7 @@ export async function GET(request) {
   const cron = process.env.CRON_SECRET;
   if (cron && sameSecret(request.headers.get("authorization"), `Bearer ${cron}`)) {
     const r = await runLibrarySync();
+    await registrarRotina("biblioteca", r.ok || r.status === 429, r.error || ""); // para o alerta por e-mail (api/rotina)
     return json(r.ok ? 200 : r.status || 500, r);
   }
   const chave = url.searchParams.get("chave");

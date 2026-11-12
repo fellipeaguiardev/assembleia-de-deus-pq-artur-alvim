@@ -11,7 +11,7 @@
    carregam depois que a pessoa permite.
    ============================================================ */
 const CONSENT_KEY = "cookie-consent-v1";
-const PRIVACY_UPDATED = "2026-11-09";
+const PRIVACY_UPDATED = "2026-11-11";
 
 let consent = readConsent();
 
@@ -229,7 +229,8 @@ function privacyPageHTML() {
       <h2>5. Com quem compartilhamos</h2>
       <p>Usamos serviços de terceiros para o site funcionar: <strong>Supabase</strong> (banco de dados e arquivos, servidores em São Paulo),
       <strong>Vercel</strong> (hospedagem do site, envio do formulário, redução das imagens das capas${stats ? " e estatísticas de visitas" : ""}), <strong>Resend</strong>
-      (entrega do e-mail do formulário à equipe, nos Estados Unidos), <strong>Spotify for Creators</strong> (áudio dos episódios do
+      (entrega do e-mail do formulário à equipe e do resumo semanal interno da equipe, que lista os empréstimos da
+      biblioteca com nome e WhatsApp de quem está com o livro, nos Estados Unidos), <strong>Spotify for Creators</strong> (áudio dos episódios do
       podcast, quando você aperta play), <strong>Google Gemini</strong> (lê os cartazes de eventos que a equipe envia no painel, para
       preencher os dados do evento; nenhum dado de visitante passa por ele) e, quando você permite, <strong>YouTube/Google</strong> e <strong>Spotify</strong>. Se você ligar o tradutor de Libras no painel
       Acessibilidade, o <strong>VLibras</strong> (Governo Federal, vlibras.gov.br) recebe o texto em que você tocar, para fazer a tradução.

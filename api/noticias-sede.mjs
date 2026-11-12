@@ -18,6 +18,7 @@ import { origemDeFora } from "./_lib/site.mjs";
 import { timingSafeEqual } from "node:crypto";
 import { rpc } from "./_lib/fonte.mjs";
 import { lerNoticiasSede } from "./_lib/noticias-sede.mjs";
+import { registrarRotina } from "./_lib/rotina.mjs";
 
 const json = (status, body) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" } });
 
@@ -58,6 +59,7 @@ export async function GET(request) {
   const cron = process.env.CRON_SECRET;
   if (!cron || !sameSecret(request.headers.get("authorization"), `Bearer ${cron}`)) return json(401, { error: "Não autorizado." });
   const r = await runNewsSync();
+  await registrarRotina("noticias", r.ok, r.error || ""); // para o alerta por e-mail (api/rotina)
   return json(r.ok ? 200 : r.status || 500, r);
 }
 

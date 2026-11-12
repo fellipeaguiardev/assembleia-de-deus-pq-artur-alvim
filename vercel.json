@@ -8,7 +8,7 @@
     "api/ebd-sincronizar.mjs": {
       "maxDuration": 30
     },
-    "api/ebd-sync-diario.mjs": {
+    "api/rotina/[tarefa].mjs": {
       "maxDuration": 60
     },
     "api/biblioteca-sync.mjs": {
@@ -37,8 +37,16 @@
   },
   "crons": [
     {
-      "path": "/api/ebd-sync-diario",
+      "path": "/api/rotina/ebd",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/rotina/alertas",
+      "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/rotina/resumo",
+      "schedule": "0 10 * * 1"
     },
     {
       "path": "/api/biblioteca-sync",

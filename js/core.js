@@ -96,7 +96,7 @@ const defaultData = {
   // Página "Sua primeira visita" (cada bloco só aparece se preenchido no painel).
   firstVisit: { intro: "", expect: "", kids: "", accessibility: "", directions: "" },
   // EBD: importação automática do sumário (Painel → EBD). Lida também pela
-  // função diária da Vercel (api/ebd-sync-diario.mjs).
+  // função diária da Vercel (api/rotina/[tarefa].mjs, /api/rotina/ebd).
   ebdSync: { enabled: true, magazines: ["adultos"], autoPublish: false },
   // Biblioteca dos Jovens (Painel → Biblioteca). Regras vindas da planilha da
   // biblioteca; os números são usados pelo painel ao emprestar e renovar.

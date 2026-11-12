@@ -99,8 +99,9 @@ manifest.webmanifest  app instalável (PWA)
 sw.js                 service worker: site abre sem internet
 robots.txt, sitemap.xml
 api/                  funções do servidor: contato.mjs (e-mail do formulário), ebd-sincronizar.mjs,
-                      ebd-sync-diario.mjs (agendada), admin-acesso.mjs e admin-aprovar.mjs
-                      (liberação do painel por e-mail) e _lib/ (modelos de e-mail, leitor da EBD)
+                      rotina/[tarefa].mjs (agendadas: EBD, resumo semanal e alertas por e-mail),
+                      admin-acesso.mjs e admin-aprovar.mjs (liberação do painel por e-mail) e
+                      _lib/ (modelos de e-mail, leitor da EBD, rotina.mjs do resumo e dos alertas)
 scripts/publicar.sh   publica na Vercel (carimba a versão para o app se atualizar)
 scripts/verificar.mjs checagem automática (sintaxe, arquivos citados, rotas, migrations, segredos)
 tests/fumaca.spec.mjs smoke test no navegador (Playwright; playwright.config.mjs e package.json)
@@ -219,7 +220,7 @@ nem de sites que a reproduzem; use referências, textos da equipe e links para a
 
 ### Importação automática do sumário (escola-ebd.com.br)
 
-Todo dia às 06:00 (Brasília) a função `api/ebd-sync-diario.mjs` (Vercel Cron) confere o sumário das
+Todo dia às 06:00 (Brasília) a rotina `/api/rotina/ebd` (`api/rotina/[tarefa].mjs`, Vercel Cron) confere o sumário das
 Lições Bíblicas em **escola-ebd.com.br** (robots.txt permite; até nov/2026 era estudantesdabiblia.com.br)
 para as revistas marcadas no painel (Adultos e/ou Jovens) e completa o trimestre atual — e o
 próximo, perto da virada: **tema, comentarista, títulos, datas e referências bíblicas** (texto
@@ -591,9 +592,25 @@ no celular) e "Baixar".
   pode continuar mostrando o banner antigo; links novos já vêm com a imagem do versículo.
 - No computador (`npx serve`) o botão "Imagem" não aparece: lá não há as funções de `api/`.
 
-## Eventos pelo cartaz (Gemini)
+## Eventos pelo cartaz ou pelo texto (Gemini) e arte do evento
 
-No painel, aba **Eventos**, o botão **"Novo evento pela imagem"** recebe o cartaz do evento e
+No painel, aba **Eventos**:
+
+- **"Novo evento pelo texto"**: cole a mensagem de divulgação (a que foi para o grupo do WhatsApp).
+  A mesma leitura do cartaz (`api/evento-da-imagem.mjs`, corpo `{ texto }`, até 4.000 letras)
+  preenche os campos, e o site **cria a arte do evento** e põe como imagem. Se a arte falhar, o
+  evento é criado sem imagem e o cartão avisa.
+- **"Gerar arte"** (em cada evento): faz uma imagem nova com o nome, a data, o horário, o local e a
+  categoria atuais. Se o evento já tem imagem, pergunta antes de trocar.
+- **A arte** (`POST /api/imagem`, só admin liberado): JPEG 1200×750 (16:10, o formato dos cartões
+  de evento do site, então nada é cortado) com o brasão, "Assembleia de Deus Belém · Parque Artur
+  Alvim", a categoria, o nome do evento, "Sábado, 21 de novembro · 19h30", o local e o endereço do
+  site. O fundo é uma das 8 paletas da imagem do versículo, escolhida pelo nome do evento. O texto é
+  escrito pelo site (satori), **não por IA**: a geração de imagem do Gemini não está no plano grátis,
+  e IA de imagem costuma errar letras e acentos. Nome muito comprido é cortado na última palavra
+  inteira, com "…".
+
+O botão **"Novo evento pela imagem"** recebe o cartaz do evento e
 preenche sozinho nome, data, horário, categoria, local, endereço, descrição e link de inscrição
 (com o link do Google Maps montado a partir do endereço). O evento nasce **desativado**: a equipe
 confere e marca **Ativo** para ele aparecer no site. Nos eventos que já têm imagem, **"Preencher
@@ -616,6 +633,72 @@ pelo cartaz"** mostra o que vai mudar e só troca depois da confirmação.
 - **Limites:** o plano grátis tem cota por minuto e por dia; passando dela, o evento é criado só
   com a imagem e o cartão explica o motivo. A IA pode errar (ano que não aparece no cartaz,
   letra muito decorada); os avisos dela aparecem no cartão do evento. Código QR não é lido.
+
+## Resumo semanal e alertas por e-mail
+
+Tudo numa função só, `api/rotina/[tarefa].mjs` (o plano grátis da Vercel aceita no máximo 12
+funções), com as peças em `api/_lib/rotina.mjs`:
+
+| Rotina | Quando (Brasília) | O que faz |
+| --- | --- | --- |
+| `/api/rotina/ebd` | todo dia 06:00 | importa as lições da EBD (antes era `api/ebd-sync-diario.mjs`) |
+| `/api/rotina/resumo` | segunda 07:00 | e-mail **Resumo da semana** |
+| `/api/rotina/alertas` | todo dia 09:00 | e-mail **Aviso do site**, se algo parou |
+
+(O Vercel Cron do plano grátis pode disparar em qualquer minuto daquela hora.)
+
+**Resumo da semana:**
+
+- **Precisa da sua atenção:**
+  - eventos desativados esperando conferência;
+  - notícias da sede esperando aprovação;
+  - pedidos novos da biblioteca;
+  - livros atrasados, com o link **Cobrar no WhatsApp** já com a mensagem pronta (a mesma do painel);
+  - o que estiver nos alertas.
+- **Esta semana na igreja:** eventos dos próximos 7 dias e avisos no ar.
+- **Biblioteca:** livros que vencem na semana, com o link **Lembrar no WhatsApp**.
+- **EBD de domingo:** cada revista com a lição publicada, sem conteúdo ou não cadastrada.
+
+**Alertas:**
+
+- uma rotina (EBD, biblioteca pela planilha, notícias da sede) **falhou 2 vezes seguidas** ou não
+  roda há mais de 2 dias (cada uma anota como foi com `registrarRotina`);
+- **nenhum vídeo novo do YouTube há 4 dias**;
+- de quinta a sábado: **lição de domingo** não cadastrada, sem conteúdo ou não publicada.
+
+O e-mail de alerta só sai quando a lista muda ou depois de 3 dias igual, e um último e-mail avisa
+quando tudo voltou ao normal. Se o site inteiro sair do ar, quem avisa é o monitor do GitHub
+(`.github/workflows/monitor.yml`), que abre um issue; o GitHub manda e-mail ao dono do repositório.
+
+**Testar:** Painel → **Igreja & redes** → **Enviar o resumo agora** / **Testar o alerta** (o de
+alerta sai marcado como `[Teste]` e manda o estado de agora mesmo sem novidade).
+
+**Configuração:**
+
+- **Banco:** `supabase/migrations/20261111120000_rotina_resumo_alertas.sql`, colado no SQL Editor.
+  Ele cria:
+  - a chave `private.rotina_key` (só o hash);
+  - `private.rotina_status`;
+  - `rotina_registrar` e `rotina_painel`, só com a chave, só leitura dos dados.
+- **Vercel:**
+  - `ROTINA_TOKEN`: a chave; o hash está na migration.
+  - `RESUMO_PARA` (opcional): e-mails separados por vírgula. Sem ela, vai para `ADMIN_APROVADORES`
+    ou `NOTIFY_TO`.
+  - E as que já existiam: `RESEND_API_KEY` e `CRON_SECRET`.
+- **Sem a migration ou sem `ROTINA_TOKEN`:** o resumo e os alertas respondem explicando o que falta.
+  As outras rotinas seguem normais, só sem anotar como foram.
+
+**Para não cair no spam:**
+
+- **O que já está feito:**
+  - o remetente é `site@adbelemparquealvim.org.br`, um domínio verificado no Resend;
+  - os registros DKIM (`resend._domainkey`), SPF (`send`) e DMARC (`_dmarc`) estão no registro.br;
+  - os e-mails têm HTML simples e versão em texto puro;
+  - não levam imagem nem anexo nem link encurtado;
+  - o assunto é sem caixa alta.
+- **O que falta, do lado de quem recebe:** adicionar o remetente aos contatos e, se o primeiro cair
+  no spam, marcar "Não é spam". No Gmail, dá para criar um filtro "Nunca enviar para o spam" para
+  esse remetente.
 
 ## Ao vivo agora
 
@@ -651,7 +734,9 @@ transmissão dentro do site.
 | Avisos e eventos | Somem sozinhos depois da data final |
 | Notícias e podcast agendados | Publique com data futura: aparecem sozinhos no dia |
 | Pedidos de oração | Vão direto por e-mail para a equipe, com a identidade da igreja (nada fica guardado) |
-| Lições da EBD | Vercel Cron todo dia às 06:00 (`api/ebd-sync-diario.mjs`) |
+| Lições da EBD | Vercel Cron todo dia às 06:00 (`/api/rotina/ebd`) |
+| **Resumo da semana por e-mail** | Toda segunda às 07:00 (`/api/rotina/resumo`): veja [Resumo semanal e alertas](#resumo-semanal-e-alertas-por-e-mail) |
+| **Alerta quando algo para** | Todo dia às 09:00 (`/api/rotina/alertas`), por e-mail |
 | Notícias da sede | Vercel Cron todo dia às 07:00 (`api/noticias-sede.mjs`): sugestões no painel, a equipe publica |
 | Versão nova do app | O site confere `/version.json` ao voltar para o app e oferece “Atualizar” |
 

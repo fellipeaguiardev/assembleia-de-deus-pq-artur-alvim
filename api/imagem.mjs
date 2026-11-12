@@ -12,12 +12,21 @@
 // versículo: o mesmo versículo sai sempre igual, e cada dia muda.
 // Fica em cache por muito tempo (o conteúdo de uma data ou referência não
 // muda); se o desenho mudar, suba IMAGEM_VERSAO em api/_lib/paginas.mjs.
+//
+// POST /api/imagem — ARTE DO EVENTO (só admin liberado, botão "Gerar arte"
+// do painel). Corpo: { nome, data (AAAA-MM-DD), hora (HH:MM), local,
+// categoria }. Devolve um JPEG 1200×750 (16:10, o formato dos cartões de
+// evento do site) com o brasão, o nome do evento e data, hora e local. O
+// painel envia a imagem para o armazenamento e põe no evento. O texto é
+// escrito pelo site (não por IA): sai sempre certo, com acentos.
 // ============================================================
 import { readFile } from "node:fs/promises";
 import satori from "satori"; // monta a imagem (SVG) a partir dos elementos
 import { Resvg } from "@resvg/resvg-js"; // SVG → pixels
 import jpeg from "jpeg-js"; // pixels → JPEG (bem mais leve que PNG: o WhatsApp não mostra prévia pesada)
 import { versiculoDaBiblia, versiculoDaPalavra } from "./_lib/paginas.mjs";
+import { rpc } from "./_lib/fonte.mjs";
+import { origemDeFora } from "./_lib/site.mjs";
 
 const PALETAS = [
   { fundo: ["#0b2a74", "#123f9e", "#081633"], destaque: "#ffd27a" }, // azul da igreja
@@ -140,4 +149,102 @@ export async function GET(request) {
       "Content-Disposition": `inline; filename="${nome}${formato === "story" ? "-status" : ""}.jpg"`,
     },
   });
+}
+
+/* ---------- Arte do evento (POST, só admin) ---------- */
+const ARTE = { w: 1200, h: 750 };
+const DIAS_SEMANA = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"];
+const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+// Texto de uma linha só; se passar do tamanho, corta na última palavra inteira e põe "…".
+const limpo = (v, max) => {
+  const t = String(v ?? "").replace(/[\u0000-\u001f]/g, " ").replace(/\s+/g, " ").trim();
+  return t.length <= max ? t : t.slice(0, max).replace(/[\s,;:.—–-]+\S*$/, "") + "…";
+};
+
+export function textoDaData(iso) {
+  const m = String(iso || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return "";
+  const d = new Date(`${iso}T12:00:00Z`);
+  if (isNaN(d) || d.getUTCDate() !== +m[3]) return "";
+  const t = `${DIAS_SEMANA[d.getUTCDay()]}, ${+m[3]} de ${MESES[+m[2] - 1]}`;
+  return t[0].toUpperCase() + t.slice(1);
+}
+
+export function textoDaHora(hhmm) {
+  const m = String(hhmm || "").match(/^(\d{1,2}):(\d{2})/);
+  if (!m || +m[1] > 23 || +m[2] > 59) return "";
+  return +m[2] ? `${+m[1]}h${m[2]}` : `${+m[1]}h`;
+}
+
+const letraDoNome = (n) => (n.length <= 16 ? 92 : n.length <= 26 ? 78 : n.length <= 40 ? 64 : n.length <= 60 ? 54 : 46);
+
+function desenhoEvento({ nome, data, hora, local, categoria }) {
+  const p = paletaPara(nome + data);
+  const quando = [textoDaData(data), textoDaHora(hora)].filter(Boolean).join(" · ");
+  const meio = [
+    categoria
+      ? h("div", { display: "flex", alignSelf: "flex-start", fontSize: 24, fontWeight: 800, letterSpacing: 3, color: p.fundo[2], backgroundColor: p.destaque, padding: "8px 18px", borderRadius: 999, marginBottom: 26 }, categoria.toUpperCase())
+      : null,
+    h("div", { display: "flex", fontFamily: "Fraunces", fontSize: letraDoNome(nome), lineHeight: 1.08, textShadow: "0 2px 18px rgba(0,0,0,0.25)" }, nome),
+    quando ? h("div", { display: "flex", marginTop: 30, fontSize: 36, fontWeight: 800, color: p.destaque }, quando) : null,
+    local ? h("div", { display: "flex", marginTop: 10, fontSize: 28, fontWeight: 600, opacity: 0.9 }, local) : null,
+  ].filter(Boolean);
+  return h(
+    "div",
+    { width: "100%", height: "100%", display: "flex", position: "relative", color: "#fff", fontFamily: "Inter", backgroundImage: `linear-gradient(140deg, ${p.fundo[0]} 0%, ${p.fundo[1]} 52%, ${p.fundo[2]} 100%)` },
+    // luz no canto e sombra embaixo (contraste do texto branco em qualquer paleta)
+    h("div", { position: "absolute", top: -ARTE.h * 0.45, right: -ARTE.w * 0.2, width: ARTE.w * 0.8, height: ARTE.w * 0.8, borderRadius: "50%", backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0) 66%)" }),
+    h("div", { position: "absolute", left: 0, top: 0, width: "100%", height: "100%", backgroundImage: "linear-gradient(180deg, rgba(0,0,0,0.10) 0%, rgba(0,0,0,0.40) 100%)" }),
+    h(
+      "div",
+      { position: "relative", display: "flex", flexDirection: "column", flexGrow: 1, padding: "52px 72px 50px" },
+      h(
+        "div",
+        { display: "flex", alignItems: "center" },
+        h("img", { width: 64, height: 64, marginRight: 18 }),
+        h(
+          "div",
+          { display: "flex", flexDirection: "column" },
+          h("div", { display: "flex", fontSize: 25, fontWeight: 800 }, "Assembleia de Deus Belém"),
+          h("div", { display: "flex", fontSize: 21, fontWeight: 600, opacity: 0.8 }, "Parque Artur Alvim"),
+        ),
+      ),
+      h("div", { display: "flex", flexDirection: "column", justifyContent: "center", flexGrow: 1 }, ...meio),
+      h("div", { display: "flex", fontSize: 20, fontWeight: 600, opacity: 0.75 }, "adbelemparquealvim.org.br"),
+    ),
+  );
+}
+
+export async function gerarArteEvento(campos) {
+  const v = { nome: limpo(campos?.nome, 90), data: limpo(campos?.data, 10), hora: limpo(campos?.hora, 5), local: limpo(campos?.local, 70), categoria: limpo(campos?.categoria, 28) };
+  if (!v.nome) throw Object.assign(new Error("O evento precisa de um nome."), { status: 400 });
+  const [fonts, logo] = await Promise.all([carregarFontes(), carregarBrasao()]);
+  const svg = await satori(comLogo(desenhoEvento(v), logo), { width: ARTE.w, height: ARTE.h, fonts });
+  const img = new Resvg(svg, { fitTo: { mode: "width", value: ARTE.w }, font: { loadSystemFonts: false } }).render();
+  return jpeg.encode({ data: img.pixels, width: img.width, height: img.height }, 88).data;
+}
+
+const respostaJson = (status, body) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" } });
+
+export async function POST(request) {
+  if (origemDeFora(request)) return respostaJson(403, { error: "Origem não permitida." });
+  const jwt = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "").trim();
+  if (!jwt || jwt.length > 4096) return respostaJson(401, { error: "Faça login no painel." });
+  const isAdmin = await rpc("is_site_admin", {}, jwt).catch((e) => (e.status === 401 ? "expirou" : null));
+  if (isAdmin === "expirou") return respostaJson(401, { error: "Sessão expirada. Entre de novo no painel." });
+  if (isAdmin !== true) return respostaJson(403, { error: "Sem permissão. Confirme o acesso ao painel pelo e-mail." });
+  let corpo;
+  try {
+    corpo = await request.json();
+  } catch {
+    return respostaJson(400, { error: "Pedido inválido." });
+  }
+  try {
+    const jpg = await gerarArteEvento(corpo);
+    return new Response(jpg, { headers: { "Content-Type": "image/jpeg", "Cache-Control": "no-store" } });
+  } catch (e) {
+    if (e.status) return respostaJson(e.status, { error: e.message });
+    console.error("arte do evento:", e);
+    return respostaJson(500, { error: "Não deu para gerar a arte agora." });
+  }
 }

@@ -1,12 +1,13 @@
 // ============================================================
-// POST /api/evento-da-imagem — lê o cartaz e devolve os campos do evento
+// POST /api/evento-da-imagem — lê o cartaz (ou a mensagem) e devolve os campos do evento
 // ------------------------------------------------------------
 // Chamada pelo painel (aba Eventos: "Novo evento pela imagem" e "Preencher
 // pelo cartaz"), com o login do painel no cabeçalho Authorization: só admin
 // com a entrada liberada por e-mail (is_site_admin). Assim ninguém de fora
 // gasta a cota do Gemini.
 // Corpo: { imagem: "<base64>", tipo: "image/jpeg" } — o painel já reduz a
-// imagem no navegador (lado maior até 1600 px).
+// imagem no navegador (lado maior até 1600 px) — ou { texto: "..." }, a
+// mensagem de divulgação colada no painel ("Novo evento pelo texto").
 // Resposta: { campos: { nome, data, horario, categoria, local, endereco,
 // descricao, link, avisos[] }, modelo } ou { error }.
 // Nada é gravado aqui: quem cria ou altera o evento é o painel.
@@ -17,6 +18,7 @@ import { lerCartaz, ErroCartaz } from "./_lib/cartaz.mjs";
 
 const TIPOS = ["image/jpeg", "image/png", "image/webp"];
 const MAX_BASE64 = 4_000_000; // ~3 MB de imagem (a Vercel aceita até 4,5 MB por pedido)
+const MAX_TEXTO = 4000; // mensagem de divulgação
 
 const json = (status, body) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" } });
 const hojeEmSP = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date());
@@ -35,13 +37,19 @@ export async function POST(request) {
   } catch {
     return json(400, { error: "Pedido inválido." });
   }
+  const texto = typeof corpo?.texto === "string" ? corpo.texto.replace(/\r\n?/g, "\n").trim() : "";
   const imagem = String(corpo?.imagem || "");
   const tipo = String(corpo?.tipo || "");
-  if (!TIPOS.includes(tipo)) return json(400, { error: "Envie uma imagem JPG, PNG ou WEBP." });
-  if (!imagem || imagem.length > MAX_BASE64 || !/^[A-Za-z0-9+/]+=*$/.test(imagem)) return json(400, { error: "Imagem inválida ou grande demais." });
+  if (typeof corpo?.texto === "string") {
+    if (texto.length < 10) return json(400, { error: "Cole a mensagem do evento (pelo menos uma frase)." });
+    if (texto.length > MAX_TEXTO) return json(400, { error: `Mensagem grande demais: até ${MAX_TEXTO} letras.` });
+  } else {
+    if (!TIPOS.includes(tipo)) return json(400, { error: "Envie uma imagem JPG, PNG ou WEBP." });
+    if (!imagem || imagem.length > MAX_BASE64 || !/^[A-Za-z0-9+/]+=*$/.test(imagem)) return json(400, { error: "Imagem inválida ou grande demais." });
+  }
 
   try {
-    const r = await lerCartaz({ imagem, tipo, hoje: hojeEmSP(), chave: process.env.GEMINI_API_KEY, modelos: [process.env.GEMINI_MODEL] });
+    const r = await lerCartaz({ ...(texto ? { texto } : { imagem, tipo }), hoje: hojeEmSP(), chave: process.env.GEMINI_API_KEY, modelos: [process.env.GEMINI_MODEL] });
     return json(200, r);
   } catch (e) {
     if (e instanceof ErroCartaz) {
