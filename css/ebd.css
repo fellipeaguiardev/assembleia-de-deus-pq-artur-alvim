@@ -30,7 +30,7 @@
   background: var(--c-tint);
   font-size: calc(14px * var(--fs));
   font-weight: 600;
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
 }
 .ebd-hero-actions {
   display: flex;
@@ -186,7 +186,7 @@ a.ebd-row:active {
   background: var(--c-tint);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
 }
 .ebd-row-main {
   display: grid;
@@ -198,7 +198,7 @@ a.ebd-row:active {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: calc(15.5px * var(--fs));
-  color: var(--c-secondary);
+  color: var(--c-secondary-ink);
 }
 .ebd-row-main small {
   font-size: calc(12.5px * var(--fs));
@@ -276,7 +276,7 @@ button.bible-nav-link {
   color: var(--c-accent-ink);
 }
 .ebd-archive-card strong {
-  color: var(--c-secondary);
+  color: var(--c-secondary-ink);
 }
 @media (hover: hover) and (pointer: fine) {
   .ebd-archive-card:hover {
@@ -369,7 +369,7 @@ button.bible-nav-link {
 }
 .ebd-card-head a {
   font-weight: 600;
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
 }
 .ebd-label {
   display: block;
@@ -393,7 +393,7 @@ button.bible-nav-link {
   font-family: var(--font-heading);
   font-size: calc(clamp(20px, 2.6vw, 25px) * var(--fs));
   line-height: 1.5;
-  color: var(--c-secondary);
+  color: var(--c-secondary-ink);
   text-wrap: pretty;
 }
 .ebd-ref {
@@ -407,7 +407,7 @@ button.bible-nav-link {
   align-items: center;
   gap: 6px;
   font-weight: 700;
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
 }
 .ebd-sub {
   margin: 16px 0 8px;
@@ -433,14 +433,14 @@ button.bible-nav-link {
   color: var(--c-text-soft);
 }
 .ebd-muted a {
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
   text-decoration: underline;
 }
 .ebd-idea p {
   font-family: var(--font-heading);
   font-size: calc(20px * var(--fs));
   line-height: 1.5;
-  color: var(--c-secondary);
+  color: var(--c-secondary-ink);
 }
 .ebd-rich {
   display: grid;
@@ -493,7 +493,7 @@ button.bible-nav-link {
 }
 .ebd-q {
   font-weight: 600;
-  color: var(--c-secondary);
+  color: var(--c-secondary-ink);
 }
 .ebd-questions details {
   margin-top: 8px;
@@ -502,7 +502,7 @@ button.bible-nav-link {
   cursor: pointer;
   font-size: calc(13.5px * var(--fs));
   font-weight: 600;
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
 }
 .ebd-questions details div {
   margin-top: 8px;
@@ -529,7 +529,7 @@ button.bible-nav-link {
 }
 .ebd-daily li a {
   font-weight: 600;
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
   text-align: right;
 }
 .ebd-check {
@@ -560,7 +560,7 @@ button.bible-nav-link {
   gap: 6px;
   padding: 6px 0;
   font-weight: 600;
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
 }
 .ebd-lesson-nav {
   --r-line: var(--c-line);
@@ -726,7 +726,7 @@ button.bible-nav-link {
   font-size: calc(clamp(26px, 4.4vw, 40px) * var(--fs-titulo));
   line-height: 1.38;
   letter-spacing: -0.015em;
-  color: var(--c-secondary);
+  color: var(--c-secondary-ink);
   text-wrap: balance;
 }
 .palavra-verse footer {
@@ -736,7 +736,7 @@ button.bible-nav-link {
 }
 .palavra-verse footer a {
   font-weight: 700;
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
 }
 .palavra-actions {
   display: flex;
@@ -777,7 +777,7 @@ button.bible-nav-link {
 }
 .palavra-days a strong {
   flex: 1;
-  color: var(--c-secondary);
+  color: var(--c-secondary-ink);
 }
 .palavra-days a .ic {
   color: var(--c-text-faint);
@@ -800,7 +800,7 @@ button.bible-nav-link {
   font-family: var(--font-heading);
   font-size: calc(clamp(21px, 3vw, 28px) * var(--fs));
   line-height: 1.45;
-  color: var(--c-secondary);
+  color: var(--c-secondary-ink);
   text-wrap: balance;
 }
 .palavra-home-text .bible-skel {
@@ -815,7 +815,7 @@ button.bible-nav-link {
   align-items: center;
   gap: 6px;
   font-weight: 700;
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
 }
 .palavra-home-ref .ic {
   transition: transform 0.25s var(--ease-out);
@@ -848,7 +848,7 @@ body.can-install .install-hint {
   gap: 2px;
 }
 .install-hint strong {
-  color: var(--c-secondary);
+  color: var(--c-secondary-ink);
 }
 .install-hint span {
   font-size: calc(13.5px * var(--fs));
@@ -1119,7 +1119,7 @@ body.has-listen main {
 .ebd-moved .ic {
   flex: none;
   margin-top: 3px;
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
 }
 
 

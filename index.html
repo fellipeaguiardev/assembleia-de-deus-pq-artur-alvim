@@ -10,6 +10,9 @@
     />
     <link rel="canonical" href="https://www.adbelemparquealvim.org.br/" />
     <meta name="theme-color" content="#003399" />
+    <!-- O site tem tema claro e escuro próprios (css/escuro.css): o navegador não
+         precisa "escurecer" a página sozinho -->
+    <meta name="color-scheme" content="light dark" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
 
     <!-- Ícones e app instalável (PWA) -->
@@ -83,7 +86,9 @@
       } catch (e) {}
       // Painel Acessibilidade (js/acessibilidade.js): tamanho da letra, contraste
       // e "parar animações" valem já na primeira pintura. Mesma lista de lá.
+      // Tema: "auto" (padrão) segue o modo escuro do aparelho; "claro"/"escuro" fixos.
       var a11yParar = false;
+      var tema = "auto";
       try {
         var a = JSON.parse(localStorage.getItem("acessibilidade") || "null");
         if (a) {
@@ -92,7 +97,14 @@
           if (a.contraste) document.documentElement.classList.add("a11y-contraste");
           if (a.movimento) document.documentElement.classList.add("a11y-sem-animacao");
           a11yParar = !!a.movimento;
+          if (a.tema === "claro" || a.tema === "escuro") tema = a.tema;
         }
+      } catch (e) {}
+      try {
+        var escuro = tema === "escuro" || (tema === "auto" && matchMedia("(prefers-color-scheme: dark)").matches);
+        var noPainel = /^\/admin(\/|$)/.test(location.pathname); // o painel da equipe fica sempre claro
+        if (escuro && !noPainel) document.documentElement.classList.add("tema-escuro");
+        if (tema === "claro") document.documentElement.classList.add("tema-claro");
       } catch (e) {}
       // full    primeira visita do aparelho (vinheta de 6 s, uma vez só)
       // short   reabertura na página inicial (~1,2 s, termina antes se os dados chegarem)
@@ -123,6 +135,7 @@
     <link rel="stylesheet" href="/css/ebd.css" />
     <link rel="stylesheet" href="/css/harpa.css" />
     <link rel="stylesheet" href="/css/biblioteca.css" />
+    <link rel="stylesheet" href="/css/escuro.css" />
   </head>
   <body>
     <!-- Tela de abertura: vinheta de 6 s só na primeira visita à página inicial,

@@ -9,7 +9,10 @@
      movimento  parar animações (classe a11y-sem-animacao)
      libras     tradutor de Libras do Governo Federal (VLibras)
      legendas   liga as legendas nos vídeos do YouTube
-   O <head> do index.html aplica texto/contraste/movimento antes da primeira
+     tema       aparência: "auto" (segue o modo escuro do aparelho), "claro"
+                ou "escuro" (classe tema-escuro no <html>; ver css/escuro.css).
+                O painel da equipe (/admin) fica sempre claro.
+   O <head> do index.html aplica texto/contraste/movimento/tema antes da primeira
    pintura (a página não "pula"). Se mudar A11Y_TEXTO, mude lá também.
 
    VLibras (vlibras.gov.br): só é baixado quando a pessoa liga a opção. A
@@ -24,7 +27,13 @@
 const A11Y_KEY = "acessibilidade";
 const A11Y_TEXTO = [1, 1.15, 1.3, 1.5];
 const A11Y_TEXTO_NOMES = ["Normal", "Grande", "Maior", "Muito grande"];
-const A11Y_PADRAO = { texto: 0, contraste: false, movimento: false, libras: false, legendas: false };
+const A11Y_PADRAO = { texto: 0, contraste: false, movimento: false, libras: false, legendas: false, tema: "auto" };
+const A11Y_TEMAS = [
+  ["auto", "Automático", "Segue o celular"],
+  ["claro", "Claro", "Sempre claro"],
+  ["escuro", "Escuro", "Sempre escuro"],
+];
+const MODO_ESCURO = matchMedia("(prefers-color-scheme: dark)");
 const VLIBRAS_URL = "https://vlibras.gov.br/app";
 
 function a11yPrefs() {
@@ -50,7 +59,22 @@ function a11yAplicar(p = a11yPrefs()) {
   else h.style.setProperty("--fs", String(fs));
   h.classList.toggle("a11y-contraste", !!p.contraste);
   h.classList.toggle("a11y-sem-animacao", !!p.movimento);
+  a11yAplicarTema(p);
 }
+
+// Tema claro/escuro. Com o painel da equipe aberto, fica sempre claro.
+function a11yAplicarTema(p = a11yPrefs()) {
+  const h = document.documentElement;
+  const tema = ["claro", "escuro"].includes(p.tema) ? p.tema : "auto";
+  const painelAberto = !!document.body?.classList.contains("admin-open");
+  const escuro = !painelAberto && (tema === "escuro" || (tema === "auto" && MODO_ESCURO.matches));
+  h.classList.toggle("tema-escuro", escuro);
+  h.classList.toggle("tema-claro", tema === "claro");
+  // cor da barra do navegador no celular
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", escuro ? "#0b1220" : "#003399");
+}
+// Mudou o modo escuro do aparelho (ex.: escurece sozinho à noite): acompanha na hora.
+MODO_ESCURO.addEventListener?.("change", () => a11yAplicarTema());
 
 // Parâmetros extras para os vídeos do YouTube (legendas em português).
 function ytLegendas() {
@@ -68,6 +92,7 @@ function a11yMudar(campo, valor) {
     movimento: valor ? "Animações paradas." : "Animações ligadas.",
     libras: valor ? "Tradutor de Libras ligado. Toque num texto para ver a tradução." : "Tradutor de Libras desligado.",
     legendas: valor ? "Legendas ligadas nos vídeos." : "Legendas desligadas nos vídeos.",
+    tema: `Aparência: ${(A11Y_TEMAS.find(([v]) => v === valor) || A11Y_TEMAS[0])[1]}.`,
   };
   announce(avisos[campo] || "Preferência salva.");
 }
@@ -110,6 +135,20 @@ function openA11yPanel() {
             <input type="radio" name="a11yTexto" value="${i}" ${p.texto === i ? "checked" : ""} onchange="a11yMudar('texto', ${i})">
             <span class="a11y-size-a" aria-hidden="true" style="font-size:${Math.round(20 * f)}px">A</span>
             <span class="a11y-size-nome">${A11Y_TEXTO_NOMES[i]}</span>
+          </label>`,
+          ).join("")}
+        </div>
+      </fieldset>
+
+      <fieldset class="a11y-sizes a11y-temas">
+        <legend>Aparência</legend>
+        <div class="a11y-size-row">
+          ${A11Y_TEMAS.map(
+            ([valor, nome, dica]) => `
+          <label class="a11y-size">
+            <input type="radio" name="a11yTema" value="${valor}" ${(p.tema || "auto") === valor ? "checked" : ""} onchange="a11yMudar('tema', '${valor}')">
+            <span class="a11y-tema-amostra is-${valor}" aria-hidden="true"></span>
+            <span class="a11y-size-nome">${nome}<small>${dica}</small></span>
           </label>`,
           ).join("")}
         </div>

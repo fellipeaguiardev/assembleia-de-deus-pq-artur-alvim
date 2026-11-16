@@ -16,7 +16,7 @@
   color: var(--c-text-soft);
 }
 .lib-stats b {
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
 }
 .lib-body {
   padding-top: 28px;
@@ -183,7 +183,7 @@
   gap: 4px;
   font-size: calc(12.5px * var(--fs));
   font-weight: 600;
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
 }
 
 /* Capa (desenhada; a foto, se houver, fica por cima) */
@@ -318,7 +318,7 @@
 .lib-facts b {
   font-family: var(--font-heading);
   font-size: calc(22px * var(--fs-titulo));
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
 }
 .lib-facts span {
   font-size: calc(14px * var(--fs));
@@ -343,7 +343,7 @@
 .lib-rules-all summary {
   cursor: pointer;
   font-weight: 700;
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
   min-height: 40px;
   display: flex;
   align-items: center;
@@ -356,7 +356,7 @@
 }
 .lib-rules-all li::marker {
   font-weight: 700;
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
 }
 .lib-rules-all p {
   margin-top: 2px;
@@ -414,7 +414,7 @@
 .lib-mine-note .ic {
   flex: none;
   margin-top: 2px;
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
 }
 .lib-actions {
   display: flex;
@@ -529,7 +529,7 @@
   accent-color: var(--c-primary);
 }
 .lib-consent a {
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
   font-weight: 600;
 }
 .lib-hp {
@@ -585,7 +585,7 @@
   margin-left: 4px;
   border-radius: 999px;
   background: var(--c-tint);
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
   font-size: calc(11.5px * var(--fs));
   font-weight: 700;
 }
@@ -610,7 +610,7 @@
 .lib-kpi b {
   font-size: calc(28px * var(--fs-titulo));
   line-height: 1.1;
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
 }
 .lib-kpi span {
   font-size: calc(13px * var(--fs));
@@ -694,7 +694,7 @@
   height: 30px;
   border-radius: 50%;
   background: var(--c-tint);
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
   font-weight: 700;
   font-size: calc(13px * var(--fs));
 }

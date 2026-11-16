@@ -31,6 +31,7 @@ async function openAdmin() {
   closeModal({ instant: true });
   toggleMobileMenu(false);
   document.body.classList.add("admin-open");
+  if (typeof a11yAplicarTema === "function") a11yAplicarTema(); // o painel fica sempre claro
   root.classList.add("open");
   root.removeAttribute("aria-hidden");
 
@@ -47,6 +48,7 @@ function closeAdminPanel({ keepHash = false } = {}) {
   root.classList.remove("open");
   root.setAttribute("aria-hidden", "true");
   document.body.classList.remove("admin-open");
+  if (typeof a11yAplicarTema === "function") a11yAplicarTema(); // volta o tema escolhido no site
   if (!keepHash && currentRoute() === "admin") {
     history.replaceState(null, "", "/");
     renderSite();

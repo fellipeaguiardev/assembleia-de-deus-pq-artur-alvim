@@ -39,7 +39,7 @@
   font-family: var(--font-heading);
   font-weight: 600;
   font-size: calc(19px * var(--fs));
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
   white-space: nowrap;
   min-width: 0;
 }
@@ -89,7 +89,7 @@
   padding: 8px 9px;
   font-size: calc(14px * var(--fs));
   font-weight: 600;
-  color: var(--c-secondary);
+  color: var(--c-secondary-ink);
   opacity: 0.72;
   border-radius: 8px;
   transition:
@@ -111,7 +111,7 @@
 }
 .nav-link.active {
   opacity: 1;
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
 }
 .nav-link.active::after {
   transform: scaleX(1);
@@ -303,7 +303,7 @@
   font-size: calc(26px * var(--fs-titulo));
   padding: 13px 4px;
   border-bottom: 1px solid var(--c-line);
-  color: var(--c-secondary);
+  color: var(--c-secondary-ink);
   opacity: 0;
   transform: translateY(8px);
   transition:
@@ -312,7 +312,7 @@
     color 0.2s ease;
 }
 .mobile-link.active {
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
 }
 .mobile-link.active::before {
   content: "";
@@ -671,7 +671,7 @@ section.block.announce-block {
   align-items: center;
   gap: 4px;
   font-weight: 600;
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -857,7 +857,7 @@ section.block.announce-block {
   padding-top: 16px;
   font-size: calc(14px * var(--fs));
   font-weight: 600;
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
 }
 .card-link .ic {
   transition: transform 260ms var(--ease-out);
@@ -865,7 +865,7 @@ section.block.announce-block {
 .card .who {
   font-size: calc(13px * var(--fs));
   font-weight: 600;
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
   margin-bottom: 8px;
 }
 @media (hover: hover) and (pointer: fine) {
@@ -923,7 +923,7 @@ section.block.announce-block {
   font-family: var(--font-heading);
   font-size: calc(22px * var(--fs-titulo));
   line-height: 1.1;
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
   letter-spacing: 0;
 }
 
@@ -978,7 +978,7 @@ section.block.announce-block {
   place-items: center;
   border: 1px solid var(--c-line-strong);
   background: var(--c-surface);
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
   transition:
     opacity 0.2s ease,
     background-color 0.2s ease,
@@ -1023,7 +1023,7 @@ section.block.announce-block {
   border-radius: 999px;
   border: 1px solid var(--c-line-strong);
   background: var(--c-surface);
-  color: var(--c-secondary);
+  color: var(--c-secondary-ink);
   font-size: calc(14px * var(--fs));
   font-weight: 600;
   transition:
@@ -1095,7 +1095,7 @@ section.block.announce-block {
   align-items: center;
   gap: 10px;
   font-size: calc(21px * var(--fs));
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
   margin-bottom: 12px;
 }
 .schedule-day h3::before {
@@ -1203,7 +1203,7 @@ section.block.announce-block {
   border: 1px solid var(--c-line);
   font-size: calc(14px * var(--fs));
   font-weight: 600;
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
 }
 .mv-grid {
   display: grid;
@@ -1343,7 +1343,7 @@ section.block.announce-block {
   border: 1px solid var(--c-line);
   box-shadow: var(--shadow-sm);
   font-weight: 600;
-  color: var(--c-secondary);
+  color: var(--c-secondary-ink);
   transition:
     transform 260ms var(--ease-out),
     box-shadow 260ms var(--ease-out),
@@ -1538,7 +1538,7 @@ body.has-player .site-footer {
   margin-top: 32px;
   font-size: calc(14.5px * var(--fs));
   font-weight: 600;
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
 }
 .back-link .ic {
   transition: transform 0.25s var(--ease-out);
@@ -1609,7 +1609,7 @@ body.has-player .site-footer {
   margin-bottom: 14px;
   border-radius: 50%;
   background: var(--c-tint);
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
 }
 .empty-state strong {
   font-family: var(--font-heading);
@@ -1780,7 +1780,7 @@ body.has-player .site-footer {
   padding: 5px 12px;
   border-radius: 999px;
   background: var(--c-tint);
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
   font-size: calc(13px * var(--fs));
   font-weight: 800;
   letter-spacing: 0.12em;
@@ -1823,7 +1823,7 @@ body.has-player .site-footer {
   gap: 4px;
   font-size: calc(13px * var(--fs));
   font-weight: 600;
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
   white-space: nowrap;
 }
 .donation-purpose-mini .ic {
@@ -1868,7 +1868,7 @@ body.has-player .site-footer {
 .qr-placeholder-inner span {
   font-size: calc(32px * var(--fs-titulo));
   font-weight: 800;
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
 }
 .pix-data label {
   display: block;
@@ -2113,7 +2113,7 @@ body.modal-open {
   background: var(--c-tint);
 }
 .modal-place .ic {
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
   margin-top: 2px;
 }
 .modal-place strong {
@@ -2460,11 +2460,11 @@ body.modal-open {
   border-radius: 9px;
   font-size: calc(14px * var(--fs));
   font-weight: 600;
-  color: var(--c-secondary);
+  color: var(--c-secondary-ink);
   transition: background-color 0.15s ease;
 }
 .nav-more-link.active {
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
   background: var(--c-tint);
 }
 .nav-more-link:focus-visible {
@@ -2610,7 +2610,7 @@ body.modal-open {
   font-family: var(--font-heading);
   font-size: calc(15px * var(--fs));
   font-weight: 600;
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
 }
 .tl-body {
   margin-top: 6px;
@@ -2653,7 +2653,7 @@ body.modal-open {
 }
 .leader-list .ic {
   flex: 0 0 auto;
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
 }
 .about-links {
   display: flex;
@@ -2724,7 +2724,7 @@ body.modal-open {
   height: 42px;
   border-radius: 12px;
   background: var(--c-tint);
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
 }
 .fv-schedule {
   display: grid;
@@ -2864,7 +2864,7 @@ body.modal-open {
   height: 42px;
   border-radius: 12px;
   background: var(--c-tint);
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
 }
 .shortcut-text {
   display: grid;
@@ -2874,7 +2874,7 @@ body.modal-open {
 }
 .shortcut-text strong {
   font-size: calc(15px * var(--fs));
-  color: var(--c-secondary);
+  color: var(--c-secondary-ink);
 }
 .shortcut-text small {
   font-size: calc(12.5px * var(--fs));
@@ -2919,7 +2919,7 @@ body.modal-open {
   color: var(--c-text-faint);
 }
 .schedule-item.is-monthly > span:first-child {
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
 }
 .fv-schedule small {
   color: var(--c-text-faint);
@@ -2969,7 +2969,7 @@ body.modal-open {
   font-size: calc(22px * var(--fs-titulo));
   font-weight: 600;
   line-height: 1.2;
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
 }
 .creed-list p {
   margin: 0;
@@ -3003,7 +3003,7 @@ a.creed-ref {
 @media (hover: hover) {
   a.creed-ref:hover {
     background: color-mix(in srgb, var(--c-primary) 12%, var(--c-surface));
-    color: var(--c-primary);
+    color: var(--c-primary-ink);
   }
 }
 .creed-source {
@@ -3013,7 +3013,7 @@ a.creed-ref {
   color: var(--c-text-soft);
 }
 .creed-source a {
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
   font-weight: 600;
 }
 @media (max-width: 560px) {
@@ -3046,7 +3046,7 @@ a.creed-ref {
   border: 1px solid color-mix(in srgb, var(--c-accent) 45%, transparent);
   border-radius: var(--radius);
   background: color-mix(in srgb, var(--c-accent) 16%, var(--c-surface));
-  color: var(--c-secondary);
+  color: var(--c-secondary-ink);
   text-align: left;
   cursor: pointer;
 }

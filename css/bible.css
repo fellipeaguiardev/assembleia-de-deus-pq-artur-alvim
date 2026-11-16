@@ -103,7 +103,7 @@
   padding: 12px 18px;
   border-radius: 14px;
   background: var(--c-tint);
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
   transition: transform 160ms var(--ease-out);
 }
 .bible-continue span {
@@ -115,7 +115,7 @@
 .bible-continue strong {
   font-family: var(--font-heading);
   font-size: calc(18px * var(--fs));
-  color: var(--c-secondary);
+  color: var(--c-secondary-ink);
 }
 .bible-continue:active {
   transform: scale(0.98);
@@ -150,7 +150,7 @@
 }
 .bible-book strong {
   font-size: calc(15.5px * var(--fs));
-  color: var(--c-secondary);
+  color: var(--c-secondary-ink);
 }
 .bible-book span {
   font-size: calc(12.5px * var(--fs));
@@ -211,7 +211,7 @@
   border: 1px solid var(--c-line);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  color: var(--c-secondary);
+  color: var(--c-secondary-ink);
   transition:
     background-color 0.15s ease,
     color 0.15s ease,
@@ -567,7 +567,7 @@
   border: 1px solid var(--c-line-strong);
   font-size: calc(13.5px * var(--fs));
   font-weight: 600;
-  color: var(--c-secondary);
+  color: var(--c-secondary-ink);
   transition:
     background-color 0.15s ease,
     transform 160ms var(--ease-out);
@@ -610,7 +610,7 @@
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
 }
 .bible-ps-letter:first-child {
   margin-top: 0.2em;

@@ -19,6 +19,10 @@
   --c-accent-ink: color-mix(in srgb, var(--c-accent) 42%, var(--c-secondary)); /* texto de destaque legível sobre fundo claro */
   --c-accent-on-dark: color-mix(in srgb, var(--c-accent) 70%, #fff); /* texto pequeno de destaque sobre o azul (contraste ≥ 4,5) */
   --c-deep: color-mix(in srgb, var(--c-secondary) 82%, #000);
+  /* Cor de LETRA da marca (títulos, links, ícones). No tema claro é a própria cor;
+     no escuro (css/escuro.css) vira uma versão clara. Fundo continua com --c-primary. */
+  --c-primary-ink: var(--c-primary);
+  --c-secondary-ink: var(--c-secondary);
 
   --radius: 18px;
   --radius-sm: calc(var(--radius) * 0.6);
@@ -248,7 +252,7 @@ select {
   color: var(--c-secondary);
 }
 .btn-ghost {
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
   border-color: var(--c-line-strong);
   background: transparent;
 }
@@ -302,7 +306,7 @@ select {
   gap: 6px;
   font-size: calc(13px * var(--fs));
   font-weight: 600;
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
   padding: 6px 0;
   text-underline-offset: 3px;
 }
@@ -320,7 +324,7 @@ select {
   align-items: center;
   justify-content: center;
   background: var(--c-tint);
-  color: var(--c-secondary);
+  color: var(--c-secondary-ink);
   transition:
     background-color 0.2s ease,
     transform 160ms var(--ease-out);

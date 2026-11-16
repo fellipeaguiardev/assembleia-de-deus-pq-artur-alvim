@@ -41,7 +41,7 @@ lições, livros, vídeos, cores) é editado pela equipe num **painel administra
 | **Biblioteca dos Jovens** | Acervo com busca e categorias, situação de cada livro (disponível, emprestado com data de volta, reservado), sinopse e pedido "Quero este livro" ou "Entrar na fila de espera". |
 | **Vídeos e podcast** | Cultos e lives do YouTube atualizados sozinhos, busca e filtros, botão "Ao vivo" e player de podcast que continua tocando enquanto se navega. |
 | **Comunidade** | Pedido de oração e contato (chega por e-mail à equipe), primeira visita (horários, endereço, como chegar), departamentos, história e liderança da igreja e ofertas por PIX com QR Code. |
-| **Acessibilidade** | Botão com o bonequinho no topo (e link no rodapé): **tamanho da letra** em 4 níveis, **alto contraste**, **parar animações**, **tradutor de Libras** (VLibras, do Governo Federal) e **legendas** automáticas nos vídeos do YouTube. As escolhas ficam no aparelho. Detalhes em [Acessibilidade](#acessibilidade). |
+| **Acessibilidade** | Botão com o bonequinho no topo (e link no rodapé): **tamanho da letra** em 4 níveis, **aparência** (automático, claro ou escuro: o site tem **tema escuro** próprio), **alto contraste**, **parar animações**, **tradutor de Libras** (VLibras, do Governo Federal) e **legendas** automáticas nos vídeos do YouTube. As escolhas ficam no aparelho. Detalhes em [Acessibilidade](#acessibilidade). |
 | **App e privacidade** | App instalável (PWA) com atalhos, abertura animada com o brasão montado em formas geométricas (na primeira visita), aviso de versão nova, política de privacidade (LGPD) e conteúdos de terceiros (YouTube, Spotify, Maps) só com permissão. |
 
 <p align="center">
@@ -496,6 +496,38 @@ surdos e cegos:
 - O painel lembra o **Modo ouvir** (leitura em voz alta) e que o site funciona com TalkBack e VoiceOver.
 - Os avisos rápidos (toast) ficam na tela o tempo de ler com calma: no mínimo 3 s, mais quanto
   maior a mensagem.
+
+### Tema escuro (`css/escuro.css`)
+
+O site segue o **modo escuro do celular** sozinho. No painel Acessibilidade → **Aparência**, a
+pessoa pode fixar Claro ou Escuro. O painel da equipe (`/admin`) fica sempre claro.
+
+**Por que existe:** sem tema escuro próprio, o Chrome do Android ("escurecer sites") e o Samsung
+Internet escureciam o site por conta própria, invertendo as cores. O menu ☰ sumia, o nome da igreja
+ficava lilás e os botões ficavam desbotados. Agora:
+
+- o `<meta name="color-scheme" content="light dark">` e o `@media (prefers-color-scheme: dark)`
+  do `escuro.css` avisam o navegador que o site cuida disso;
+- com o "escurecer sites" forçado, a página sai igual ao tema escuro.
+
+**Como funciona:**
+
+- A classe `tema-escuro` no `<html>` é posta pelo `<head>` do `index.html`, antes da primeira
+  pintura (sem piscar branco), e por `a11yAplicarTema()` em `js/acessibilidade.js`, que acompanha
+  na hora quando o celular muda de modo. Ela também troca a cor da barra do navegador
+  (`theme-color`).
+- **As variáveis `--c-*` ganham valores escuros.** O fundo e o texto usam `!important`, porque as
+  cores do painel Aparência chegam como estilo da própria página.
+- **As cores da marca têm dois papéis:**
+  - **fundo:** `--c-primary`, `--c-secondary` e `--c-deep` não mudam (botões, faixas, rodapé);
+  - **letra:** `--c-primary-ink` e `--c-secondary-ink` (títulos, links, ícones). No claro valem a
+    própria cor da marca; no escuro, uma versão clara.
+- **CSS novo:** letra azul da marca usa `color: var(--c-primary-ink)` (ou `--c-secondary-ink`).
+  A exceção é letra sobre o azul-claro de destaque (`--c-accent`) ou sobre branco fixo, que
+  continua `var(--c-secondary)`.
+- **Cores fixas** (verde, vermelho, amarelo dos selos e avisos) têm a versão escura no fim do
+  `escuro.css`. O QR Code do PIX continua em fundo claro, porque o leitor do banco precisa.
+- Auditoria axe no tema escuro: as 19 páginas sem nenhum alerta, a 375 e a 1280 px.
 
 ### Auditoria (axe-core, WCAG 2.2 AA)
 

@@ -17,7 +17,7 @@
   font-size: calc(20px * var(--fs));
 }
 .harpa-favs h2 .ic {
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
 }
 .harpa-chips {
   display: flex;
@@ -45,7 +45,7 @@
   padding: 0 6px;
   border-radius: 999px;
   background: var(--c-tint);
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
   font-size: calc(13px * var(--fs));
 }
 .harpa-count {
@@ -83,7 +83,7 @@
   height: 36px;
   border-radius: 10px;
   background: var(--c-tint);
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
   font-size: calc(14px * var(--fs));
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -108,7 +108,7 @@
   color: var(--c-text-faint);
 }
 .harpa-rights a {
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
   font-weight: 600;
 }
 
@@ -193,7 +193,7 @@
 }
 .harpa-nav-link .ic {
   flex: none;
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
 }
 @media (hover: hover) and (pointer: fine) {
   .harpa-nav-link:hover {
@@ -295,7 +295,7 @@
   padding: 0 6px;
   border-radius: 10px;
   background: var(--c-tint);
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
   font-size: calc(13.5px * var(--fs));
   letter-spacing: 0.02em;
 }
@@ -310,7 +310,7 @@
 .bible-version small {
   font-size: calc(12px * var(--fs));
   font-weight: 600;
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
 }
 .bible-version > .ic {
   flex: none;

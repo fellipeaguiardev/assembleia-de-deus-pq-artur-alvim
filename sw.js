@@ -35,6 +35,7 @@ const SHELL = [
   "/css/ebd.css",
   "/css/harpa.css",
   "/css/biblioteca.css",
+  "/css/escuro.css",
   "/vendor/supabase.js",
   "/vendor/qrcode.js",
   "/js/intro.js",

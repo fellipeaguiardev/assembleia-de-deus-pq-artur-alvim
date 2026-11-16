@@ -62,7 +62,7 @@ body.has-player .cookie-banner {
 }
 .cookie-text a {
   position: relative;
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -180,7 +180,7 @@ body.has-player .cookie-banner {
   border-radius: 12px;
   border: 1px solid var(--c-line-strong);
   background: var(--c-surface);
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
   transition: background-color 0.2s ease;
 }
 @media (hover: hover) {
@@ -246,10 +246,10 @@ body.has-player .cookie-banner {
 .a11y-size:has(input:checked) {
   border-color: var(--c-primary);
   background: var(--c-tint);
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
 }
 .a11y-size:has(input:checked) .a11y-size-nome {
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
   font-weight: 700;
 }
 .a11y-size:has(input:focus-visible) {
@@ -277,10 +277,36 @@ body.has-player .cookie-banner {
 }
 .a11y-dicas .ic {
   margin-top: 3px;
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
+}
+/* Aparência: Automático / Claro / Escuro */
+.a11y-temas .a11y-size-row {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.a11y-tema-amostra {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--c-line-strong);
+  margin-bottom: 4px;
+}
+.a11y-tema-amostra.is-claro {
+  background: #f7f8fc;
+}
+.a11y-tema-amostra.is-escuro {
+  background: #0b1220;
+}
+.a11y-tema-amostra.is-auto {
+  background: linear-gradient(135deg, #f7f8fc 50%, #0b1220 50%);
+}
+.a11y-size-nome small {
+  display: block;
+  font-size: calc(11px * var(--fs));
+  font-weight: 400;
+  color: var(--c-text-faint);
 }
 @media (max-width: 380px) {
-  .a11y-size-row {
+  .a11y-sizes:not(.a11y-temas) .a11y-size-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -505,7 +531,7 @@ body.has-player .cookie-banner {
   accent-color: var(--c-primary);
 }
 .pf-check a {
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -628,7 +654,7 @@ body.has-player .cookie-banner {
 }
 .legal a,
 .legal .link-btn {
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -731,7 +757,7 @@ body.can-install .install-btn {
   height: 32px;
   margin-left: 8px;
   border-radius: 8px;
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
   vertical-align: middle;
   transition:
     background-color 0.2s ease,

@@ -174,7 +174,7 @@
 }
 @media (hover: hover) {
   .ep-platform:hover {
-    color: var(--c-primary);
+    color: var(--c-primary-ink);
     border-color: color-mix(in srgb, var(--c-primary) 40%, transparent);
   }
   .podcast-featured .ep-platform:hover {
@@ -190,7 +190,7 @@
   height: 48px;
   border-radius: 50%;
   background: var(--c-tint);
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
 }
 
 /* Botão play/pausa redondo (ícones trocam com crossfade + blur) */
@@ -302,7 +302,7 @@
 }
 .modal-episode .modal-close {
   background: var(--c-tint);
-  color: var(--c-secondary);
+  color: var(--c-secondary-ink);
 }
 .segmented {
   display: inline-flex;
@@ -331,7 +331,7 @@
 }
 .segmented button.active {
   background: var(--c-surface);
-  color: var(--c-primary);
+  color: var(--c-primary-ink);
   box-shadow: var(--shadow-sm);
 }
 .episode-source.swap {

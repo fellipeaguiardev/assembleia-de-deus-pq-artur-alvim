@@ -1,0 +1,175 @@
+/* ============================================================
+   TEMA ESCURO — vale quando o <html> tem a classe "tema-escuro"
+   ------------------------------------------------------------
+   Quem decide: o <head> do index.html (antes da primeira pintura) e
+   js/acessibilidade.js, pela escolha do painel Acessibilidade → Aparência:
+     Automático (padrão)  segue o modo escuro do celular/computador
+     Claro / Escuro       fixo, escolhido pela pessoa
+   O painel da equipe (/admin) fica sempre claro.
+
+   Como funciona: o site já pinta quase tudo com as variáveis --c-*. Aqui elas
+   ganham valores escuros. As cores da marca seguem duas regras:
+     --c-primary / --c-secondary / --c-deep  FUNDOS (botões, faixas, rodapé):
+                                             não mudam; já levam letra branca.
+     --c-primary-ink / --c-secondary-ink     LETRAS (títulos, links, ícones):
+                                             versões claras, legíveis no escuro.
+   As cores do painel (Aparência) chegam como estilo na própria página; por isso
+   o fundo e o texto usam !important para valer por cima delas.
+   Cores fixas que não seguem as variáveis estão corrigidas uma a uma no fim.
+   ============================================================ */
+
+/* Avisa ao navegador que o site tem tema escuro próprio: assim o Chrome do
+   Android e o Samsung Internet não "escurecem" o site por conta própria
+   (era isso que deixava o site feio nos celulares com modo escuro). */
+@media (prefers-color-scheme: dark) {
+  :root:not(.tema-claro) {
+    color-scheme: dark;
+  }
+}
+
+html.tema-escuro {
+  color-scheme: dark;
+  --c-bg: #0b1220 !important;
+  --c-text: #e6eaf2 !important;
+  --c-surface: #141d30;
+  --c-primary-ink: color-mix(in srgb, var(--c-primary) 30%, #b9ceff);
+  --c-secondary-ink: color-mix(in srgb, var(--c-secondary) 12%, #e8eef9);
+  --c-accent-ink: color-mix(in srgb, var(--c-accent) 70%, #ffffff);
+  --c-line: rgba(255, 255, 255, 0.1);
+  --c-line-strong: rgba(255, 255, 255, 0.2);
+  --c-tint: color-mix(in srgb, var(--c-primary-ink) 12%, var(--c-surface));
+  --focus-ring: #a9c2ff;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 8px -2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.45), 0 12px 32px -12px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 10px 24px -8px rgba(0, 0, 0, 0.5), 0 32px 64px -24px rgba(0, 0, 0, 0.7);
+}
+
+/* Alto contraste no escuro: bordas claras (no claro elas são azul-marinho). */
+html.tema-escuro.a11y-contraste {
+  --c-line: rgba(255, 255, 255, 0.35);
+  --c-line-strong: rgba(255, 255, 255, 0.55);
+  --c-text-faint: color-mix(in srgb, var(--c-text) 88%, var(--c-bg));
+}
+
+/* ---------- Peças desenhadas com a cor da marca como "tinta" ---------- */
+html.tema-escuro .hamburger span {
+  background: var(--c-primary-ink);
+}
+html.tema-escuro .site-header {
+  border-bottom-color: var(--c-line);
+}
+/* Botão "fantasma" e contornos azuis: azul-marinho sumiria no fundo escuro */
+html.tema-escuro .btn-ghost {
+  border-color: color-mix(in srgb, var(--c-primary-ink) 40%, transparent);
+}
+html.tema-escuro .btn-primary {
+  background: color-mix(in srgb, var(--c-primary) 82%, #4d7ee8);
+}
+
+/* Bordas e contornos de foco/seleção: o azul-marinho sumiria no fundo escuro */
+html.tema-escuro :is(
+    .bible-chapters a:hover,
+    .bible-search:focus-within,
+    .video-search:focus-within,
+    .pf-field input:focus,
+    .pf-field select:focus,
+    .pf-field textarea:focus,
+    .lib-form input:focus,
+    .lib-form textarea:focus,
+    .a11y-size:has(input:checked)
+  ) {
+  border-color: var(--c-primary-ink);
+}
+html.tema-escuro .tl-item::before {
+  border-color: var(--c-primary-ink);
+}
+html.tema-escuro :is(
+    .bible-verses .v:focus-visible,
+    .lib-cover-pick:focus-visible,
+    .a11y-size:has(input:focus-visible),
+    .pref-switch input:focus-visible + span,
+    .ep-title-btn:focus-visible,
+    .nav-more-link:focus-visible
+  ) {
+  outline-color: var(--focus-ring);
+}
+
+/* ---------- Cores fixas (verde, vermelho, amarelo…) ---------- */
+html.tema-escuro .btn-danger,
+html.tema-escuro .pf-error,
+html.tema-escuro .bible-search-error,
+html.tema-escuro .versiculo-imagem-erro,
+html.tema-escuro .ebd-warn {
+  color: #ff9b91;
+}
+html.tema-escuro .btn-danger {
+  border-color: rgba(255, 155, 145, 0.35);
+}
+html.tema-escuro .next-meta .is-live,
+html.tema-escuro .prayer-points .ic,
+html.tema-escuro .prayer-done-icon,
+html.tema-escuro .ref-ok {
+  color: #6ee7a0;
+}
+html.tema-escuro .prayer-done-icon {
+  background: rgba(110, 231, 160, 0.14);
+}
+html.tema-escuro .location-map {
+  background: var(--c-surface);
+}
+html.tema-escuro .ebd-week-row span,
+html.tema-escuro .ebd-lesson-item .meta small,
+html.tema-escuro .ebd-qform > summary::after,
+html.tema-escuro .ebd-sync-mags > span,
+html.tema-escuro .ebd-sync-status {
+  color: var(--c-text-faint);
+}
+/* situação dos livros da Biblioteca */
+html.tema-escuro .lib-st-livre,
+html.tema-escuro .lib-sent-icon {
+  background: rgba(110, 231, 160, 0.14);
+  color: #8cf0b4;
+}
+html.tema-escuro .lib-st-emprestado {
+  background: rgba(251, 191, 36, 0.14);
+  color: #fcd34d;
+}
+html.tema-escuro .lib-st-reservado {
+  background: rgba(147, 180, 255, 0.16);
+  color: #b9ceff;
+}
+html.tema-escuro .lib-form-error,
+html.tema-escuro .ebd-badge.lib-st-late {
+  background: rgba(255, 120, 110, 0.14);
+  color: #ffaaa2;
+}
+/* situação das lições (EBD) */
+html.tema-escuro .st-draft {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--c-text-soft);
+}
+html.tema-escuro .st-review {
+  background: rgba(251, 191, 36, 0.14);
+  color: #fcd34d;
+}
+html.tema-escuro .st-live {
+  background: rgba(110, 231, 160, 0.14);
+  color: #8cf0b4;
+}
+html.tema-escuro .st-scheduled {
+  background: rgba(147, 180, 255, 0.16);
+  color: #b9ceff;
+}
+
+/* ---------- Detalhes ---------- */
+/* QR Code do PIX continua em fundo claro (o leitor do banco precisa) */
+html.tema-escuro .pix-qr {
+  background: #f4f6fb;
+}
+/* imagens com fundo branco (capas, logos) não ofuscam tanto */
+html.tema-escuro img:not([src$=".svg"]) {
+  filter: brightness(0.94);
+}
+html.tema-escuro ::selection {
+  color: #fff;
+}
