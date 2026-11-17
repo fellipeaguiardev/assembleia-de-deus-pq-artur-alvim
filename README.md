@@ -649,6 +649,22 @@ No painel, aba **Eventos**:
   e IA de imagem costuma errar letras e acentos. Nome muito comprido é cortado na última palavra
   inteira, com "…".
 
+**Validade das notícias** (pedido da equipe em 17/11/2026):
+
+- **O prazo:**
+  - cada notícia tem **"Fica no site até"** (`news.expires_at`, o último dia no site);
+  - vazio = **1 semana** depois da data da notícia;
+  - numa campanha, ponha o último dia dela.
+- **Ao vencer:** a notícia **sai do site, mas não é apagada**. No painel aparece "Expirada" e volta
+  ao site se ganhar uma data nova.
+- **Quem esconde:**
+  - **o banco:** a regra de leitura dos visitantes
+    (`supabase/migrations/20261117120000_noticias_validade.sql`). Assim a notícia vencida some
+    também do `/api/dados` e da página dela, que passa a responder 404 com a prévia do WhatsApp;
+  - **o site:** `noticiaVencida()` em `js/core.js`, para a cópia guardada no aparelho.
+- **Sugestões da sede:** a data delas é a da sede. Ao publicar, ficam 1 semana a partir do dia da
+  publicação.
+
 **Notícia pelo banner** (aba **Notícias** → **"Nova notícia pela imagem"**), para campanhas como a
 de arrecadação para as cadeiras:
 
@@ -783,6 +799,7 @@ transmissão dentro do site.
 | Próximo culto na home | Calculado sozinho a partir dos horários cadastrados |
 | Avisos e eventos | Somem sozinhos depois da data final |
 | Notícias e podcast agendados | Publique com data futura: aparecem sozinhos no dia |
+| **Notícias saem do site sozinhas** | No dia seguinte ao "Fica no site até" (vazio = 1 semana depois da data da notícia). Não são apagadas: ficam no painel como **Expirada** |
 | Pedidos de oração | Vão direto por e-mail para a equipe, com a identidade da igreja (nada fica guardado) |
 | Lições da EBD | Vercel Cron todo dia às 06:00 (`/api/rotina/ebd`) |
 | **Resumo da semana por e-mail** | Toda segunda às 07:00 (`/api/rotina/resumo`): veja [Resumo semanal e alertas](#resumo-semanal-e-alertas-por-e-mail) |

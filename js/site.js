@@ -731,7 +731,7 @@ const isDue = (dateValue) => !dateValue || String(dateValue).slice(0, 10) <= loc
 
 function publishedNews() {
   return (data.news || [])
-    .filter((n) => n.published !== false && isDue(n.published_at))
+    .filter((n) => n.published !== false && isDue(n.published_at) && !noticiaVencida(n))
     .sort((a, b) => new Date(b.published_at || b.created_at) - new Date(a.published_at || a.created_at));
 }
 

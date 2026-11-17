@@ -735,7 +735,25 @@ const mapNews = (n) => ({
   sourceUrl: n.source_url || "",
   sourceName: n.source_name || "",
   dismissed: n.dismissed === true,
+  // Último dia no site ("Fica no site até"); vazio = 1 semana depois da data da notícia.
+  expires_at: n.expires_at ? String(n.expires_at).slice(0, 10) : "",
 });
+
+/* ---------- Validade das notícias ----------
+   A notícia sai do site depois do último dia (não é apagada: fica no painel como
+   "Expirada"). O banco faz a mesma conta na regra de leitura dos visitantes
+   (supabase/migrations/20261117120000_noticias_validade.sql). */
+const NOTICIA_DIAS_PADRAO = 7;
+function noticiaUltimoDia(n) {
+  if (n.expires_at) return n.expires_at;
+  const base = String(n.published_at || n.created_at || "").slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(base)) return "";
+  return new Date(Date.parse(base + "T12:00:00Z") + NOTICIA_DIAS_PADRAO * 864e5).toISOString().slice(0, 10);
+}
+const noticiaVencida = (n) => {
+  const fim = noticiaUltimoDia(n);
+  return !!fim && fim < SITE_SHARED.spToday();
+};
 const mapPodcast = (p) => ({
   id: p.id,
   title: p.title || "",

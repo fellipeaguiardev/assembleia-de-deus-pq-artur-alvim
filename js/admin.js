@@ -1443,6 +1443,7 @@ function tabNews() {
     )}
     ${sedeSuggestionsHTML(sugestoes)}
     <p class="admin-note"><strong>Pela imagem:</strong> envie o banner (de uma campanha, por exemplo) e o site escreve o título, o resumo e o texto, com o banner de capa. A notícia nasce como <strong>rascunho</strong>: confira tudo (principalmente valores e chave PIX) e marque <strong>Publicada</strong>.</p>
+    <p class="admin-note"><strong>Validade:</strong> cada notícia fica no site até o dia em “Fica no site até” (vazio = 1 semana depois da data dela) e depois sai sozinha. Ela não é apagada: continua aqui como <strong>Expirada</strong>. Numa campanha, ponha o último dia dela.</p>
     <p class="admin-note"><strong>Publicação agendada:</strong> marque “Publicada” e escolha uma data futura. A notícia aparece no site automaticamente nesse dia.</p>
     ${
       items.length
@@ -1451,6 +1452,7 @@ function tabNews() {
               ({ n, i }) => `
       <div class="admin-card" id="noticia-${esc(n.id)}">
         ${avisoNoticiaLidaHTML(n)}
+        ${noticiaVencida(n) && n.published !== false ? `<p class="admin-note admin-warn">${icon("clock", 14)}<span><strong>Expirada:</strong> saiu do site depois de ${fmtDia(noticiaUltimoDia(n))}. Para voltar, escolha uma nova data em “Fica no site até”.</span></p>` : ""}
         ${n.sourceUrl ? `<p class="admin-note sede-note">Notícia da <strong>${esc(n.sourceName || "AD Belém – Sede")}</strong>: no site aparecem o título, a data, o resumo e o link para <a href="${esc(safeUrl(n.sourceUrl))}" target="_blank" rel="noopener">ler no site da sede</a>.</p>` : ""}
         <div class="field-row">
           ${field("Título", `<input type="text" value="${esc(n.title)}" onchange="updateNews(${i},'title',this.value)">`, true)}
@@ -1460,6 +1462,7 @@ function tabNews() {
           ${n.sourceUrl ? "" : field("Conteúdo", `<textarea rows="8" onchange="updateNews(${i},'content',this.value)">${esc(n.content)}</textarea>`, true)}
           ${n.sourceUrl ? "" : field("Imagem de capa", `<input type="url" value="${esc(n.cover_image)}" onchange="updateNews(${i},'cover_image',this.value)" placeholder="Cole o link ou envie abaixo">${uploadRow(n.cover_image, `handleNewsImageUpload(this, ${i})`)}`, true)}
           ${field("Data", `<input type="date" value="${esc(n.published_at ? String(n.published_at).slice(0, 10) : "")}" onchange="updateNews(${i},'published_at',this.value)">`)}
+          ${field("Fica no site até", `<input type="date" value="${esc(n.expires_at || "")}" onchange="updateNews(${i},'expires_at',this.value)"><small class="field-hint">${validadeNoticiaTexto(n)}</small>`)}
           ${field(
             "Publicação",
             `<label class="check"><input type="checkbox" ${n.published !== false ? "checked" : ""} onchange="updateNews(${i},'published',this.checked)"> Publicada</label>
@@ -1513,8 +1516,11 @@ function sedeSuggestionsHTML(list) {
 async function publishSedeNews(i) {
   const n = data.news[i];
   if (!n) return;
-  if (!(await dbWrite(db("news").update({ published: true }).eq("id", n.id), "Notícia publicada no site!", "Erro ao publicar."))) return;
+  // A data dela é a da sede (pode ter dias): fica no site 1 semana a partir de hoje.
+  const ate = new Date(Date.parse(SITE_SHARED.spToday() + "T12:00:00Z") + NOTICIA_DIAS_PADRAO * 864e5).toISOString().slice(0, 10);
+  if (!(await dbWrite(db("news").update({ published: true, expires_at: ate }).eq("id", n.id), "Notícia publicada no site!", "Erro ao publicar."))) return;
   n.published = true;
+  n.expires_at = ate;
   renderAdmin();
   renderSite();
 }
@@ -1645,12 +1651,21 @@ async function novaNoticiaPelaImagem(input) {
   }
 }
 
+const fmtDia = (iso) => (iso ? new Date(iso + "T12:00:00Z").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC" }) : "");
+function validadeNoticiaTexto(n) {
+  const fim = noticiaUltimoDia(n);
+  if (!fim) return "";
+  const quando = noticiaVencida(n) ? `Saiu do site depois de ${fmtDia(fim)}.` : `Aparece no site até ${fmtDia(fim)}.`;
+  return n.expires_at ? quando : `${quando} Vazio = 1 semana depois da data.`;
+}
+
 async function updateNews(i, key, val) {
   const n = data.news[i];
   if (!n) return;
   n[key] = val;
-  if (await dbWrite(db("news").update({ [key]: val === "" && key === "published_at" ? null : val }).eq("id", n.id), "Notícia atualizada!", "Erro ao atualizar notícia.")) {
+  if (await dbWrite(db("news").update({ [key]: val === "" && (key === "published_at" || key === "expires_at") ? null : val }).eq("id", n.id), "Notícia atualizada!", "Erro ao atualizar notícia.")) {
     renderSite();
+    if (key === "expires_at" || key === "published_at") renderAdmin(); // atualiza a dica da validade
   }
 }
 
