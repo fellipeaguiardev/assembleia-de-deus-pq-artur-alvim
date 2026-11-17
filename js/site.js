@@ -295,17 +295,17 @@ function renderSite() {
   }
 }
 
-/* ---------- "Voltar" e "Página inicial" no topo das páginas internas ----------
+/* ---------- "Voltar" no topo das páginas internas ----------
    Voltar = a página anterior dentro do site (como o voltar do celular). Quem
    chegou por um link direto (Google, WhatsApp) não tem página anterior aqui:
-   aí o botão sobe um nível (/biblia/joao/3 → /biblia/joao → /biblia → início). */
+   aí o botão sobe um nível (/biblia/joao/3 → /biblia/joao → /biblia → início).
+   Para o início, o caminho é o logo/nome da igreja no topo. */
 function voltarHTML(route) {
   if (routeBase(route) === "home") return "";
   return `
-  <nav class="voltar-bar" aria-label="Voltar ou ir para o início">
+  <nav class="voltar-bar" aria-label="Voltar">
     <div class="container voltar-inner">
       <button type="button" class="voltar-btn" onclick="voltarPagina()">${icon("arrowBack", 18)} Voltar</button>
-      <a class="voltar-inicio" href="/">${icon("home", 17)} Página inicial</a>
     </div>
   </nav>`;
 }

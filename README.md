@@ -545,8 +545,8 @@ tanto no modo normal quanto com alto contraste e letra "Muito grande". Para isso
 
 ### Outros cuidados
 
-- **"Voltar" e "Página inicial"** no topo de toda página interna (`voltarHTML` em `js/site.js`),
-  pensando em quem não sabe que o logo leva ao início:
+- **"Voltar"** no topo de toda página interna (`voltarHTML` em `js/site.js`). Para o início, o
+  caminho é o logo/nome da igreja no topo (pedido do usuário: sem link "Página inicial" na faixa).
   - **Voltar** volta à página anterior dentro do site. Cada página aberta conta +1 em
     `history.state.dentro`, e todo `replaceState` do site mantém esse estado.
   - Quem chegou por link direto (Google, WhatsApp) não tem página anterior: o botão sobe um nível

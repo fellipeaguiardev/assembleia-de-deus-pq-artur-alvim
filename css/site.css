@@ -676,7 +676,7 @@ section.block.announce-block {
   text-underline-offset: 3px;
 }
 
-/* ---------- "Voltar" e "Página inicial" (voltarHTML em js/site.js) ---------- */
+/* ---------- "Voltar" (voltarHTML em js/site.js) ---------- */
 .voltar-bar {
   border-bottom: 1px solid var(--c-line);
   background: var(--c-bg);
@@ -684,17 +684,15 @@ section.block.announce-block {
 .voltar-inner {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
   min-height: 52px;
 }
-.voltar-btn,
-.voltar-inicio {
+.voltar-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   min-height: 44px;
-  padding: 0 4px;
+  padding: 0 14px 0 4px;
+  margin-left: -4px;
   border: 0;
   background: none;
   font-size: calc(15px * var(--fs));
@@ -702,23 +700,12 @@ section.block.announce-block {
   color: var(--c-primary-ink);
   border-radius: 10px;
 }
-.voltar-btn {
-  padding-right: 14px;
-  margin-left: -4px;
-}
-.voltar-inicio {
-  font-weight: 600;
-  color: var(--c-text-soft);
-}
 @media (hover: hover) {
-  .voltar-btn:hover,
-  .voltar-inicio:hover {
-    color: var(--c-primary-ink);
+  .voltar-btn:hover {
     background: var(--c-tint);
   }
 }
-.voltar-btn:active,
-.voltar-inicio:active {
+.voltar-btn:active {
   background: var(--c-tint);
 }
 
