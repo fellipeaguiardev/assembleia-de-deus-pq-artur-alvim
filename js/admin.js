@@ -50,7 +50,7 @@ function closeAdminPanel({ keepHash = false } = {}) {
   document.body.classList.remove("admin-open");
   if (typeof a11yAplicarTema === "function") a11yAplicarTema(); // volta o tema escolhido no site
   if (!keepHash && currentRoute() === "admin") {
-    history.replaceState(null, "", "/");
+    history.replaceState(history.state, "", "/");
     renderSite();
     window.scrollTo({ top: 0, behavior: "instant" });
   }

@@ -215,7 +215,7 @@ function openPodcastModal(id) {
   const p = findEpisode(id);
   if (!p) return;
   const sources = episodeSources(p);
-  if (routeBase(currentRoute()) === "podcast") history.replaceState(null, "", "/podcast/" + encodeURIComponent(p.id));
+  if (routeBase(currentRoute()) === "podcast") history.replaceState(history.state, "", "/podcast/" + encodeURIComponent(p.id));
   openModal(
     `
     <div class="episode-modal">

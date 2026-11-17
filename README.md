@@ -545,6 +545,13 @@ tanto no modo normal quanto com alto contraste e letra "Muito grande". Para isso
 
 ### Outros cuidados
 
+- **"Voltar" e "Página inicial"** no topo de toda página interna (`voltarHTML` em `js/site.js`),
+  pensando em quem não sabe que o logo leva ao início:
+  - **Voltar** volta à página anterior dentro do site. Cada página aberta conta +1 em
+    `history.state.dentro`, e todo `replaceState` do site mantém esse estado.
+  - Quem chegou por link direto (Google, WhatsApp) não tem página anterior: o botão sobe um nível
+    (`paginaDeCima`), por exemplo `/biblia/joao/3` → `/biblia/joao` e lição da EBD → trimestre → `/ebd`.
+  - O logo do topo tem a dica "Ir para a página inicial".
 - **Foco ao trocar de página**: depois de cada navegação interna, o foco vai para o `h1` da página
   (sem contorno), para o leitor de tela anunciar a página nova; sem `h1`, para o `<main>`. Em link de
   versículo ou de doação, vai para o alvo da rolagem. Páginas que carregam o conteúdo depois (Bíblia,

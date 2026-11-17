@@ -676,6 +676,52 @@ section.block.announce-block {
   text-underline-offset: 3px;
 }
 
+/* ---------- "Voltar" e "Página inicial" (voltarHTML em js/site.js) ---------- */
+.voltar-bar {
+  border-bottom: 1px solid var(--c-line);
+  background: var(--c-bg);
+}
+.voltar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 52px;
+}
+.voltar-btn,
+.voltar-inicio {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  font-size: calc(15px * var(--fs));
+  font-weight: 700;
+  color: var(--c-primary-ink);
+  border-radius: 10px;
+}
+.voltar-btn {
+  padding-right: 14px;
+  margin-left: -4px;
+}
+.voltar-inicio {
+  font-weight: 600;
+  color: var(--c-text-soft);
+}
+@media (hover: hover) {
+  .voltar-btn:hover,
+  .voltar-inicio:hover {
+    color: var(--c-primary-ink);
+    background: var(--c-tint);
+  }
+}
+.voltar-btn:active,
+.voltar-inicio:active {
+  background: var(--c-tint);
+}
+
 /* ---------- Última transmissão ---------- */
 .latest-video {
   display: grid;

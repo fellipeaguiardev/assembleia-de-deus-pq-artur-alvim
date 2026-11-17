@@ -72,7 +72,7 @@ const ROUTE_RENAMES = { ministerios: "departamentos" };
 function migrateRenamedRoute() {
   const [base, ...rest] = currentRoute().split("/");
   if (!ROUTE_RENAMES[base]) return false;
-  history.replaceState(null, "", routePath([ROUTE_RENAMES[base], ...rest].join("/")) + location.search);
+  history.replaceState(history.state, "", routePath([ROUTE_RENAMES[base], ...rest].join("/")) + location.search);
   return true;
 }
 const routeParam = (route) => route.split("/").slice(1).join("/");
@@ -89,13 +89,13 @@ function migrateLegacyHash() {
     return false;
   }
   if (!/^[a-z][a-z0-9-]*(\/\S*)?$/i.test(route)) return false;
-  history.replaceState(null, "", routePath(route));
+  history.replaceState(history.state, "", routePath(route));
   return true;
 }
 
 function navigateTo(path, { replace = false } = {}) {
-  if (replace) history.replaceState(null, "", path);
-  else if (path !== location.pathname + location.search) history.pushState(null, "", path);
+  if (replace) history.replaceState(history.state, "", path);
+  else if (path !== location.pathname + location.search) history.pushState({ dentro: (history.state?.dentro || 0) + 1 }, "", path);
   onRouteChange();
 }
 
@@ -274,7 +274,7 @@ function renderSite() {
   if (!storageReady) return;
   const route = currentRoute();
   const root = document.getElementById("siteRoot");
-  root.innerHTML = headerHTML(route) + `<main id="main" class="page-enter" tabindex="-1">${pageHTML(route)}</main>` + footerHTML();
+  root.innerHTML = headerHTML(route) + `<main id="main" class="page-enter" tabindex="-1">${voltarHTML(route)}${pageHTML(route)}</main>` + footerHTML();
   root.removeAttribute("aria-busy");
   updateHeaderScrolled();
   updateMeta(route);
@@ -293,6 +293,34 @@ function renderSite() {
     initPalavraHome();
     initEbdHome();
   }
+}
+
+/* ---------- "Voltar" e "Página inicial" no topo das páginas internas ----------
+   Voltar = a página anterior dentro do site (como o voltar do celular). Quem
+   chegou por um link direto (Google, WhatsApp) não tem página anterior aqui:
+   aí o botão sobe um nível (/biblia/joao/3 → /biblia/joao → /biblia → início). */
+function voltarHTML(route) {
+  if (routeBase(route) === "home") return "";
+  return `
+  <nav class="voltar-bar" aria-label="Voltar ou ir para o início">
+    <div class="container voltar-inner">
+      <button type="button" class="voltar-btn" onclick="voltarPagina()">${icon("arrowBack", 18)} Voltar</button>
+      <a class="voltar-inicio" href="/">${icon("home", 17)} Página inicial</a>
+    </div>
+  </nav>`;
+}
+
+// Página "de cima" de um endereço, para quem chegou por link direto.
+function paginaDeCima(caminho) {
+  const p = caminho.split("/").filter(Boolean);
+  if (p[0] === "ebd") return p.length >= 5 ? "/" + p.slice(0, 4).join("/") : p.length > 1 ? "/ebd" : "/"; // lição → trimestre → EBD
+  p.pop();
+  return "/" + p.join("/");
+}
+
+function voltarPagina() {
+  if ((history.state?.dentro || 0) > 0) return history.back();
+  navigateTo(paginaDeCima(location.pathname), { replace: true });
 }
 
 function pageHTML(route) {
@@ -378,7 +406,7 @@ function headerHTML(route) {
   <a class="skip-link" href="#main" onclick="event.preventDefault(); const m = document.getElementById('main'); m.focus(); m.scrollIntoView();">Pular para o conteúdo</a>
   <header class="site-header">
     <div class="header-inner">
-      <a href="/" class="brand" aria-label="${esc(c.name)} — início">${brandHTML()}</a>
+      <a href="/" class="brand" aria-label="${esc(c.name)} — página inicial" title="Ir para a página inicial">${brandHTML()}</a>
       <nav class="main-nav" aria-label="Principal">
         ${NAV_PRIMARY.map(([r, l]) => navLink(r, l, "nav-link", base)).join("")}
         <div class="nav-more">
@@ -1734,7 +1762,7 @@ function closeModal({ instant = false } = {}) {
     window.currentMinistryPhotos = [];
     lastFocus?.focus?.({ preventScroll: true });
     // Fecha o deep link do episódio sem criar entrada nova no histórico.
-    if (/^\/podcast\/.+/.test(location.pathname)) history.replaceState(null, "", "/podcast");
+    if (/^\/podcast\/.+/.test(location.pathname)) history.replaceState(history.state, "", "/podcast");
   };
   if (instant || reduceMotion()) return finish();
   backdrop.classList.add("closing");

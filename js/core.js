@@ -562,6 +562,7 @@ const ICONS = {
   right: '<path d="m9 18 6-6-6-6"/>',
   arrow: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
   arrowBack: '<path d="M19 12H5"/><path d="m12 19-7-7 7-7"/>',
+  home: '<path d="m3 10.5 9-7.5 9 7.5"/><path d="M5 9v12h14V9"/><path d="M10 21v-6h4v6"/>',
   external: '<path d="M7 7h10v10"/><path d="M7 17 17 7"/>',
   x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
   calendar: '<rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',

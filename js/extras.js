@@ -313,7 +313,7 @@ try {
   if (u.searchParams.has("mudou")) {
     movedNotice = true;
     u.searchParams.delete("mudou");
-    history.replaceState(null, "", u.pathname + u.search + u.hash);
+    history.replaceState(history.state, "", u.pathname + u.search + u.hash);
   }
 } catch {}
 if (movedNotice)
@@ -340,7 +340,7 @@ try {
   if (u.searchParams.has("instalar")) {
     installInvite = true;
     u.searchParams.delete("instalar");
-    history.replaceState(null, "", u.pathname + u.search + u.hash);
+    history.replaceState(history.state, "", u.pathname + u.search + u.hash);
   }
 } catch {}
 
