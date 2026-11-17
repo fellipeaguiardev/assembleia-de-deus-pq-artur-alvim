@@ -851,7 +851,7 @@ async function reduzirImagem(blob, lado = 1600) {
   return { imagem, tipo: "image/jpeg" };
 }
 
-async function lerCartazNoServidor(blob, texto) {
+async function lerCartazNoServidor(blob, texto, para = "evento") {
   let corpo;
   if (texto) corpo = { texto };
   else
@@ -860,6 +860,7 @@ async function lerCartazNoServidor(blob, texto) {
     } catch {
       throw Object.assign(new Error("imagem"), { userMessage: "não consegui abrir essa imagem (use JPG, PNG ou WEBP)." });
     }
+  if (para !== "evento") corpo.para = para;
   const { data: s } = await supabaseClient.auth.getSession();
   let res;
   try {
@@ -1433,15 +1434,23 @@ function tabNews() {
   const sugestoes = all.filter(({ n }) => n.sourceId && !n.published && !n.dismissed);
   const items = all.filter(({ n }) => !n.dismissed && !(n.sourceId && !n.published));
   return `
-    ${topbar("Notícias", `<button class="btn btn-primary btn-sm" type="button" onclick="addNews()">+ Nova notícia</button>`)}
+    ${topbar(
+      "Notícias",
+      `<div class="item-actions">
+        <label class="btn btn-ghost btn-sm upload-label" data-cartaz-btn>${icon("image", 15)} Nova notícia pela imagem<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden onchange="novaNoticiaPelaImagem(this)"></label>
+        <button class="btn btn-primary btn-sm" type="button" onclick="addNews()">+ Nova notícia</button>
+      </div>`,
+    )}
     ${sedeSuggestionsHTML(sugestoes)}
+    <p class="admin-note"><strong>Pela imagem:</strong> envie o banner (de uma campanha, por exemplo) e o site escreve o título, o resumo e o texto, com o banner de capa. A notícia nasce como <strong>rascunho</strong>: confira tudo (principalmente valores e chave PIX) e marque <strong>Publicada</strong>.</p>
     <p class="admin-note"><strong>Publicação agendada:</strong> marque “Publicada” e escolha uma data futura. A notícia aparece no site automaticamente nesse dia.</p>
     ${
       items.length
         ? items
             .map(
               ({ n, i }) => `
-      <div class="admin-card">
+      <div class="admin-card" id="noticia-${esc(n.id)}">
+        ${avisoNoticiaLidaHTML(n)}
         ${n.sourceUrl ? `<p class="admin-note sede-note">Notícia da <strong>${esc(n.sourceName || "AD Belém – Sede")}</strong>: no site aparecem o título, a data, o resumo e o link para <a href="${esc(safeUrl(n.sourceUrl))}" target="_blank" rel="noopener">ler no site da sede</a>.</p>` : ""}
         <div class="field-row">
           ${field("Título", `<input type="text" value="${esc(n.title)}" onchange="updateNews(${i},'title',this.value)">`, true)}
@@ -1568,6 +1577,72 @@ async function addNews() {
   if (!created) return;
   data.news.unshift(mapNews(created));
   renderAdmin();
+}
+
+/* ---- NOTÍCIAS: pela imagem (banner lido pelo Gemini, api/evento-da-imagem.mjs com para: "noticia") ----
+   O banner vai para o armazenamento como capa e, ao mesmo tempo, o Gemini escreve
+   título, resumo e texto só com o que está nele. Nasce como RASCUNHO. */
+let noticiaLida = null; // { id, avisos, erro }
+
+function avisoNoticiaLidaHTML(n) {
+  if (!noticiaLida || String(noticiaLida.id) !== String(n.id)) return "";
+  if (noticiaLida.erro)
+    return `<p class="admin-note admin-warn" role="status">${icon("x", 14)}<span>Não deu para ler a imagem: ${esc(noticiaLida.erro)} A notícia ficou com o banner de capa; escreva o texto à mão.</span></p>`;
+  const avisos = noticiaLida.avisos?.length ? `<br>${noticiaLida.avisos.map((a) => `• ${esc(a)}`).join("<br>")}` : "";
+  return `<p class="admin-note admin-ok" role="status">${icon("check", 15)}<span><strong>Escrita a partir do banner.</strong> Confira tudo e marque <strong>Publicada</strong> (e <strong>Destaque</strong>, se for uma campanha).${avisos}</span></p>`;
+}
+
+async function novaNoticiaPelaImagem(input) {
+  const file = input.files?.[0];
+  input.value = "";
+  if (!file || lendoCartaz) return;
+  if (!UPLOAD_RULES.image.types.includes(file.type)) return showToast(`Arquivo inválido: envie uma ${UPLOAD_RULES.image.label}.`, "error");
+  if (!(await adminEnsureAccess())) return;
+  lendoCartaz = true;
+  marcarBotoesCartaz(true);
+  showToast("Lendo o banner… pode levar até 1 minuto.");
+  try {
+    const [url, leitura] = await Promise.all([
+      uploadFile(file, "noticias"),
+      lerCartazNoServidor(file, null, "noticia").then(
+        (campos) => ({ campos }),
+        (erro) => ({ erro }),
+      ),
+    ]);
+    const c = leitura.campos || {};
+    const titulo = c.titulo || "Nova notícia";
+    const created = await dbWrite(
+      db("news")
+        .insert({
+          title: titulo,
+          slug: `${slugify(titulo) || "noticia"}-${Date.now().toString(36).slice(-4)}`,
+          summary: c.resumo || "",
+          content: c.conteudo || "",
+          cover_image: url,
+          published_at: localISO(),
+          author: "",
+          featured: false,
+          published: false,
+        })
+        .select()
+        .single(),
+      null,
+      "Erro ao criar notícia.",
+    );
+    if (!created) return;
+    data.news.unshift(mapNews(created));
+    noticiaLida = { id: created.id, avisos: c.avisos || [], erro: leitura.erro ? leitura.erro.userMessage || "tente de novo." : "" };
+    renderAdmin();
+    requestAnimationFrame(() => document.getElementById(`noticia-${created.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    if (leitura.erro) showToast("Notícia criada só com o banner: não deu para ler a imagem.", "error");
+    else showToast("Notícia escrita a partir do banner! Confira e marque Publicada.", "success");
+  } catch (e) {
+    console.error("Nova notícia pela imagem:", e);
+    showToast(e.userMessage || "Erro ao enviar a imagem.", "error");
+  } finally {
+    lendoCartaz = false;
+    marcarBotoesCartaz(false);
+  }
 }
 
 async function updateNews(i, key, val) {

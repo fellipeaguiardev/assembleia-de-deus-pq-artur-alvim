@@ -8,6 +8,8 @@
 // Corpo: { imagem: "<base64>", tipo: "image/jpeg" } — o painel já reduz a
 // imagem no navegador (lado maior até 1600 px) — ou { texto: "..." }, a
 // mensagem de divulgação colada no painel ("Novo evento pelo texto").
+// Com { para: "noticia" } e a imagem, lê o BANNER e devolve
+// { campos: { titulo, resumo, conteudo, avisos[] } } ("Nova notícia pela imagem").
 // Resposta: { campos: { nome, data, horario, categoria, local, endereco,
 // descricao, link, avisos[] }, modelo } ou { error }.
 // Nada é gravado aqui: quem cria ou altera o evento é o painel.
@@ -49,7 +51,8 @@ export async function POST(request) {
   }
 
   try {
-    const r = await lerCartaz({ ...(texto ? { texto } : { imagem, tipo }), hoje: hojeEmSP(), chave: process.env.GEMINI_API_KEY, modelos: [process.env.GEMINI_MODEL] });
+    const para = corpo?.para === "noticia" ? "noticia" : "evento";
+    const r = await lerCartaz({ ...(texto ? { texto } : { imagem, tipo }), para, hoje: hojeEmSP(), chave: process.env.GEMINI_API_KEY, modelos: [process.env.GEMINI_MODEL] });
     return json(200, r);
   } catch (e) {
     if (e instanceof ErroCartaz) {

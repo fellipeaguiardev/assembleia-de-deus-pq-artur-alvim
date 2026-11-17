@@ -649,6 +649,17 @@ No painel, aba **Eventos**:
   e IA de imagem costuma errar letras e acentos. Nome muito comprido é cortado na última palavra
   inteira, com "…".
 
+**Notícia pelo banner** (aba **Notícias** → **"Nova notícia pela imagem"**), para campanhas como a
+de arrecadação para as cadeiras:
+
+- O banner vai para o Storage como capa.
+- Ao mesmo tempo, a mesma função (`api/evento-da-imagem.mjs` com `{ para: "noticia" }`) pede ao
+  Gemini o **título**, o **resumo** e o **texto** (2 a 4 parágrafos), só com o que está no banner
+  (instruções e formato em `instrucoesNoticia` e `ESQUEMA_NOTICIA` de `api/_lib/cartaz.mjs`).
+- A notícia nasce como **rascunho**.
+- Se o texto tem PIX, o cartão sempre pede para conferir a chave letra por letra, porque a IA pode
+  trocar um dígito.
+
 O botão **"Novo evento pela imagem"** recebe o cartaz do evento e
 preenche sozinho nome, data, horário, categoria, local, endereço, descrição e link de inscrição
 (com o link do Google Maps montado a partir do endereço). O evento nasce **desativado**: a equipe
