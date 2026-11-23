@@ -353,6 +353,22 @@ function ytId(url) {
   return "";
 }
 
+/* Trecho de um vídeo do YouTube guardado no próprio link (&start=…&end=…, em
+   segundos). As PREGAÇÕES do podcast (aba Vídeos → "Pregação no podcast") são
+   episódios sem áudio próprio cujo link do YouTube tem start=: tocam só a pregação. */
+function ytTrecho(url) {
+  const ini = String(url || "").match(/[?&]start=(\d+)/);
+  const fim = String(url || "").match(/[?&]end=(\d+)/);
+  return (ini ? `&start=${ini[1]}` : "") + (fim ? `&end=${fim[1]}` : "");
+}
+// Link para abrir no YouTube já no início do trecho (no YouTube o parâmetro é t=).
+function ytAbrir(url) {
+  const id = ytId(url);
+  const ini = String(url || "").match(/[?&]start=(\d+)/);
+  return id ? `https://www.youtube.com/watch?v=${id}${ini ? `&t=${ini[1]}s` : ""}` : url;
+}
+const ehPregacao = (p) => !safeUrl(p?.audio_url) && /[?&]start=\d+/.test(p?.youtube_url || "");
+
 function ytThumb(url) {
   const id = ytId(url);
   return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : "";

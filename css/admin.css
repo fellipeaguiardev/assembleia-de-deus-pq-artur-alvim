@@ -1136,3 +1136,23 @@ p.gate-note {
   font-weight: 600;
   text-decoration: underline;
 }
+
+/* Pregação no podcast (aba Vídeos) */
+.admin-card-media > .pregacao-form {
+  grid-column: 1 / -1;
+}
+.pregacao-form {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border: 1px dashed var(--c-line-strong);
+  border-radius: 12px;
+}
+.pregacao-form-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.pregacao-form .field-row {
+  margin-top: 10px;
+}

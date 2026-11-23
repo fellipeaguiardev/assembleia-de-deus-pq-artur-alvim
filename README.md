@@ -700,6 +700,28 @@ pelo cartaz"** mostra o que vai mudar e só troca depois da confirmação.
   com a imagem e o cartão explica o motivo. A IA pode errar (ano que não aparece no cartaz,
   letra muito decorada); os avisos dela aparecem no cartão do evento. Código QR não é lido.
 
+## Pregação no podcast (a partir da live)
+
+Na aba **Vídeos** do painel, cada vídeo do YouTube tem **"Pregação no podcast"**.
+
+- **Como usar:** a equipe digita onde a pregação **começa** e, se quiser, onde **termina**, como o
+  YouTube mostra (1:22:00). Também valem 82:00, 1h22 e 82min. Ao tocar em **Publicar no podcast**,
+  o site cria um episódio **publicado** no podcast do site:
+  - **título:** "Pregação – " + o título da live, sem "(Parte 2)";
+  - **capa, data e descrição:** as da live.
+- **Como toca só a pregação:**
+  - O episódio **não tem áudio próprio**: toca o vídeo do YouTube no trecho, e o início e o fim
+    ficam no próprio link (`youtube_url` = `…watch?v=ID&start=4920&end=7470`). Não precisou de
+    coluna nova.
+  - `ytTrecho()` em `js/core.js` passa o trecho para o player (`&start=&end=`).
+  - `ytAbrir()` faz o link "Assistir no YouTube" abrir no início (`&t=4920s`).
+  - `ehPregacao()` reconhece esses episódios: sem áudio e com `start=` no link. Neles o rótulo
+    é "Pregação", em vez de "EP. N", e o número fica 0.
+- **Importação do Spotify:** ela não oferece apagar as pregações (antes, todo episódio sem áudio era
+  tratado como sobra).
+- **Limite:** é o player do YouTube, então no celular **para quando a tela apaga** (o YouTube não
+  deixa tocar em segundo plano fora do app dele). Para ouvir com a tela apagada, só pelo Spotify.
+
 ## Achar a pregação na live (Gemini) — em teste
 
 Na aba **Vídeos** do painel, cada vídeo do YouTube tem **"Achar a pregação"**. A rota é
