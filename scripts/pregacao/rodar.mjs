@@ -45,6 +45,11 @@ const SIMULAR = process.argv.includes("--simular");
 const ESPERA_DEPOIS_DA_LIVE_MS = 60 * 60e3; // 1 hora depois do fim da live
 const ANALISES_POR_RODADA = 2; // poupa a cota grátis do Gemini
 const LIMITE_MB = 45; // o Storage aceita até 50 MB por arquivo
+// Pausas longas: silêncio abaixo de -40 dB por mais de 1,5 s fica com 1 s (acharPausas).
+// (-40 dB: não pega fala baixa; desligar: "cortarPausas": false no config.json)
+const PAUSA_DB = -40;
+const PAUSA_MAX = 1.5;
+const PAUSA_FICA = 1;
 
 /* ---------- Registro ---------- */
 fs.mkdirSync(TMP, { recursive: true });
@@ -143,13 +148,60 @@ async function detalhes(cfg, id) {
   return { titulo: j.title || "", liveStatus: j.live_status, inicioMs, fimMs: inicioMs + (j.duration || 0) * 1000, duracao: j.duration || 0 };
 }
 
+/* ---------- Pausas longas ----------
+   O silencedetect acha os trechos abaixo de PAUSA_DB por mais de PAUSA_MAX s; de
+   cada um fica PAUSA_FICA/2 s antes e depois e o meio sai (aselect). Só corta
+   dentro do silêncio: a fala nunca é cortada. Na pregação de 22/11/2026 (49 min):
+   106 pausas, 2 min 25 s a menos, maior pausa de 6,8 s → ~2 s.
+   (O filtro silenceremove do ffmpeg 8 foi testado e deixou pausas de 6 s.) */
+async function acharPausas(ffmpeg, arquivo) {
+  const saida = await new Promise((resolve, reject) => {
+    const p = spawn(ffmpeg, ["-hide_banner", "-nostats", "-i", arquivo, "-af", `silencedetect=noise=${PAUSA_DB}dB:d=${PAUSA_MAX}`, "-f", "null", "-"], { windowsHide: true });
+    let err = "";
+    p.stderr.on("data", (d) => (err += d));
+    p.on("error", reject);
+    p.on("close", (code) => (code === 0 ? resolve(err) : reject(new Error(`ffmpeg (pausas) saiu com erro ${code}`))));
+  });
+  const lado = PAUSA_FICA / 2;
+  const cortes = [];
+  let ini = null;
+  for (const l of saida.split("\n")) {
+    const a = l.match(/silence_start: ([\d.]+)/);
+    const b = l.match(/silence_end: ([\d.]+)/);
+    if (a) ini = Number(a[1]);
+    if (b && ini !== null) {
+      if (Number(b[1]) - ini - 2 * lado > 0.05) cortes.push([ini + lado, Number(b[1]) - lado]);
+      ini = null;
+    }
+  }
+  // as maiores primeiro, no máximo 600 (a linha de comando do Windows tem limite)
+  const usados = cortes.sort((x, y) => y[1] - y[0] - (x[1] - x[0])).slice(0, 600).sort((x, y) => x[0] - y[0]);
+  if (!usados.length) return { filtro: "", segundos: 0, pausas: 0 };
+  // árvore balanceada de somas: uma lista longa "a+b+c+…" estoura o ffmpeg
+  const arvore = (l) => (l.length === 1 ? l[0] : `(${arvore(l.slice(0, l.length >> 1))}+${arvore(l.slice(l.length >> 1))})`);
+  const expr = arvore(usados.map(([a, b]) => `between(t,${a.toFixed(3)},${b.toFixed(3)})`));
+  return { filtro: `aselect='not(${expr})',asetpts=N/SR/TB`, segundos: usados.reduce((t, [a, b]) => t + b - a, 0), pausas: usados.length };
+}
+
 /* ---------- Passo 2: gerar o áudio ---------- */
 async function gerarAudio(cfg, ffmpeg, p) {
   const id = p.video_id;
   if (p.inicio == null) throw new Error("Sem o início da pregação.");
   // baixa só o áudio da live (rápido: ~1 minuto por hora de culto, ou menos)
   for (const f of fs.readdirSync(TMP)) if (f.startsWith(id)) fs.rmSync(path.join(TMP, f), { force: true });
-  await ytdlp(cfg, ["-f", "251/140/bestaudio", "--no-part", "--no-playlist", "-o", path.join(TMP, `${id}.%(ext)s`), `https://www.youtube.com/watch?v=${id}`]);
+  // O YouTube às vezes recusa um link de download (403) e aceita logo depois
+  // (visto em 23/11/2026): até 3 tentativas, 30 s entre elas.
+  for (let tentativa = 1; ; tentativa++) {
+    try {
+      await ytdlp(cfg, ["-f", "251/140/bestaudio", "--no-part", "--no-playlist", "--retries", "5", "-o", path.join(TMP, `${id}.%(ext)s`), `https://www.youtube.com/watch?v=${id}`]);
+      break;
+    } catch (e) {
+      if (tentativa >= 3) throw e;
+      log(`  → o download falhou (${e.message.slice(-90)}); tentando de novo em 30 s…`);
+      for (const f of fs.readdirSync(TMP)) if (f.startsWith(id)) fs.rmSync(path.join(TMP, f), { force: true });
+      await new Promise((r) => setTimeout(r, 30e3));
+    }
+  }
   const baixado = fs.readdirSync(TMP).find((f) => f.startsWith(id + ".") && !f.endsWith(".mp3"));
   if (!baixado) throw new Error("O yt-dlp não baixou o áudio.");
   const entrada = path.join(TMP, baixado);
@@ -157,19 +209,31 @@ async function gerarAudio(cfg, ffmpeg, p) {
   // sem fim (a live caiu antes de terminar a pregação): vai até o fim do áudio
   const dur = p.fim != null ? p.fim - p.inicio : null;
   const kbps = dur ? Math.max(32, Math.min(64, Math.floor((LIMITE_MB * 8e3) / dur / 8) * 8)) : 48;
-  const filtros = ["loudnorm=I=-16:TP=-1.5:LRA=11", "afade=t=in:d=2"];
+  // 1) corta a pregação, iguala o volume (o loudnorm trabalha em 192 kHz: volta
+  //    para 44,1 kHz) e faz fade no início e no fim → FLAC temporário (sem perda)
+  const filtros = ["loudnorm=I=-16:TP=-1.5:LRA=11", "aresample=44100", "afade=t=in:d=2"];
   if (dur) filtros.push(`afade=t=out:st=${Math.max(0, dur - 4)}:d=4`);
-  const ano = p.culto_em ? new Date(p.culto_em).getFullYear() : new Date().getFullYear();
+  const meio = path.join(TMP, `${id}-meio.flac`);
   await rodarProg(ffmpeg, [
     "-hide_banner", "-loglevel", "error", "-y",
     "-ss", String(p.inicio), ...(p.fim != null ? ["-to", String(p.fim)] : []),
-    "-i", entrada, "-vn", "-ac", "1", "-ar", "44100", "-af", filtros.join(","),
+    "-i", entrada, "-vn", "-ac", "1", "-af", filtros.join(","), "-c:a", "flac", meio,
+  ]);
+  fs.rmSync(entrada, { force: true });
+  // 2) pausas longas (cortarPausas no config.json; ligado se não disser nada)
+  const { filtro: semPausas, segundos: tirado, pausas } = cfg.cortarPausas === false ? { filtro: "", segundos: 0, pausas: 0 } : await acharPausas(ffmpeg, meio);
+  // 3) MP3 final
+  const ano = p.culto_em ? new Date(p.culto_em).getFullYear() : new Date().getFullYear();
+  await rodarProg(ffmpeg, [
+    "-hide_banner", "-loglevel", "error", "-y", "-i", meio,
+    ...(semPausas ? ["-af", semPausas] : []),
     "-c:a", "libmp3lame", "-b:a", `${kbps}k`,
     "-metadata", `title=${p.tema || p.titulo || "Pregação"}`, "-metadata", `artist=${p.pregador || "AD Belém – Parque Artur Alvim"}`,
     "-metadata", "album=Pregações – AD Belém Parque Artur Alvim", "-metadata", `date=${ano}`,
     saida,
   ]);
-  fs.rmSync(entrada, { force: true });
+  fs.rmSync(meio, { force: true });
+  if (pausas) log(`  → ${pausas} pausas longas encurtadas (${Math.round(tirado)} s a menos).`);
   const mb = fs.statSync(saida).size / 1e6;
   if (mb > 49.5) throw new Error(`O MP3 ficou grande demais (${mb.toFixed(1)} MB).`);
   return { arquivo: saida, mb };

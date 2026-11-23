@@ -39,7 +39,7 @@ lições, livros, vídeos, cores) é editado pela equipe num **painel administra
 | **Escola Bíblica Dominical** | Lição da semana de cada revista (Adultos, Jovens…), trimestres, texto áureo e leitura em classe com o texto bíblico, leitura diária para marcar, pontos principais, perguntas e link para a lição completa. |
 | **Harpa Cristã** | Índice dos 640 hinos com busca por número ou nome, "Meus hinos" no aparelho e atalhos para ouvir e ver a letra. |
 | **Biblioteca dos Jovens** | Acervo com busca e categorias, situação de cada livro (disponível, emprestado com data de volta, reservado), sinopse e pedido "Quero este livro" ou "Entrar na fila de espera". |
-| **Vídeos e podcast** | Cultos e lives do YouTube atualizados sozinhos, busca e filtros, botão "Ao vivo" e player de podcast que continua tocando enquanto se navega. |
+| **Vídeos e podcast** | Cultos e lives do YouTube atualizados sozinhos, busca e filtros, botão "Ao vivo" e player de podcast que continua tocando enquanto se navega, com velocidade 1x / 1,25x / 1,5x / 2x (também no celular; a escolha fica guardada no aparelho). |
 | **Comunidade** | Pedido de oração e contato (chega por e-mail à equipe), primeira visita (horários, endereço, como chegar), departamentos, história e liderança da igreja e ofertas por PIX com QR Code. |
 | **Acessibilidade** | Botão com o bonequinho no topo (e link no rodapé): **tamanho da letra** em 4 níveis, **aparência** (automático, claro ou escuro: o site tem **tema escuro** próprio), **alto contraste**, **parar animações**, **tradutor de Libras** (VLibras, do Governo Federal) e **legendas** automáticas nos vídeos do YouTube. As escolhas ficam no aparelho. Detalhes em [Acessibilidade](#acessibilidade). |
 | **App e privacidade** | App instalável (PWA) com atalhos, abertura animada com o brasão montado em formas geométricas (na primeira visita), aviso de versão nova, política de privacidade (LGPD) e conteúdos de terceiros (YouTube, Spotify, Maps) só com permissão. |
@@ -710,10 +710,20 @@ precisar fazer nada. São três partes:
    - lê as últimas lives do canal com o yt-dlp;
    - para cada live nova que terminou há mais de 1 hora (e começou nos últimos 3 dias), pede ao
      site para o Gemini achar a pregação (no máximo 2 por rodada, para poupar a cota);
-   - para cada pregação na fila: baixa só o áudio da live (cerca de 5 s), corta a pregação com o
-     ffmpeg (mono, volume igualado com `loudnorm`, fade, MP3 de 32 a 64 kbps para caber nos 50 MB do
-     Storage; cerca de 3 min para 50 min de pregação), envia para `images/pregacoes/` e publica o
-     episódio;
+   - para cada pregação na fila: baixa só o áudio da live (cerca de 5 s; se o YouTube recusar o
+     download, tenta 3 vezes com 30 s de intervalo) e trata o áudio com o ffmpeg em 3 passos:
+     1. corta a pregação, em mono, com o volume igualado (`loudnorm`, depois de volta a 44,1 kHz) e
+        fade, num FLAC temporário;
+     2. **encurta as pausas longas** (`acharPausas`): o `silencedetect` acha o silêncio abaixo de
+        -40 dB por mais de 1,5 s; de cada pausa ficam 0,5 s antes e 0,5 s depois, e o meio sai
+        (`aselect`). Só corta dentro do silêncio, nunca a fala. Na pregação de 22/11 (49 min), 126
+        pausas encurtadas deixaram o áudio 2 min 52 s menor, e a maior pausa caiu de 6,8 s para 2 s.
+        O `silenceremove` do ffmpeg 8 foi testado e deixava pausas de 6 s. Para desligar:
+        `"cortarPausas": false` no `config.json`;
+     3. gera o MP3 de 32 a 64 kbps, para caber nos 50 MB do Storage.
+
+     Leva cerca de 7 min para 50 min de pregação. Depois envia para `images/pregacoes/` e publica
+     o episódio;
    - manda e-mail para a equipe (`RESUMO_PARA`) quando publica, quando precisa conferir ou quando
      falha 3 vezes;
    - anota como foi (`pregacao_registrar`). O alerta diário avisa se falhar 2 vezes seguidas ou se o

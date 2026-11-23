@@ -605,8 +605,8 @@
     display: block;
   }
   .player-inner {
-    grid-template-columns: 44px minmax(0, 1fr) auto auto;
-    gap: 10px;
+    grid-template-columns: 44px minmax(0, 1fr) auto auto auto;
+    gap: 8px;
     padding: 10px;
   }
   .player-cover {
@@ -614,9 +614,14 @@
     height: 44px;
   }
   .player-timeline,
-  .player-speed,
   .player-controls .player-btn:not(.player-main) {
     display: none;
+  }
+  /* Velocidade continua no celular (1x → 1,25x → 1,5x → 2x) */
+  .player-speed {
+    min-width: 44px;
+    height: 34px;
+    padding: 0 6px;
   }
 }
 

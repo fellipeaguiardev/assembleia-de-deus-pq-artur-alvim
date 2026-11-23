@@ -280,12 +280,24 @@ function shareEpisode(id) {
 /* ============================================================
    PLAYER GLOBAL (fica fora do #siteRoot, então não para ao navegar)
    ============================================================ */
+// Velocidade escolhida fica guardada neste aparelho (vale para os próximos episódios).
+const VELOCIDADE_KEY = "podcast-velocidade";
+function lerVelocidade() {
+  try {
+    const i = [1, 1.25, 1.5, 2].indexOf(Number(localStorage.getItem(VELOCIDADE_KEY)));
+    return i < 0 ? 0 : i;
+  } catch {
+    return 0;
+  }
+}
+const velocidadeTexto = (s) => String(s).replace(".", ",") + "x";
+
 const player = {
   audio: new Audio(),
   id: null,
   el: null,
   speeds: [1, 1.25, 1.5, 2],
-  speedIndex: 0,
+  speedIndex: lerVelocidade(),
   seeking: false,
   lastSave: 0,
 };
@@ -338,7 +350,7 @@ function ensurePlayer() {
         <input class="player-range" type="range" min="0" max="1000" value="0" step="1" aria-label="Posição do episódio">
         <span class="player-time t-dur">0:00</span>
       </div>
-      <button class="player-speed" type="button" onclick="cycleSpeed()" aria-label="Velocidade de reprodução">1x</button>
+      <button class="player-speed" type="button" onclick="cycleSpeed()" aria-label="Velocidade: ${velocidadeTexto(player.speeds[player.speedIndex])}. Toque para mudar" title="Velocidade (1x, 1,25x, 1,5x, 2x)">${velocidadeTexto(player.speeds[player.speedIndex])}</button>
       <button class="player-btn player-close" type="button" onclick="closePlayer()" aria-label="Fechar player">${icon("x", 18)}</button>
     </div>`;
   document.body.appendChild(el);
@@ -456,7 +468,13 @@ function cycleSpeed() {
   player.speedIndex = (player.speedIndex + 1) % player.speeds.length;
   const s = player.speeds[player.speedIndex];
   player.audio.playbackRate = s;
-  player.el.querySelector(".player-speed").textContent = String(s).replace(".", ",") + "x";
+  const b = player.el.querySelector(".player-speed");
+  b.textContent = velocidadeTexto(s);
+  b.setAttribute("aria-label", `Velocidade: ${velocidadeTexto(s)}. Toque para mudar`);
+  try {
+    localStorage.setItem(VELOCIDADE_KEY, String(s));
+  } catch {}
+  announce(`Velocidade ${velocidadeTexto(s)}`);
 }
 
 function closePlayer() {
