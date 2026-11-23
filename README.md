@@ -715,6 +715,7 @@ Na aba **Vídeos** do painel, cada vídeo do YouTube tem **"Achar a pregação"*
 - **Por enquanto só mostra o resultado,** com links "Conferir o início/fim no YouTube". Nada é
   gravado. É o teste para ver se a leitura acerta nos cultos da igreja (precisão esperada: cerca de
   1 minuto).
+- **Situação em 22/11/2026:** o Gemini recusou com **403 ("The caller does not have permission")** todas as 5 formas de mandar o link, nos 3 modelos, em menos de 0,2 s, com vídeos públicos. O bloqueio é da chave/conta no Google, não do vídeo. Teste seguinte: chave nova num projeto novo do AI Studio. Se persistir, plano B: a equipe digita o minuto do início no painel e o resto é automático.
 - **Próximo passo, se acertar:** o episódio entra sozinho no podcast do site, tocando só a pregação
   (player do YouTube com início e fim).
 
