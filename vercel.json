@@ -9,7 +9,7 @@
       "maxDuration": 30
     },
     "api/rotina/[tarefa].mjs": {
-      "maxDuration": 60
+      "maxDuration": 300
     },
     "api/biblioteca-sync.mjs": {
       "maxDuration": 60

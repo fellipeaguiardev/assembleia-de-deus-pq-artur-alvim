@@ -325,7 +325,8 @@ p.gate-note {
   grid-template-columns: 160px minmax(0, 1fr);
   gap: 0 22px;
 }
-.admin-card-media .admin-card-foot {
+.admin-card-media .admin-card-foot,
+.admin-card-media > .admin-note {
   grid-column: 1 / -1;
 }
 .admin-thumb {
@@ -1130,4 +1131,8 @@ p.gate-note {
   font-size: 12.5px;
   line-height: 1.4;
   color: var(--c-text-faint);
+}
+.pregacao-res a {
+  font-weight: 600;
+  text-decoration: underline;
 }

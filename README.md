@@ -700,6 +700,24 @@ pelo cartaz"** mostra o que vai mudar e só troca depois da confirmação.
   com a imagem e o cartão explica o motivo. A IA pode errar (ano que não aparece no cartaz,
   letra muito decorada); os avisos dela aparecem no cartão do evento. Código QR não é lido.
 
+## Achar a pregação na live (Gemini) — em teste
+
+Na aba **Vídeos** do painel, cada vídeo do YouTube tem **"Achar a pregação"**. A rota é
+`POST /api/rotina/pregacao { video }`, só para admin, e o código fica em `api/_lib/pregacao.mjs`.
+
+- **Como funciona:** o Gemini recebe o **link** do vídeo (só vídeo público) e o próprio Google busca
+  o vídeo. O servidor do site não baixa nada, porque o YouTube barra os servidores da Vercel. Ele
+  devolve onde a pregação começa e termina, o pregador, o tema, o texto bíblico e a confiança.
+- **Plano grátis:** até 8 horas de vídeo do YouTube por dia. O vídeo vai em resolução baixa e com
+  0,2 quadro por segundo, para gastar menos.
+- **Tempo:** a função tem até 300 s (`maxDuration` no `vercel.json`); um culto longo pode levar
+  alguns minutos.
+- **Por enquanto só mostra o resultado,** com links "Conferir o início/fim no YouTube". Nada é
+  gravado. É o teste para ver se a leitura acerta nos cultos da igreja (precisão esperada: cerca de
+  1 minuto).
+- **Próximo passo, se acertar:** o episódio entra sozinho no podcast do site, tocando só a pregação
+  (player do YouTube com início e fim).
+
 ## Resumo semanal e alertas por e-mail
 
 Tudo numa função só, `api/rotina/[tarefa].mjs` (o plano grátis da Vercel aceita no máximo 12

@@ -11,6 +11,9 @@
 //   POST com o login de um admin liberado        → botões "Enviar resumo agora" e
 //        "Testar alerta" do painel (Igreja & redes); o de alerta manda o e-mail
 //        mesmo sem novidade, marcado como [Teste].
+//   POST /api/rotina/pregacao { video: "<id do YouTube>" } (só admin) → botão
+//        "Achar a pregação" da aba Vídeos: o Gemini assiste o culto e diz onde a
+//        pregação começa e termina (api/_lib/pregacao.mjs). Pode levar alguns minutos.
 //
 // EBD: confere o sumário das Lições Bíblicas do trimestre atual (e do próximo,
 // perto da virada) das revistas marcadas no painel (EBD → Importação
@@ -27,6 +30,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { syncQuarter, readSyncConfig, quartersToSync, rpc } from "../_lib/fonte.mjs";
 import { origemDeFora } from "../_lib/site.mjs";
+import { acharPregacao, ErroPregacao } from "../_lib/pregacao.mjs";
 import { lerPainel, registrarRotina, problemas, decidirAlerta, emailResumo, emailAlerta, enviarEmail, destinatarios } from "../_lib/rotina.mjs";
 
 const TIME_BUDGET_MS = 45000; // a função pode rodar até 60 s (vercel.json)
@@ -140,12 +144,22 @@ export async function GET(request) {
 export async function POST(request) {
   if (origemDeFora(request)) return json(403, { error: "Origem não permitida." });
   const tarefa = tarefaDe(request);
-  if (!["resumo", "alertas"].includes(tarefa)) return json(404, { error: "Rotina desconhecida." });
+  if (!["resumo", "alertas", "pregacao"].includes(tarefa)) return json(404, { error: "Rotina desconhecida." });
   const jwt = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "").trim();
   if (!jwt || jwt.length > 4096) return json(401, { error: "Faça login no painel." });
   const isAdmin = await rpc("is_site_admin", {}, jwt).catch((e) => (e.status === 401 ? "expirou" : null));
   if (isAdmin === "expirou") return json(401, { error: "Sessão expirada. Entre de novo no painel." });
   if (isAdmin !== true) return json(403, { error: "Sem permissão. Confirme o acesso ao painel pelo e-mail." });
+  if (tarefa === "pregacao") {
+    const corpo = await request.json().catch(() => ({}));
+    try {
+      const r = await acharPregacao({ videoId: String(corpo?.video || ""), chave: process.env.GEMINI_API_KEY, modelos: [process.env.GEMINI_MODEL] });
+      return json(200, r);
+    } catch (e) {
+      if (!(e instanceof ErroPregacao)) console.error("pregacao:", e);
+      return json(e.status || 500, { error: e.message || "Não deu para achar a pregação agora." });
+    }
+  }
   const r = await rodar(tarefa, { teste: true });
   return json(r.status, r.body);
 }

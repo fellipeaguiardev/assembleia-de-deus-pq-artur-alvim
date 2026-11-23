@@ -1121,6 +1121,55 @@ async function preencherPeloCartaz(i) {
   }
 }
 
+/* ---- VÍDEOS: achar a pregação (POST /api/rotina/pregacao, api/_lib/pregacao.mjs) ----
+   O Gemini assiste o culto pelo link do YouTube e diz onde a pregação começa e
+   termina. Por enquanto só mostra o resultado (com links para conferir no
+   YouTube); nada é gravado. */
+const pregacoes = {}; // id do vídeo → { carregando } | { erro } | resultado
+
+function pregacaoResultadoHTML(v) {
+  const r = v.youtube_id && pregacoes[v.youtube_id];
+  if (!r) return "";
+  if (r.carregando) return `<p class="admin-note" role="status">${icon("clock", 14)}<span>O Gemini está assistindo o culto… pode levar até 5 minutos. Pode continuar usando o painel.</span></p>`;
+  if (r.erro) return `<p class="admin-note admin-warn" role="status">${icon("x", 14)}<span>${esc(r.erro)}</span></p>`;
+  const yt = (seg) => `https://www.youtube.com/watch?v=${encodeURIComponent(v.youtube_id)}&t=${Math.max(0, seg)}s`;
+  const t = (seg) => (seg == null ? "?" : hmsDe(seg));
+  const conf = { alta: "alta", media: "média", baixa: "baixa" }[r.confianca] || r.confianca;
+  return `<div class="admin-note admin-ok pregacao-res" role="status">${icon("mic", 15)}<span>
+      <strong>Pregação: ${t(r.inicio)} → ${t(r.fim)}</strong> (confiança ${esc(conf)})<br>
+      ${r.pregador ? `Pregador: ${esc(r.pregador)}<br>` : ""}${r.tema ? `Tema: ${esc(r.tema)}<br>` : ""}${r.texto_biblico ? `Texto: ${esc(r.texto_biblico)}<br>` : ""}
+      <small>${esc(r.como_identificou || "")}${r.avisos?.length ? " · " + r.avisos.map(esc).join(" · ") : ""}</small><br>
+      ${r.inicio != null ? `<a href="${esc(yt(r.inicio - 15))}" target="_blank" rel="noopener">Conferir o início no YouTube</a>` : ""}
+      ${r.fim != null ? ` · <a href="${esc(yt(r.fim - 30))}" target="_blank" rel="noopener">Conferir o fim</a>` : ""}
+      <br><small>Leitura: ${esc(r.modelo || "")}, ${Math.round((r.ms || 0) / 1000)} s.</small>
+    </span></div>`;
+}
+const hmsDe = (seg) => `${Math.floor(seg / 3600)}:${String(Math.floor((seg % 3600) / 60)).padStart(2, "0")}:${String(Math.floor(seg % 60)).padStart(2, "0")}`;
+
+async function acharPregacaoDoVideo(i) {
+  const v = data.videos[i];
+  if (!v?.youtube_id || pregacoes[v.youtube_id]?.carregando) return;
+  if (!(await adminEnsureAccess())) return;
+  const id = v.youtube_id;
+  pregacoes[id] = { carregando: true };
+  renderAdmin();
+  showToast("O Gemini está assistindo o culto… pode levar alguns minutos.");
+  try {
+    const { data: s } = await supabaseClient.auth.getSession();
+    const res = await fetch("/api/rotina/pregacao", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${s?.session?.access_token || ""}` },
+      body: JSON.stringify({ video: id }),
+    });
+    const body = await res.json().catch(() => ({}));
+    pregacoes[id] = res.ok ? body : { erro: body.error || (res.status === 504 ? "Demorou demais (o culto é longo). Tente de novo." : `Não deu para achar a pregação (${res.status}).`) };
+    if (res.ok) showToast(`Pregação encontrada: ${body.inicio != null ? hmsDe(body.inicio) : "?"}`, "success");
+  } catch {
+    pregacoes[id] = { erro: "Sem conexão com o site agora." };
+  }
+  if (adminTab === "videos") renderAdmin();
+}
+
 /* ---- VÍDEOS ---- */
 function tabVideos() {
   return `
@@ -1152,7 +1201,11 @@ function tabVideos() {
           ${field("Data", `<input type="date" value="${esc(v.date)}" onchange="updateVideo(${i},'date',this.value)">`)}
           ${field("Descrição", `<textarea onchange="updateVideo(${i},'description',this.value)">${esc(v.description)}</textarea>`, true)}
         </div>
-        <div class="admin-card-foot end"><button class="btn btn-danger btn-sm" type="button" onclick="removeVideo(${i})">${v.youtube_id ? "Ocultar do site" : "Excluir vídeo"}</button></div>
+        ${pregacaoResultadoHTML(v)}
+        <div class="admin-card-foot end">
+          ${v.youtube_id ? `<button class="btn btn-ghost btn-sm" type="button" data-pregacao-btn onclick="acharPregacaoDoVideo(${i})">${icon("mic", 14)} Achar a pregação</button>` : ""}
+          <button class="btn btn-danger btn-sm" type="button" onclick="removeVideo(${i})">${v.youtube_id ? "Ocultar do site" : "Excluir vídeo"}</button>
+        </div>
       </div>`,
             )
             .join("")
