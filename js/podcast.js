@@ -434,8 +434,11 @@ function togglePlayEpisode(id) {
   if (player.id !== String(p.id)) loadEpisodeIntoPlayer(p);
   if (player.audio.paused) {
     player.audio.play().catch((e) => {
+      // "AbortError": o navegador interrompeu este pedido de play (ex.: o áudio ainda
+      // carregando, ou um toque duplo) e logo depois toca normalmente. Não é erro.
+      if (e?.name === "AbortError") return;
       console.error("Erro ao tocar áudio:", e);
-      showToast("Não foi possível tocar este áudio.", "error");
+      avisarSeNaoTocou("Não foi possível tocar este áudio.");
     });
   } else {
     player.audio.pause();
@@ -491,6 +494,17 @@ player.audio.addEventListener("timeupdate", () => {
   savePosition();
 });
 player.audio.addEventListener("error", () => {
-  if (player.id) showToast("O áudio deste episódio não pôde ser carregado.", "error");
+  if (player.id && player.audio.getAttribute("src")) avisarSeNaoTocou("O áudio deste episódio não pôde ser carregado.");
 });
+
+// Só avisa se o áudio continuar parado: às vezes o navegador acusa um erro passageiro
+// (rede, redirecionamento do servidor do podcast) e em seguida toca normalmente.
+function avisarSeNaoTocou(msg) {
+  const id = player.id;
+  setTimeout(() => {
+    const a = player.audio;
+    const tocando = !a.paused && a.readyState >= 2 && !a.error;
+    if (player.id === id && !tocando) showToast(msg, "error");
+  }, 2500);
+}
 window.addEventListener("pagehide", () => savePosition(true));
