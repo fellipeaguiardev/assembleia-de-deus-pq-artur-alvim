@@ -746,6 +746,7 @@ precisar fazer nada. São três partes:
 | `pronta` | Está no podcast. |
 | `erro` | O programa tenta de novo até 3 vezes. |
 | `ignorar` | "Não publicar": o episódio vira rascunho. |
+| `arquivada` | Culto com mais de 3 meses: saiu sozinha do podcast e o MP3 foi apagado. "Gerar o áudio" traz de volta. |
 
 **Corrigir no painel:** os campos **Começa em, Termina em, Pregador, Texto bíblico e Tema** (o tema
 vira o título do episódio).
@@ -773,9 +774,16 @@ quadro por segundo. O plano grátis permite até 8 horas de vídeo do YouTube po
 - **Desinstalar:** `Unregister-ScheduledTask -TaskName "Pregacao no podcast"`.
 - O yt-dlp se atualiza sozinho uma vez por dia, porque o YouTube muda sempre.
 
-**Espaço:** cerca de 23 MB por pregação de 50 min. O Storage grátis (1 GB, junto com as fotos)
-guarda umas 30 a 40 pregações. Depois disso, é preciso apagar episódios antigos no painel (Podcast)
-ou mudar para outro armazenamento.
+**Espaço e limpeza** (`supabase/migrations/20261124120000_pregacao_limpeza.sql`):
+- Cerca de 23 MB por pregação de 50 min; o Storage grátis tem 1 GB, junto com as fotos.
+- **Cada pregação fica 3 meses no podcast** (decisão da equipe em 23/11/2026). Uma vez por dia o
+  programa chama `pregacao_arquivar_antigas`: culto com mais de 90 dias tem o episódio apagado (só
+  episódio de número 0, nunca o Parque Cast) e o MP3 vai para o `lixo`.
+- O MP3 de episódio de pregação excluído à mão no painel também vai para o `lixo`.
+- Depois o programa apaga o lixo do Storage. As regras "Programa da pregação vê/apaga o lixo"
+  liberam para visitantes **só** arquivos que estão no lixo (`pregacao_apagavel`).
+- Para mudar o prazo: `"diasNoPodcast": 120` no `config.json` (mínimo 30, travado no banco).
+- Neste computador não fica áudio: a pasta `tmp` é esvaziada a cada rodada.
 
 ## Resumo semanal e alertas por e-mail
 

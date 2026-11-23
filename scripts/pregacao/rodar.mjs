@@ -16,7 +16,9 @@
 //      para o Storage e publica o episódio no podcast do site
 //      (pregacao_publicar). E-mail avisando; se o pregador não foi
 //      identificado, o e-mail diz onde completar.
-//   3. Anota como foi (pregacao_registrar): se falhar 2 vezes seguidas, o alerta
+//   3. Uma vez por dia, limpeza: pregação com mais de 3 meses sai do podcast e o
+//      MP3 é apagado do site (limpezaDiaria). Aqui no computador não fica áudio.
+//   4. Anota como foi (pregacao_registrar): se falhar 2 vezes seguidas, o alerta
 //      diário do site manda e-mail.
 //
 // Precisa: Node 18+, Python com yt-dlp (py -m pip install -U "yt-dlp[default]")
@@ -187,6 +189,47 @@ async function enviarEPublicar(cfg, p, arquivo) {
   return url;
 }
 
+/* ---------- Passo 3: limpeza (1 vez por dia) ----------
+   Pregação de culto com mais de DIAS_NO_PODCAST dias sai do podcast e o MP3 é
+   apagado do Storage (pregacao_arquivar_antigas; migração 20261124120000).
+   Também apaga os MP3 trocados ("Gerar o áudio" de novo) e os de episódios
+   excluídos à mão no painel. Neste computador não fica áudio nenhum: a pasta
+   tmp é esvaziada a cada rodada. */
+const DIAS_NO_PODCAST = 90; // decisão da equipe em 23/11/2026: 3 meses
+async function limpezaDiaria(cfg) {
+  const marca = path.join(PASTA, "limpeza-feita");
+  if (fs.existsSync(marca) && Date.now() - fs.statSync(marca).mtimeMs < 20 * 3600e3) return "";
+  const r = await rpc("pregacao_arquivar_antigas", { p_key: cfg.chave, p_dias: cfg.diasNoPodcast || DIAS_NO_PODCAST }).catch((e) => {
+    if (e.missing) return null;
+    throw e;
+  });
+  if (!r) return log("Limpeza: falta rodar supabase/migrations/20261124120000_pregacao_limpeza.sql no Supabase."), "";
+  const lixo = (await rpc("pregacao_lixo", { p_key: cfg.chave })) || [];
+  let apagados = [];
+  if (lixo.length) {
+    const res = await fetch(`${SUPABASE_URL}/storage/v1/object/images`, {
+      method: "DELETE",
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ prefixes: lixo }),
+      signal: AbortSignal.timeout(60e3),
+    });
+    if (!res.ok) throw new Error(`O Storage não apagou os MP3 antigos (${res.status}): ${(await res.text()).slice(0, 200)}`);
+    const nomes = ((await res.json()) || []).map((o) => o.name);
+    apagados = lixo.filter((n) => nomes.includes(n) || nomes.includes(n.split("/").pop()));
+    // o que não voltou pode já ter sido apagado (pelo painel): confere se ainda existe
+    for (const n of lixo.filter((x) => !apagados.includes(x))) {
+      const h = await fetch(`${SUPABASE_URL}/storage/v1/object/public/images/${n}`, { method: "HEAD", signal: AbortSignal.timeout(15e3) }).catch(() => null);
+      if (h && (h.status === 404 || h.status === 400)) apagados.push(n);
+    }
+    if (apagados.length) await rpc("pregacao_lixo_apagado", { p_key: cfg.chave, p_nomes: apagados });
+  }
+  fs.writeFileSync(marca, new Date().toISOString());
+  const partes = [r.antigas && `${r.antigas} pregação(ões) com mais de ${cfg.diasNoPodcast || DIAS_NO_PODCAST} dias saíram do podcast`, r.soltas && `${r.soltas} MP3 de episódio excluído no painel`, apagados.length && `${apagados.length} MP3 apagado(s) do site`].filter(Boolean);
+  if (lixo.length > apagados.length) partes.push(`${lixo.length - apagados.length} MP3 não deu para apagar (tenta amanhã)`);
+  if (partes.length) log("Limpeza:", partes.join("; ") + ".");
+  return partes.join("; ");
+}
+
 /* ---------- Rodada ---------- */
 async function rodada() {
   const cfg = lerConfig();
@@ -251,6 +294,10 @@ async function rodada() {
       resumo.push(`${p.video_id}: falhou (${e.message.slice(0, 80)})`);
       if (tentativas >= 3) await avisar(cfg, p.video_id);
     }
+  }
+  if (!SIMULAR) {
+    const limpeza = await limpezaDiaria(cfg).catch((e) => (log("Limpeza falhou:", e.message), `limpeza falhou (${e.message.slice(0, 80)})`));
+    if (limpeza) resumo.push(limpeza);
   }
   for (const f of fs.readdirSync(TMP)) fs.rmSync(path.join(TMP, f), { force: true }); // sobras de rodadas que caíram
   return { cfg, resumo };

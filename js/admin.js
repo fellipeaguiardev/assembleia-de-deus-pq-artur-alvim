@@ -1176,6 +1176,7 @@ const PREG_SITUACAO = {
   conferir: ["mic", "admin-warn", "Confira: o Gemini não teve certeza (ou não achou pregação). Corrija se precisar e toque em “Gerar o áudio”."],
   erro: ["x", "admin-warn", "O áudio não saiu."],
   ignorar: ["x", "", "Não publicada (marcada para não ir ao podcast)."],
+  arquivada: ["clock", "", "Saiu do podcast sozinha (culto com mais de 3 meses) e o áudio foi apagado. Para trazer de volta, toque em “Gerar o áudio”."],
 };
 
 function pregacaoHTML(v, i) {
@@ -1206,7 +1207,7 @@ function pregacaoHTML(v, i) {
     : "";
   const val = (s) => (s == null ? "" : hmsDe(s));
   const conferir = [d.inicio != null ? `<a href="${esc(yt(d.inicio - 15))}" target="_blank" rel="noopener">Conferir o início no YouTube</a>` : "", d.fim != null ? `<a href="${esc(yt(d.fim - 30))}" target="_blank" rel="noopener">Conferir o fim</a>` : ""].filter(Boolean).join(" · ");
-  const rotulo = !row || ["conferir", "erro", "ignorar"].includes(row.status) ? "Gerar o áudio" : "Salvar";
+  const rotulo = !row || ["conferir", "erro", "ignorar", "arquivada"].includes(row.status) ? "Gerar o áudio" : "Salvar";
   return `<div class="pregacao-box">
       <h4>${icon("headphones", 16)} Pregação no podcast (áudio)</h4>
       ${situacao}${erroGemini}${aviso}
@@ -1220,7 +1221,7 @@ function pregacaoHTML(v, i) {
       ${conferir ? `<p class="field-hint pregacao-res">${conferir}</p>` : ""}
       <div class="item-actions">
         <button class="btn btn-primary btn-sm" type="button" onclick="salvarPregacao(${i})">${esc(rotulo)}</button>
-        ${row && row.status !== "ignorar" ? `<button class="btn btn-ghost btn-sm" type="button" onclick="naoPublicarPregacao(${i})">Não publicar</button>` : ""}
+        ${row && !["ignorar", "arquivada"].includes(row.status) ? `<button class="btn btn-ghost btn-sm" type="button" onclick="naoPublicarPregacao(${i})">Não publicar</button>` : ""}
       </div>
     </div>`;
 }
@@ -1325,7 +1326,7 @@ function tabVideos() {
       ${icon("headphones", 20)}
       <p><strong>Pregação em áudio no podcast.</strong> Um programa no computador da equipe confere o canal de hora em hora. Mais ou menos 1 hora depois de cada live,
       o Gemini acha a pregação e o áudio dela vai sozinho para o podcast do site (você recebe um e-mail). Quando o Gemini não souber o pregador ou errar o horário,
-      corrija na live abaixo e toque em “Salvar” ou “Gerar o áudio”.
+      corrija na live abaixo e toque em “Salvar” ou “Gerar o áudio”. Cada pregação fica 3 meses no podcast; depois sai sozinha e o áudio é apagado (para não lotar o espaço do site).
       ${pregSemTabela ? `<br><strong class="text-warn">Falta rodar no Supabase o arquivo supabase/migrations/20261123120000_pregacao_audio.sql.</strong>` : ""}</p>
     </div>
     ${
