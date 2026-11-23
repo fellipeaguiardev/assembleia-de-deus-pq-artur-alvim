@@ -100,7 +100,7 @@ export async function acharPregacao({ videoId, chave, modelos, fetchImpl = fetch
     { nome: "youtu.be", video: { fileData: { fileUri: `https://youtu.be/${videoId}` } }, baixa: false },
   ];
   let so403 = true;
-  for (const modelo of lista) {
+  fora: for (const modelo of lista) {
     for (const v of VARIANTES) {
       const comFps = v.nome; // (nome da forma, para o log)
       const sobra = fim - Date.now();
@@ -131,7 +131,11 @@ export async function acharPregacao({ videoId, chave, modelos, fetchImpl = fetch
       console.log(`pregacao: ${modelo} forma=${comFps} → ${res.status} em ${Date.now() - t0} ms`, res.status === 200 ? JSON.stringify(j?.usageMetadata || {}) : msg.slice(0, 200));
       if (res.status !== 403) so403 = false;
       if (res.status === 400 && /api key/i.test(msg)) throw new ErroPregacao(503, "A chave do Gemini não foi aceita.");
-      if (res.status === 403 || res.status === 400) {
+      // 403 = o Google não libera vídeo do YouTube para esta conta (visto em 22/11/2026, também
+      // com chave nova em projeto novo). Para na 1ª recusa: tentar de novo só gasta a cota do
+      // plano grátis, que é a mesma da leitura de cartazes.
+      if (res.status === 403) break fora;
+      if (res.status === 400) {
         ultimo = new ErroPregacao(502, `O Gemini não respondeu (${res.status}): ${msg.slice(0, 140)}`);
         continue; // tenta a próxima forma de mandar o vídeo
       }
