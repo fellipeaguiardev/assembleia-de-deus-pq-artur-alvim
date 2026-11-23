@@ -13,7 +13,7 @@ function publishedPodcasts() {
 }
 
 const findEpisode = (id) => publishedPodcasts().find((p) => String(p.id) === String(id));
-const epLabel = (p) => (ehPregacao(p) ? "Pregação" : p.episode_number ? `EP. ${p.episode_number}` : "Episódio");
+const epLabel = (p) => (p.episode_number ? `EP. ${p.episode_number}` : "Episódio");
 const epDate = (p) => fmtDateLong(p.published_at ? String(p.published_at).slice(0, 10) : "");
 
 // width: tamanho em que a capa aparece (a miniatura vem já reduzida, ver imgThumb).
@@ -34,7 +34,7 @@ function epPlayButton(p, size = "md") {
 function epPlatformLinks(p) {
   return [
     safeUrl(p.spotify_url) && `<a class="ep-platform" href="${href(p.spotify_url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" aria-label="Ouvir no Spotify">${icon("spotify", 18)}</a>`,
-    safeUrl(p.youtube_url) && `<a class="ep-platform" href="${href(ytAbrir(p.youtube_url))}" target="_blank" rel="noopener" onclick="event.stopPropagation()" aria-label="Assistir no YouTube">${icon("youtube", 18)}</a>`,
+    safeUrl(p.youtube_url) && `<a class="ep-platform" href="${href(p.youtube_url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" aria-label="Assistir no YouTube">${icon("youtube", 18)}</a>`,
   ]
     .filter(Boolean)
     .join("");
@@ -203,7 +203,7 @@ function episodeSourceHTML(p, source) {
     return `<div class="embed-spotify">${embedGate("spotify", spotifyEmbed(p.spotify_url), "Spotify — " + p.title, { allow: "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture", openUrl: p.spotify_url, compact: true })}</div>`;
   }
   if (source === "youtube") {
-    return `<div class="embed-video">${embedGate("youtube", `https://www.youtube-nocookie.com/embed/${ytId(p.youtube_url)}?rel=0${ytTrecho(p.youtube_url)}${ytLegendas()}`, "YouTube — " + p.title, { allow: "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture", openUrl: p.youtube_url })}</div>`;
+    return `<div class="embed-video">${embedGate("youtube", `https://www.youtube-nocookie.com/embed/${ytId(p.youtube_url)}?rel=0${ytLegendas()}`, "YouTube — " + p.title, { allow: "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture", openUrl: p.youtube_url })}</div>`;
   }
   return `<div class="embed-audio">
       ${epPlayButton(p, "lg")}

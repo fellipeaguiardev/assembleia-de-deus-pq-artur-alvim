@@ -67,7 +67,7 @@ function podcastImportPlan() {
   const days = new Set(current.map(podcastDayKey));
   const fresh = feed.episodes.filter((e) => !audios.has(e.audio_url) && !days.has(podcastDayKey(e)));
   // Candidatos a apagar: episódios sem áudio próprio que não vieram do feed (ex.: o de teste).
-  const extras = current.filter((p) => !safeUrl(p.audio_url) && !ehPregacao(p)); // as pregações (aba Vídeos) ficam
+  const extras = current.filter((p) => !safeUrl(p.audio_url));
   return { fresh, extras, already: feed.episodes.length - fresh.length };
 }
 

@@ -1144,115 +1144,6 @@ function pregacaoResultadoHTML(v) {
       <br><small>Leitura: ${esc(r.modelo || "")}, ${Math.round((r.ms || 0) / 1000)} s.</small>
     </span></div>`;
 }
-/* ---- VÍDEOS: "Pregação no podcast" ----
-   A equipe digita onde a pregação começa (e, se quiser, onde termina) e o site
-   cria um episódio no podcast que toca o vídeo do YouTube só nesse trecho
-   (o início e o fim ficam no próprio link: &start=…&end=…, ver ytTrecho em core.js).
-   Entra direto no ar; dá para mudar os minutos ou tirar do podcast aqui mesmo. */
-const pregacaoDoVideo = (v) => (data.podcasts || []).find((p) => ehPregacao(p) && ytId(p.youtube_url) === v.youtube_id);
-const trechoDe = (url) => ({
-  ini: Number((String(url || "").match(/[?&]start=(\d+)/) || [])[1] ?? NaN),
-  fim: Number((String(url || "").match(/[?&]end=(\d+)/) || [])[1] ?? NaN),
-});
-
-// "1:22:00", "82:00" ou "1:22" (horas:minutos não: 2 partes = minutos:segundos) → segundos
-function lerTempo(txt) {
-  const bruto = String(txt || "").trim();
-  if (!bruto) return null;
-  // "1h22", "1h22m", "1h 22min 10s"
-  const hm = bruto.match(/^(\d+)\s*h\s*(?:(\d+)\s*(?:m|min)?)?\s*(?:(\d+)\s*s)?$/i);
-  if (hm) return +hm[1] * 3600 + +(hm[2] || 0) * 60 + +(hm[3] || 0);
-  // "82m", "82min"
-  const so = bruto.match(/^(\d+)\s*(?:m|min)$/i);
-  if (so) return +so[1] * 60;
-  const t = bruto.replace(/\s+/g, "");
-  const p = t.split(":").map((x) => (x === "" ? NaN : Number(x)));
-  if (p.length < 1 || p.length > 3 || p.some((n) => !Number.isFinite(n) || n < 0)) return NaN;
-  if (p.length === 1) return Math.round(p[0] * 60); // só um número = minutos
-  const [h, m, s] = p.length === 3 ? p : [0, ...p];
-  if (s > 59 || (p.length === 3 && m > 59)) return NaN;
-  return h * 3600 + m * 60 + s;
-}
-
-function pregacaoFormHTML(v, i) {
-  const ep = pregacaoDoVideo(v);
-  const t = ep ? trechoDe(ep.youtube_url) : {};
-  const ia = pregacoes[v.youtube_id];
-  const ini = ep && Number.isFinite(t.ini) ? hmsDe(t.ini) : ia?.inicio != null ? hmsDe(ia.inicio) : "";
-  const fim = ep && Number.isFinite(t.fim) ? hmsDe(t.fim) : ia?.fim != null && !ep ? hmsDe(ia.fim) : "";
-  return `
-        <div class="pregacao-form">
-          <div class="pregacao-form-head">${icon("mic", 15)} <strong>Pregação no podcast</strong>
-            ${ep ? `<span class="badge-inline is-auto">No podcast</span>` : ""}</div>
-          <p class="admin-muted">${
-            ep
-              ? `Já está no podcast do site, tocando só este trecho. Mude os minutos e toque em Atualizar, ou tire do podcast.`
-              : `Digite onde a pregação começa no vídeo, do jeito que o YouTube mostra: horas:minutos:segundos (ex.: 1:22:00). O fim é opcional: sem ele, toca até o fim do vídeo. Entra direto no podcast do site.`
-          }</p>
-          <div class="field-row">
-            ${field("Começa em", `<input type="text" inputmode="numeric" id="preg-ini-${i}" value="${esc(ini)}" placeholder="1:22:00">`)}
-            ${field("Termina em (opcional)", `<input type="text" inputmode="numeric" id="preg-fim-${i}" value="${esc(fim)}" placeholder="2:04:30">`)}
-          </div>
-          <div class="item-actions">
-            <button class="btn btn-primary btn-sm" type="button" onclick="salvarPregacao(${i})">${ep ? "Atualizar" : "Publicar no podcast"}</button>
-            ${ep ? `<a class="btn btn-ghost btn-sm" href="/podcast/${esc(encodeURIComponent(ep.id))}" target="_blank" rel="noopener">Ver no site</a>
-                    <button class="btn btn-ghost btn-sm" type="button" onclick="tirarPregacao(${i})">Tirar do podcast</button>` : ""}
-            <a class="btn btn-ghost btn-sm" href="${esc(ytAbrir(`https://www.youtube.com/watch?v=${v.youtube_id}${Number.isFinite(t.ini) ? `&start=${t.ini}` : ""}`))}" target="_blank" rel="noopener">${icon("youtube", 14)} Abrir no YouTube</a>
-          </div>
-        </div>`;
-}
-
-async function salvarPregacao(i) {
-  const v = data.videos[i];
-  if (!v?.youtube_id) return;
-  const ini = lerTempo(document.getElementById(`preg-ini-${i}`)?.value);
-  const fim = lerTempo(document.getElementById(`preg-fim-${i}`)?.value);
-  if (ini === null || Number.isNaN(ini)) return showToast("Digite onde a pregação começa, assim: 1:22:00", "error");
-  if (Number.isNaN(fim)) return showToast("O fim não ficou claro. Use assim: 2:04:30 (ou deixe vazio).", "error");
-  if (fim !== null && fim <= ini) return showToast("O fim precisa ser depois do início.", "error");
-  if (!(await adminEnsureAccess())) return;
-  const youtube_url = `https://www.youtube.com/watch?v=${v.youtube_id}&start=${ini}${fim !== null ? `&end=${fim}` : ""}`;
-  const ep = pregacaoDoVideo(v);
-  if (ep) {
-    if (!(await dbWrite(db("podcasts").update({ youtube_url }).eq("id", ep.id), `Pregação atualizada: de ${hmsDe(ini)} ${fim !== null ? `até ${hmsDe(fim)}` : "até o fim do vídeo"}.`, "Erro ao atualizar."))) return;
-    ep.youtube_url = youtube_url;
-  } else {
-    const titulo = `Pregação – ${String(v.title || "Culto").replace(/\s*\(parte\s*\d+\)\s*/i, " ").replace(/\s+/g, " ").trim()}`;
-    const created = await dbWrite(
-      db("podcasts")
-        .insert({
-          title: titulo.slice(0, 300),
-          description: (v.description || "").trim() || `Pregação do ${v.title || "culto"}, transmitido ao vivo pela igreja.`,
-          episode_number: 0,
-          cover_url: ytThumb(v.youtubeUrl) || "",
-          audio_url: "",
-          spotify_url: "",
-          youtube_url,
-          published_at: v.date ? `${v.date}T12:00:00Z` : new Date().toISOString(),
-          status: "Publicado",
-        })
-        .select()
-        .single(),
-      `Pregação no podcast: de ${hmsDe(ini)} ${fim !== null ? `até ${hmsDe(fim)}` : "até o fim do vídeo"}.`,
-      "Erro ao publicar no podcast.",
-    );
-    if (!created) return;
-    (data.podcasts ||= []).unshift(mapPodcast(created));
-  }
-  renderAdmin();
-  renderSite();
-}
-
-async function tirarPregacao(i) {
-  const v = data.videos[i];
-  const ep = v && pregacaoDoVideo(v);
-  if (!ep || !confirm("Tirar esta pregação do podcast do site? (O vídeo continua normal.)")) return;
-  if (!(await dbWrite(db("podcasts").delete().eq("id", ep.id), "Pregação tirada do podcast.", "Erro ao tirar do podcast."))) return;
-  data.podcasts = data.podcasts.filter((p) => p.id !== ep.id);
-  renderAdmin();
-  renderSite();
-}
-
 const hmsDe = (seg) => `${Math.floor(seg / 3600)}:${String(Math.floor((seg % 3600) / 60)).padStart(2, "0")}:${String(Math.floor(seg % 60)).padStart(2, "0")}`;
 
 async function acharPregacaoDoVideo(i) {
@@ -1311,7 +1202,6 @@ function tabVideos() {
           ${field("Descrição", `<textarea onchange="updateVideo(${i},'description',this.value)">${esc(v.description)}</textarea>`, true)}
         </div>
         ${pregacaoResultadoHTML(v)}
-        ${v.youtube_id ? pregacaoFormHTML(v, i) : ""}
         <div class="admin-card-foot end">
           ${v.youtube_id ? `<button class="btn btn-ghost btn-sm" type="button" data-pregacao-btn onclick="acharPregacaoDoVideo(${i})">${icon("mic", 14)} Achar a pregação</button>` : ""}
           <button class="btn btn-danger btn-sm" type="button" onclick="removeVideo(${i})">${v.youtube_id ? "Ocultar do site" : "Excluir vídeo"}</button>
