@@ -87,15 +87,27 @@ export async function acharPregacao({ videoId, chave, modelos, fetchImpl = fetch
   const lista = [...new Set([...(modelos || []), ...MODELOS].filter(Boolean))];
   const fim = Date.now() + prazoMs;
   let ultimo = null;
+  const watch = `https://www.youtube.com/watch?v=${videoId}`;
+  // Formas de mandar o vídeo, da mais econômica para a mais simples. Em 22/11/2026 a
+  // 1ª voltou 403 ("The caller does not have permission") na hora, nos 3 modelos,
+  // com vídeos públicos: por isso, se uma forma for recusada (400/403), tenta a
+  // próxima, e o log mostra qual funcionou.
+  const VARIANTES = [
+    { nome: "fps0.2+baixa", video: { fileData: { fileUri: watch }, videoMetadata: { fps: 0.2 } }, baixa: true },
+    { nome: "baixa", video: { fileData: { fileUri: watch } }, baixa: true },
+    { nome: "simples", video: { fileData: { fileUri: watch } }, baixa: false },
+    { nome: "mime", video: { fileData: { fileUri: watch, mimeType: "video/*" } }, baixa: false },
+    { nome: "youtu.be", video: { fileData: { fileUri: `https://youtu.be/${videoId}` } }, baixa: false },
+  ];
+  let so403 = true;
   for (const modelo of lista) {
-    // primeiro com poucos quadros por segundo; se o modelo não aceitar o ajuste, vai sem ele
-    for (const comFps of [true, false]) {
+    for (const v of VARIANTES) {
+      const comFps = v.nome; // (nome da forma, para o log)
       const sobra = fim - Date.now();
       if (sobra < 20000) throw ultimo || new ErroPregacao(504, "O Gemini demorou demais. Tente de novo mais tarde.");
-      const video = { fileData: { fileUri: `https://www.youtube.com/watch?v=${videoId}` }, ...(comFps && { videoMetadata: { fps: 0.2 } }) };
       const corpo = {
-        contents: [{ role: "user", parts: [video, { text: PROMPT_PREGACAO }] }],
-        generationConfig: { responseMimeType: "application/json", responseJsonSchema: ESQUEMA_PREGACAO, mediaResolution: "MEDIA_RESOLUTION_LOW" },
+        contents: [{ role: "user", parts: [v.video, { text: PROMPT_PREGACAO }] }],
+        generationConfig: { responseMimeType: "application/json", responseJsonSchema: ESQUEMA_PREGACAO, ...(v.baixa && { mediaResolution: "MEDIA_RESOLUTION_LOW" }) },
       };
       const t0 = Date.now();
       let res, bruto;
@@ -116,10 +128,13 @@ export async function acharPregacao({ videoId, chave, modelos, fetchImpl = fetch
         j = JSON.parse(bruto);
       } catch {}
       const msg = j?.error?.message || bruto.slice(0, 300);
-      console.log(`pregacao: ${modelo} fps=${comFps} → ${res.status} em ${Date.now() - t0} ms`, res.status === 200 ? JSON.stringify(j?.usageMetadata || {}) : msg.slice(0, 200));
-      if (res.status === 400 && comFps && /fps|video_?metadata/i.test(msg)) continue;
+      console.log(`pregacao: ${modelo} forma=${comFps} → ${res.status} em ${Date.now() - t0} ms`, res.status === 200 ? JSON.stringify(j?.usageMetadata || {}) : msg.slice(0, 200));
+      if (res.status !== 403) so403 = false;
       if (res.status === 400 && /api key/i.test(msg)) throw new ErroPregacao(503, "A chave do Gemini não foi aceita.");
-      if (res.status === 400 && /(private|unlisted|not (be )?accessible|youtube)/i.test(msg)) throw new ErroPregacao(422, "O Gemini não conseguiu abrir esse vídeo (precisa ser público).");
+      if (res.status === 403 || res.status === 400) {
+        ultimo = new ErroPregacao(502, `O Gemini não respondeu (${res.status}): ${msg.slice(0, 140)}`);
+        continue; // tenta a próxima forma de mandar o vídeo
+      }
       if (res.status === 429) {
         ultimo = new ErroPregacao(429, "O plano grátis do Gemini chegou ao limite por agora (vídeo longo gasta bastante). Tente de novo mais tarde.");
         break;
@@ -137,8 +152,13 @@ export async function acharPregacao({ videoId, chave, modelos, fetchImpl = fetch
         ultimo = new ErroPregacao(422, "Não entendi a resposta do Gemini. Tente de novo.");
         break;
       }
-      return { ...limparPregacao(obj), modelo, ms: Date.now() - t0, tokens: j?.usageMetadata?.promptTokenCount || null };
+      return { ...limparPregacao(obj), modelo, forma: v.nome, ms: Date.now() - t0, tokens: j?.usageMetadata?.promptTokenCount || null };
     }
   }
+  if (so403)
+    throw new ErroPregacao(
+      403,
+      "O Gemini recusou abrir vídeos do YouTube com a chave atual (403, sem permissão). O vídeo é público; o bloqueio é do lado do Google — veja o README (Achar a pregação).",
+    );
   throw ultimo || new ErroPregacao(502, "O Gemini não respondeu. Tente de novo.");
 }
