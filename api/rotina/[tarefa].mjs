@@ -14,6 +14,11 @@
 //   POST /api/rotina/pregacao { video: "<id do YouTube>" } (só admin) → botão
 //        "Achar a pregação" da aba Vídeos: o Gemini assiste o culto e diz onde a
 //        pregação começa e termina (api/_lib/pregacao.mjs). Pode levar alguns minutos.
+//   POST /api/rotina/pregacao com "Authorization: Bearer preg_…" → o programa do
+//        computador (scripts/pregacao/rodar.mjs). A chave é conferida no banco
+//        (pregacao_chave_ok; no banco fica só o hash):
+//        { acao: "analisar", video, titulo, culto_em } → Gemini + grava em public.pregacoes
+//        { acao: "avisar", video } → e-mail para a equipe (publicada / conferir / erro)
 //
 // EBD: confere o sumário das Lições Bíblicas do trimestre atual (e do próximo,
 // perto da virada) das revistas marcadas no painel (EBD → Importação
@@ -31,7 +36,7 @@ import { timingSafeEqual } from "node:crypto";
 import { syncQuarter, readSyncConfig, quartersToSync, rpc } from "../_lib/fonte.mjs";
 import { origemDeFora } from "../_lib/site.mjs";
 import { acharPregacao, ErroPregacao } from "../_lib/pregacao.mjs";
-import { lerPainel, registrarRotina, problemas, decidirAlerta, emailResumo, emailAlerta, enviarEmail, destinatarios } from "../_lib/rotina.mjs";
+import { lerPainel, registrarRotina, problemas, decidirAlerta, emailResumo, emailAlerta, emailPregacao, enviarEmail, destinatarios } from "../_lib/rotina.mjs";
 
 const TIME_BUDGET_MS = 45000; // a função pode rodar até 60 s (vercel.json)
 
@@ -122,6 +127,37 @@ async function rotinaAlertas({ teste = false } = {}) {
   return { status: 200, body: { ok: true, enviado: true, problemas: lista.map((x) => x.titulo) } };
 }
 
+/* ---------- Programa da pregação (computador) ---------- */
+async function pregacaoDoPrograma(request, chave) {
+  const valida = chave.length <= 200 ? await rpc("pregacao_chave_ok", { p_key: chave }).catch((e) => (e.missing ? "falta" : null)) : false;
+  if (valida === "falta") return json(503, { error: "Falta rodar supabase/migrations/20261123120000_pregacao_audio.sql no Supabase." });
+  if (valida !== true) return json(401, { error: "Chave do programa não aceita." });
+  const corpo = await request.json().catch(() => ({}));
+  const video = String(corpo?.video || "");
+  if (!/^[\w-]{11}$/.test(video)) return json(400, { error: "Vídeo inválido." });
+  try {
+    if (corpo.acao === "analisar") {
+      const r = await acharPregacao({ videoId: video, chave: process.env.GEMINI_API_KEY, modelos: [process.env.GEMINI_MODEL] });
+      const culto = new Date(corpo.culto_em || "");
+      const dados = { ...r, titulo: String(corpo.titulo || "").slice(0, 200), culto_em: Number.isNaN(culto.getTime()) ? "" : culto.toISOString() };
+      const status = await rpc("pregacao_salvar", { p_key: chave, p_video: video, p_dados: dados });
+      console.log(`pregacao (programa): ${video} → ${status} (${r.inicio}–${r.fim}, ${r.confianca})`);
+      return json(200, { ...r, status });
+    }
+    if (corpo.acao === "avisar") {
+      const p = await rpc("pregacao_ler", { p_key: chave, p_video: video });
+      if (!p) return json(404, { error: "Pregação não encontrada." });
+      const email = emailPregacao(p);
+      await enviarEmail({ to: destinatarios(), ...email });
+      return json(200, { ok: true, assunto: email.subject });
+    }
+    return json(400, { error: "Ação desconhecida." });
+  } catch (e) {
+    if (!(e instanceof ErroPregacao)) console.error("pregacao (programa):", e.message);
+    return json(e.status || 500, { error: e.message || "Falhou." });
+  }
+}
+
 async function rodar(tarefa, opcoes) {
   try {
     if (tarefa === "ebd") return await rotinaEbd();
@@ -146,6 +182,7 @@ export async function POST(request) {
   const tarefa = tarefaDe(request);
   if (!["resumo", "alertas", "pregacao"].includes(tarefa)) return json(404, { error: "Rotina desconhecida." });
   const jwt = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "").trim();
+  if (tarefa === "pregacao" && jwt.startsWith("preg_")) return pregacaoDoPrograma(request, jwt);
   if (!jwt || jwt.length > 4096) return json(401, { error: "Faça login no painel." });
   const isAdmin = await rpc("is_site_admin", {}, jwt).catch((e) => (e.status === 401 ? "expirou" : null));
   if (isAdmin === "expirou") return json(401, { error: "Sessão expirada. Entre de novo no painel." });

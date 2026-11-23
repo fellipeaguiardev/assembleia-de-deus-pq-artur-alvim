@@ -1121,30 +1121,164 @@ async function preencherPeloCartaz(i) {
   }
 }
 
-/* ---- VÍDEOS: achar a pregação (POST /api/rotina/pregacao, api/_lib/pregacao.mjs) ----
-   O Gemini assiste o culto pelo link do YouTube e diz onde a pregação começa e
-   termina. Por enquanto só mostra o resultado (com links para conferir no
-   YouTube); nada é gravado. */
-const pregacoes = {}; // id do vídeo → { carregando } | { erro } | resultado
+/* ---- VÍDEOS: pregação em áudio no podcast ----
+   Tabela public.pregacoes (supabase/migrations/20261123120000_pregacao_audio.sql).
+   O programa do computador (scripts/pregacao/rodar.mjs) acha a pregação das
+   lives novas com o Gemini, gera o MP3 e publica no podcast. Aqui a equipe vê
+   a situação de cada live e corrige o que o Gemini não soube (pregador, tema,
+   texto, início e fim). "Gerar o áudio" põe na fila: o computador gera na
+   próxima rodada (de hora em hora).
+   "Achar a pregação" (POST /api/rotina/pregacao) pede ao Gemini na hora e
+   preenche os campos; só grava quando a equipe toca em "Gerar o áudio". */
+const pregacoes = {}; // id do vídeo → { carregando } | { erro } | resultado do Gemini
+let pregRows = null; // id do vídeo → linha de public.pregacoes (null: ainda não leu)
+let pregSemTabela = false;
 
-function pregacaoResultadoHTML(v) {
-  const r = v.youtube_id && pregacoes[v.youtube_id];
-  if (!r) return "";
-  if (r.carregando) return `<p class="admin-note" role="status">${icon("clock", 14)}<span>O Gemini está assistindo o culto… pode levar até 5 minutos. Pode continuar usando o painel.</span></p>`;
-  if (r.erro) return `<p class="admin-note admin-warn" role="status">${icon("x", 14)}<span>${esc(r.erro)}</span></p>`;
-  const yt = (seg) => `https://www.youtube.com/watch?v=${encodeURIComponent(v.youtube_id)}&t=${Math.max(0, seg)}s`;
-  const t = (seg) => (seg == null ? "?" : hmsDe(seg));
-  const conf = { alta: "alta", media: "média", baixa: "baixa" }[r.confianca] || r.confianca;
-  return `<div class="admin-note admin-ok pregacao-res" role="status">${icon("mic", 15)}<span>
-      <strong>Pregação: ${t(r.inicio)} → ${t(r.fim)}</strong> (confiança ${esc(conf)})<br>
-      ${r.pregador ? `Pregador: ${esc(r.pregador)}<br>` : ""}${r.tema ? `Tema: ${esc(r.tema)}<br>` : ""}${r.texto_biblico ? `Texto: ${esc(r.texto_biblico)}<br>` : ""}
-      <small>${esc(r.como_identificou || "")}${r.avisos?.length ? " · " + r.avisos.map(esc).join(" · ") : ""}</small><br>
-      ${r.inicio != null ? `<a href="${esc(yt(r.inicio - 15))}" target="_blank" rel="noopener">Conferir o início no YouTube</a>` : ""}
-      ${r.fim != null ? ` · <a href="${esc(yt(r.fim - 30))}" target="_blank" rel="noopener">Conferir o fim</a>` : ""}
-      <br><small>Leitura: ${esc(r.modelo || "")}, ${Math.round((r.ms || 0) / 1000)} s.</small>
-    </span></div>`;
+async function carregarPregacoes() {
+  if (pregRows) return;
+  pregRows = {};
+  const { data: rows, error } = await db("pregacoes").select("*");
+  if (error) {
+    pregSemTabela = /pregacoes|PGRST205|42P01/.test(`${error.code} ${error.message}`);
+    if (!pregSemTabela) console.error("pregacoes:", error);
+  } else {
+    for (const r of rows || []) pregRows[r.video_id] = r;
+    limparAudiosAntigos(rows || []);
+  }
+  if (adminTab === "videos") renderAdmin();
 }
+
+// MP3 trocados ("Gerar o áudio" de novo): o programa não pode apagar; o painel apaga.
+async function limparAudiosAntigos(rows) {
+  for (const r of rows.filter((x) => x.lixo?.length)) {
+    const nomes = r.lixo.filter((n) => /^pregacoes\/[\w-]+\.mp3$/.test(n));
+    const { error } = nomes.length ? await supabaseClient.storage.from("images").remove(nomes) : { error: null };
+    if (!error) await db("pregacoes").update({ lixo: [] }).eq("video_id", r.video_id);
+  }
+}
+
 const hmsDe = (seg) => `${Math.floor(seg / 3600)}:${String(Math.floor((seg % 3600) / 60)).padStart(2, "0")}:${String(Math.floor(seg % 60)).padStart(2, "0")}`;
+// "1:22:10", "82:10" ou "4930" → segundos; "" → null; inválido → NaN
+function lerHms(txt) {
+  const t = String(txt || "").trim();
+  if (!t) return null;
+  if (/^\d+$/.test(t)) return Number(t);
+  const p = t.split(":").map((x) => (/^\d+$/.test(x) ? Number(x) : NaN));
+  if (p.length < 2 || p.length > 3 || p.some(Number.isNaN)) return NaN;
+  const [h, m, s] = p.length === 3 ? p : [0, ...p];
+  if (s > 59 || (p.length === 3 && m > 59)) return NaN;
+  return h * 3600 + m * 60 + s;
+}
+
+const PREG_SITUACAO = {
+  fila: ["clock", "", "Na fila: o computador gera o áudio na próxima rodada (de hora em hora, com ele ligado)."],
+  pronta: ["check", "admin-ok", "No podcast em áudio."],
+  conferir: ["mic", "admin-warn", "Confira: o Gemini não teve certeza (ou não achou pregação). Corrija se precisar e toque em “Gerar o áudio”."],
+  erro: ["x", "admin-warn", "O áudio não saiu."],
+  ignorar: ["x", "", "Não publicada (marcada para não ir ao podcast)."],
+};
+
+function pregacaoHTML(v, i) {
+  if (!v.youtube_id) return "";
+  const id = v.youtube_id;
+  const row = pregRows?.[id];
+  const r = pregacoes[id];
+  if (r?.carregando) return `<p class="admin-note" role="status">${icon("clock", 14)}<span>O Gemini está assistindo o culto… pode levar até 5 minutos. Pode continuar usando o painel.</span></p>`;
+  const erroGemini = r?.erro ? `<p class="admin-note admin-warn" role="status">${icon("x", 14)}<span>${esc(r.erro)}</span></p>` : "";
+  const novo = r && !r.erro ? r : null; // resultado do Gemini ainda não gravado
+  if (!row && !novo) return erroGemini;
+  const d = novo ? { inicio: novo.inicio, fim: novo.fim, pregador: novo.pregador, tema: novo.tema, texto: novo.texto_biblico } : row;
+  const yt = (seg) => `https://www.youtube.com/watch?v=${encodeURIComponent(id)}&t=${Math.max(0, seg)}s`;
+  let situacao = "";
+  if (row) {
+    const [ic, cls, txt] = PREG_SITUACAO[row.status] || ["mic", "", row.status];
+    const ep = row.episodio && (data.podcasts || []).find((p) => String(p.id) === String(row.episodio));
+    const extra =
+      row.status === "erro"
+        ? ` Tentativa ${row.tentativas} de 3: ${esc(row.detalhe || "?")}${row.tentativas >= 3 ? " Toque em “Gerar o áudio” para tentar de novo." : " O computador tenta de novo na próxima rodada."}`
+        : row.status === "pronta" && ep
+          ? ` <a href="${esc(ep.audio_url)}" target="_blank" rel="noopener">Ouvir</a> · episódio “${esc(ep.title)}”${row.pregador ? "" : " · <strong>falta o pregador</strong>"}`
+          : "";
+    situacao = `<p class="admin-note ${cls}" role="status">${icon(ic, 14)}<span>${esc(txt)}${extra}</span></p>`;
+  }
+  const aviso = novo
+    ? `<p class="admin-note admin-ok" role="status">${icon("mic", 14)}<span>O Gemini achou (confiança ${esc({ alta: "alta", media: "média", baixa: "baixa" }[novo.confianca] || novo.confianca)})${novo.como_identificou ? ": " + esc(novo.como_identificou.replace(/[.\s]+$/, "")) : ""}.${novo.avisos?.length ? " " + novo.avisos.map(esc).join(" ") : ""} Confira e toque em “${row ? "Salvar" : "Gerar o áudio"}” para usar.</span></p>`
+    : "";
+  const val = (s) => (s == null ? "" : hmsDe(s));
+  const conferir = [d.inicio != null ? `<a href="${esc(yt(d.inicio - 15))}" target="_blank" rel="noopener">Conferir o início no YouTube</a>` : "", d.fim != null ? `<a href="${esc(yt(d.fim - 30))}" target="_blank" rel="noopener">Conferir o fim</a>` : ""].filter(Boolean).join(" · ");
+  const rotulo = !row || ["conferir", "erro", "ignorar"].includes(row.status) ? "Gerar o áudio" : "Salvar";
+  return `<div class="pregacao-box">
+      <h4>${icon("headphones", 16)} Pregação no podcast (áudio)</h4>
+      ${situacao}${erroGemini}${aviso}
+      <div class="field-row">
+        ${field("Começa em", `<input type="text" inputmode="numeric" id="preg-ini-${i}" value="${esc(val(d.inicio))}" placeholder="1:22:00">`)}
+        ${field("Termina em", `<input type="text" inputmode="numeric" id="preg-fim-${i}" value="${esc(val(d.fim))}" placeholder="vazio = até o fim">`)}
+        ${field("Pregador", `<input type="text" id="preg-pregador-${i}" maxlength="80" value="${esc(d.pregador || "")}" placeholder="Ex.: Pr. João Silva">`)}
+        ${field("Texto bíblico", `<input type="text" id="preg-texto-${i}" maxlength="120" value="${esc(d.texto || "")}" placeholder="Ex.: Salmos 133:1-3">`)}
+        ${field("Tema (vira o título do episódio)", `<input type="text" id="preg-tema-${i}" maxlength="160" value="${esc(d.tema || "")}">`, true)}
+      </div>
+      ${conferir ? `<p class="field-hint pregacao-res">${conferir}</p>` : ""}
+      <div class="item-actions">
+        <button class="btn btn-primary btn-sm" type="button" onclick="salvarPregacao(${i})">${esc(rotulo)}</button>
+        ${row && row.status !== "ignorar" ? `<button class="btn btn-ghost btn-sm" type="button" onclick="naoPublicarPregacao(${i})">Não publicar</button>` : ""}
+      </div>
+    </div>`;
+}
+
+async function salvarPregacao(i) {
+  const v = data.videos[i];
+  if (!v?.youtube_id) return;
+  const id = v.youtube_id;
+  const row = pregRows?.[id];
+  const novo = pregacoes[id] && !pregacoes[id].erro && !pregacoes[id].carregando ? pregacoes[id] : null;
+  const val = (k) => document.getElementById(`preg-${k}-${i}`)?.value.trim() || "";
+  const inicio = lerHms(val("ini"));
+  const fim = lerHms(val("fim"));
+  if (inicio === null) return showToast("Digite onde a pregação começa (ex.: 1:22:00).", "error");
+  if (Number.isNaN(inicio) || Number.isNaN(fim)) return showToast("Escreva o horário como no YouTube: 1:22:00.", "error");
+  if (fim !== null && fim <= inicio) return showToast("O fim precisa ser depois do início.", "error");
+  const mudouTempo = !row || row.inicio !== inicio || (row.fim ?? null) !== fim;
+  const status = row?.status === "pronta" && !mudouTempo ? "pronta" : "fila";
+  const linha = {
+    video_id: id,
+    titulo: row?.titulo || v.title || "",
+    culto_em: row?.culto_em || (v.date ? `${v.date}T19:00:00-03:00` : null),
+    inicio,
+    fim,
+    pregador: val("pregador"),
+    tema: val("tema"),
+    texto: val("texto"),
+    status,
+    ...(status === "fila" && { tentativas: 0, detalhe: "" }),
+    ...(novo && { confianca: novo.confianca || "", como: novo.como_identificou || "" }),
+    atualizado_em: new Date().toISOString(),
+  };
+  const salvo = await dbWrite(db("pregacoes").upsert(linha).select().single(), null, "Não foi possível salvar a pregação.");
+  if (!salvo) return;
+  pregRows[id] = salvo === true ? { ...row, ...linha } : salvo;
+  delete pregacoes[id];
+  if (row?.episodio) await supabaseClient.rpc("pregacao_atualizar_episodio", { p_video: id }).then(({ error }) => error && console.error(error));
+  if (row?.episodio) {
+    const { data: ep } = await db("podcasts").select("*").eq("id", row.episodio).maybeSingle();
+    if (ep) data.podcasts = data.podcasts.map((x) => (String(x.id) === String(ep.id) ? mapPodcast(ep) : x));
+  }
+  showToast(status === "fila" ? "Pronto! O computador gera o áudio na próxima rodada (de hora em hora)." : "Salvo! O episódio do podcast foi atualizado.", "success");
+  renderAdmin();
+}
+
+async function naoPublicarPregacao(i) {
+  const v = data.videos[i];
+  const row = v?.youtube_id && pregRows?.[v.youtube_id];
+  if (!row) return;
+  if (!confirm(`Não publicar a pregação de "${v.title}"?${row.episodio ? " O episódio sai do site (vira rascunho no Podcast)." : ""}`)) return;
+  if (!(await dbWrite(db("pregacoes").update({ status: "ignorar", atualizado_em: new Date().toISOString() }).eq("video_id", row.video_id), null, "Não foi possível salvar."))) return;
+  if (row.episodio) await dbWrite(db("podcasts").update({ status: "Rascunho" }).eq("id", row.episodio), null, "Não foi possível tirar o episódio do site.");
+  pregRows[row.video_id] = { ...row, status: "ignorar" };
+  const ep = row.episodio && (data.podcasts || []).find((p) => String(p.id) === String(row.episodio));
+  if (ep) ep.status = "Rascunho";
+  showToast("Ok, essa pregação não vai para o podcast.", "success");
+  renderAdmin();
+}
 
 async function acharPregacaoDoVideo(i) {
   const v = data.videos[i];
@@ -1163,7 +1297,7 @@ async function acharPregacaoDoVideo(i) {
     });
     const body = await res.json().catch(() => ({}));
     pregacoes[id] = res.ok ? body : { erro: body.error || (res.status === 504 ? "Demorou demais (o culto é longo). Tente de novo." : `Não deu para achar a pregação (${res.status}).`) };
-    if (res.ok) showToast(`Pregação encontrada: ${body.inicio != null ? hmsDe(body.inicio) : "?"}`, "success");
+    if (res.ok) showToast(`Pregação encontrada: ${body.inicio != null ? hmsDe(body.inicio) : "?"}. Confira e toque em “Gerar o áudio”.`, "success");
   } catch {
     pregacoes[id] = { erro: "Sem conexão com o site agora." };
   }
@@ -1172,6 +1306,7 @@ async function acharPregacaoDoVideo(i) {
 
 /* ---- VÍDEOS ---- */
 function tabVideos() {
+  if (!pregRows) carregarPregacoes();
   return `
     ${topbar(
       "Vídeos e lives",
@@ -1185,6 +1320,13 @@ function tabVideos() {
       <p><strong>Sincronização automática ligada.</strong> A cada 10 minutos o site busca as lives e vídeos novos do canal do YouTube
       (ID configurado em “Igreja &amp; redes”) e adiciona aqui. Você pode editar título e categoria normalmente.
       Para tirar um vídeo do site, use “Ocultar”: ele não volta na próxima sincronização.</p>
+    </div>
+    <div class="admin-card admin-sync-note">
+      ${icon("headphones", 20)}
+      <p><strong>Pregação em áudio no podcast.</strong> Um programa no computador da equipe confere o canal de hora em hora. Mais ou menos 1 hora depois de cada live,
+      o Gemini acha a pregação e o áudio dela vai sozinho para o podcast do site (você recebe um e-mail). Quando o Gemini não souber o pregador ou errar o horário,
+      corrija na live abaixo e toque em “Salvar” ou “Gerar o áudio”.
+      ${pregSemTabela ? `<br><strong class="text-warn">Falta rodar no Supabase o arquivo supabase/migrations/20261123120000_pregacao_audio.sql.</strong>` : ""}</p>
     </div>
     ${
       data.videos.length
@@ -1201,7 +1343,7 @@ function tabVideos() {
           ${field("Data", `<input type="date" value="${esc(v.date)}" onchange="updateVideo(${i},'date',this.value)">`)}
           ${field("Descrição", `<textarea onchange="updateVideo(${i},'description',this.value)">${esc(v.description)}</textarea>`, true)}
         </div>
-        ${pregacaoResultadoHTML(v)}
+        ${pregacaoHTML(v, i)}
         <div class="admin-card-foot end">
           ${v.youtube_id ? `<button class="btn btn-ghost btn-sm" type="button" data-pregacao-btn onclick="acharPregacaoDoVideo(${i})">${icon("mic", 14)} Achar a pregação</button>` : ""}
           <button class="btn btn-danger btn-sm" type="button" onclick="removeVideo(${i})">${v.youtube_id ? "Ocultar do site" : "Excluir vídeo"}</button>

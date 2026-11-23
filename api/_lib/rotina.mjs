@@ -69,9 +69,11 @@ const msgAtraso = (x) => `${oi(x.leitor)} O prazo do livro “${x.livro}” venc
 const msgLembrete = (x) => `${oi(x.leitor)} Passando para lembrar que o livro “${x.livro}” vence em ${diaMes(x.vence)}. Você pode devolver no culto ou pedir renovação, se não houver fila. Deus abençoe!`;
 
 /* ---------- O que merece alerta ---------- */
-const ROTINAS = { ebd: "Importação das lições da EBD", biblioteca: "Atualização da biblioteca pela planilha", noticias: "Busca das notícias da sede" };
+const ROTINAS = { ebd: "Importação das lições da EBD", biblioteca: "Atualização da biblioteca pela planilha", noticias: "Busca das notícias da sede", pregacao: "Programa da pregação no podcast (computador)" };
 const VIDEO_PARADO_DIAS = 4; // a igreja transmite várias vezes por semana
 const ROTINA_SUMIDA_H = 50; // rotinas diárias: mais de 2 dias sem rodar
+// O programa da pregação roda num computador que pode ficar desligado uns dias.
+const SUMIDA_H = { pregacao: 8 * 24 };
 
 export function problemas(p, agora = new Date()) {
   const out = [];
@@ -79,7 +81,7 @@ export function problemas(p, agora = new Date()) {
     const r = p?.rotinas?.[tarefa];
     if (!r) continue; // ainda não rodou desde que o alerta foi ligado
     if (!r.ok && r.falhas >= 2) out.push({ chave: `rotina-${tarefa}`, titulo: `${nome} está falhando`, texto: `Falhou ${r.falhas} vezes seguidas (a última em ${quando(r.em)}). ${r.detalhe || ""}`.trim() });
-    else if (agora - new Date(r.em) > ROTINA_SUMIDA_H * 3600e3) out.push({ chave: `rotina-${tarefa}-parada`, titulo: `${nome} parou de rodar`, texto: `A última vez foi em ${quando(r.em)}.` });
+    else if (agora - new Date(r.em) > (SUMIDA_H[tarefa] || ROTINA_SUMIDA_H) * 3600e3) out.push({ chave: `rotina-${tarefa}-parada`, titulo: `${nome} parou de rodar`, texto: `A última vez foi em ${quando(r.em)}.` });
   }
   if (p?.ultimo_video) {
     const dias = Math.floor((agora - new Date(p.ultimo_video)) / DIA_MS);
@@ -129,6 +131,69 @@ function moldura({ titulo, subtitulo, corpo, rodape }) {
 
 const RODAPE_TEXTO = (oque) =>
   `${oque} Quem recebe: a variável RESUMO_PARA na Vercel (ou, sem ela, quem libera o painel). Para não cair no spam, adicione ${REMETENTE.replace(/^.*<|>$/g, "")} aos seus contatos.`;
+
+/* ---------- Pregação no podcast (programa do computador: scripts/pregacao/) ---------- */
+const hms = (seg) => (seg == null ? "?" : `${Math.floor(seg / 3600)}:${String(Math.floor((seg % 3600) / 60)).padStart(2, "0")}:${String(Math.floor(seg % 60)).padStart(2, "0")}`);
+// p = linha de public.pregacoes (pregacao_ler), com episodio_titulo.
+export function emailPregacao(p) {
+  const yt = (seg) => `https://www.youtube.com/watch?v=${encodeURIComponent(p.video_id)}${seg != null ? `&t=${Math.max(0, seg - 15)}s` : ""}`;
+  const live = p.titulo || "a live";
+  const painel = `${SITE_URL}/admin`;
+  const ondeCorrigir = `no painel, aba Vídeos, na live “${live}”.`;
+  const trecho = `Trecho: ${hms(p.inicio)} até ${hms(p.fim)} da live.`;
+  const rodape = RODAPE_TEXTO("Aviso automático do programa da pregação.");
+  let assunto, titulo, subtitulo, blocos, texto;
+  if (p.status === "pronta") {
+    const semPregador = !p.pregador;
+    assunto = `Pregação no podcast: ${p.episodio_titulo || live}`;
+    titulo = "Pregação publicada no podcast";
+    subtitulo = live;
+    blocos = [
+      caixa("ok", `O áudio da pregação já está no podcast do site como <strong>${esc(p.episodio_titulo || "")}</strong>.<br>${esc(trecho)}${linkPequeno(yt(p.inicio), "Conferir o início")}`),
+      semPregador ? caixa("aviso", `O Gemini não identificou o <strong>pregador</strong>. Para completar: ${esc(ondeCorrigir)} Digite o nome e toque em “Salvar”.`) : "",
+      `<p style="margin:14px 0 0;">${botao(`${SITE_URL}/podcast`, "Ouvir no site")} &nbsp; ${botao(painel, "Corrigir no painel", C.navy)}</p>`,
+    ];
+    texto = `O áudio da pregação já está no podcast do site como "${p.episodio_titulo || ""}".
+${trecho}
+Conferir no YouTube: ${yt(p.inicio)}
+${semPregador ? `
+O Gemini não identificou o pregador. Para completar: ${ondeCorrigir} Digite o nome e toque em "Salvar".
+` : ""}
+Ouvir: ${SITE_URL}/podcast
+Painel: ${painel}`;
+  } else if (p.status === "conferir") {
+    assunto = `Pregação para conferir: ${live}`;
+    titulo = "Confira a pregação";
+    subtitulo = live;
+    const achou = p.inicio != null;
+    const msg = achou
+      ? `O Gemini não teve certeza de onde está a pregação (achou ${hms(p.inicio)} até ${hms(p.fim)}). Confira no YouTube e, no painel, corrija o início e o fim se precisar e toque em “Gerar o áudio”.`
+      : "O Gemini não achou pregação nesta live. Se tiver, digite no painel onde ela começa e termina e toque em “Gerar o áudio”. Se não tiver, toque em “Não publicar”.";
+    blocos = [caixa("aviso", `${esc(msg)}${achou ? linkPequeno(yt(p.inicio), "Ver no YouTube") : linkPequeno(yt(null), "Ver no YouTube")}`), `<p style="margin:14px 0 0;">${botao(painel, "Abrir o painel")}</p>`];
+    texto = `${msg}
+Onde: ${ondeCorrigir}
+YouTube: ${yt(p.inicio)}
+Painel: ${painel}`;
+  } else {
+    assunto = `Não consegui gerar o áudio da pregação: ${live}`;
+    titulo = "O áudio da pregação não saiu";
+    subtitulo = live;
+    const msg = `O programa tentou ${p.tentativas || 1} vez(es) e não conseguiu. Último erro: ${p.detalhe || "?"}`;
+    blocos = [caixa("aviso", esc(msg)), `<p style="margin:8px 0 0;font-size:14px;color:${C.soft};">Para tentar de novo: ${esc(ondeCorrigir)} Toque em “Gerar o áudio”. O computador precisa estar ligado.</p>`];
+    texto = `${msg}
+Para tentar de novo: ${ondeCorrigir} Toque em "Gerar o áudio". O computador precisa estar ligado.
+Painel: ${painel}`;
+  }
+  return {
+    subject: assunto,
+    html: moldura({ titulo, subtitulo, corpo: secao("Pregação", blocos.filter(Boolean).join('<div style="height:10px"></div>')), rodape: esc(rodape) }),
+    text: `${titulo} — ${subtitulo}
+
+${texto}
+
+${rodape}`,
+  };
+}
 
 /* ---------- Resumo da semana (segunda-feira) ---------- */
 export function emailResumo(p, agora = new Date()) {

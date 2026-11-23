@@ -13,7 +13,8 @@ function publishedPodcasts() {
 }
 
 const findEpisode = (id) => publishedPodcasts().find((p) => String(p.id) === String(id));
-const epLabel = (p) => (p.episode_number ? `EP. ${p.episode_number}` : "Episódio");
+// Pregação das lives (programa scripts/pregacao/: MP3 em images/pregacoes/, episódio 0)
+const epLabel = (p) => (p.episode_number ? `EP. ${p.episode_number}` : String(p.audio_url).includes("/pregacoes/") ? "Pregação" : "Episódio");
 const epDate = (p) => fmtDateLong(p.published_at ? String(p.published_at).slice(0, 10) : "");
 
 // width: tamanho em que a capa aparece (a miniatura vem já reduzida, ver imgThumb).

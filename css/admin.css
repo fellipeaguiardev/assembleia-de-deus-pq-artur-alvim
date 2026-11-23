@@ -1136,3 +1136,36 @@ p.gate-note {
   font-weight: 600;
   text-decoration: underline;
 }
+
+/* Vídeos: pregação em áudio no podcast (js/admin.js, pregacaoHTML) */
+.admin-card-media > .pregacao-box {
+  grid-column: 1 / -1;
+}
+.pregacao-box {
+  margin-top: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--c-line-strong);
+  border-radius: 12px;
+  background: #f7f9fc;
+}
+.pregacao-box h4 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 10px;
+  font-size: 15px;
+}
+.pregacao-box .admin-note {
+  margin: 0 0 10px;
+}
+.pregacao-box .item-actions {
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.pregacao-box .admin-note a {
+  font-weight: 600;
+  text-decoration: underline;
+}
+.text-warn {
+  color: #9a2a1d;
+}

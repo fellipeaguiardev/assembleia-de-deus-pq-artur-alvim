@@ -700,24 +700,82 @@ pelo cartaz"** mostra o que vai mudar e só troca depois da confirmação.
   com a imagem e o cartão explica o motivo. A IA pode errar (ano que não aparece no cartaz,
   letra muito decorada); os avisos dela aparecem no cartão do evento. Código QR não é lido.
 
-## Achar a pregação na live (Gemini) — em teste
+## Pregação em áudio no podcast (programa no computador + Gemini)
 
-Na aba **Vídeos** do painel, cada vídeo do YouTube tem **"Achar a pregação"**. A rota é
-`POST /api/rotina/pregacao { video }`, só para admin, e o código fica em `api/_lib/pregacao.mjs`.
+Depois de cada live, o **áudio da pregação** vai sozinho para o podcast do site, sem ninguém da mídia
+precisar fazer nada. São três partes:
 
-- **Como funciona:** o Gemini recebe o **link** do vídeo (só vídeo público) e o próprio Google busca
-  o vídeo. O servidor do site não baixa nada, porque o YouTube barra os servidores da Vercel. Ele
-  devolve onde a pregação começa e termina, o pregador, o tema, o texto bíblico e a confiança.
-- **Plano grátis:** até 8 horas de vídeo do YouTube por dia. O vídeo vai em resolução baixa e com
-  0,2 quadro por segundo, para gastar menos.
-- **Tempo:** a função tem até 300 s (`maxDuration` no `vercel.json`); um culto longo pode levar
-  alguns minutos.
-- **Por enquanto só mostra o resultado,** com links "Conferir o início/fim no YouTube". Nada é
-  gravado. É o teste para ver se a leitura acerta nos cultos da igreja (precisão esperada: cerca de
-  1 minuto).
-- **Situação em 22/11/2026:** o Gemini recusou com **403 ("The caller does not have permission")** todas as 5 formas de mandar o link, nos 3 modelos, em menos de 0,2 s, com vídeos públicos. O bloqueio é da chave/conta no Google, não do vídeo. Com **chave nova em projeto novo** (23/11) o 403 continuou: o Google não libera vídeo do YouTube para esta conta no plano grátis. Desde então o botão faz **uma tentativa só** e para no 403, porque as tentativas seguidas gastavam a cota (a mesma da leitura de cartazes; o Google chegou a responder 429). Plano B: a equipe digita o minuto do início no painel e o resto é automático.
-- **Próximo passo, se acertar:** o episódio entra sozinho no podcast do site, tocando só a pregação
-  (player do YouTube com início e fim).
+1. **Programa no computador** (`scripts/pregacao/rodar.mjs`). O Agendador de Tarefas do Windows roda
+   ele de hora em hora, sem abrir janela. A cada rodada ele:
+   - lê as últimas lives do canal com o yt-dlp;
+   - para cada live nova que terminou há mais de 1 hora (e começou nos últimos 3 dias), pede ao
+     site para o Gemini achar a pregação (no máximo 2 por rodada, para poupar a cota);
+   - para cada pregação na fila: baixa só o áudio da live (cerca de 5 s), corta a pregação com o
+     ffmpeg (mono, volume igualado com `loudnorm`, fade, MP3 de 32 a 64 kbps para caber nos 50 MB do
+     Storage; cerca de 3 min para 50 min de pregação), envia para `images/pregacoes/` e publica o
+     episódio;
+   - manda e-mail para a equipe (`RESUMO_PARA`) quando publica, quando precisa conferir ou quando
+     falha 3 vezes;
+   - anota como foi (`pregacao_registrar`). O alerta diário avisa se falhar 2 vezes seguidas ou se o
+     computador ficar mais de 8 dias sem rodar.
+
+   O servidor da Vercel não faz essa parte porque o YouTube barra download vindo de servidores. De um
+   computador comum funciona: testado em 23/11/2026 com a live do dia 22.
+2. **Site** (`POST /api/rotina/pregacao` com `Authorization: Bearer preg_…`). A chave é conferida no
+   banco (`pregacao_chave_ok`) **antes** de gastar o Gemini. Ações:
+   - `analisar`: Gemini + grava em `public.pregacoes`;
+   - `avisar`: e-mail (`emailPregacao` em `api/_lib/rotina.mjs`).
+
+   A chave do Gemini continua só na Vercel.
+3. **Banco** (`supabase/migrations/20261123120000_pregacao_audio.sql`):
+   - tabela `public.pregacoes`, só admin;
+   - funções do programa, que conferem o hash da chave;
+   - **vale de envio**: o programa só consegue enviar o MP3 cujo nome o banco acabou de sortear (vale
+     2 horas). Regra do Storage "Programa da pregação envia o áudio": nenhum outro envio fica liberado
+     para visitantes;
+   - `pregacao_publicar`: cria ou atualiza o episódio, com número 0, capa da live, data do culto e
+     link do YouTube no início da pregação. No site o rótulo é "Pregação" (`epLabel` em
+     `js/podcast.js`).
+
+**Situações** (aba **Vídeos** do painel, caixa "Pregação no podcast" em cada live):
+
+| Situação | O que significa |
+| --- | --- |
+| `fila` | O Gemini teve confiança alta ou média, ou a equipe tocou em "Gerar o áudio". O computador gera na próxima rodada. |
+| `conferir` | Confiança baixa ou sem pregação: chega um e-mail, e a equipe corrige o início e o fim e toca em "Gerar o áudio", ou em "Não publicar". |
+| `pronta` | Está no podcast. |
+| `erro` | O programa tenta de novo até 3 vezes. |
+| `ignorar` | "Não publicar": o episódio vira rascunho. |
+
+**Corrigir no painel:** os campos **Começa em, Termina em, Pregador, Texto bíblico e Tema** (o tema
+vira o título do episódio).
+- Mudou só o texto: "Salvar" atualiza o episódio na hora (`pregacao_atualizar_episodio`).
+- Mudou o horário: volta para a fila e sai um MP3 novo. O antigo vai para `lixo`, e o painel apaga
+  esses arquivos ao abrir a aba Vídeos (o programa não tem permissão de apagar).
+- **"Achar a pregação"** pergunta ao Gemini na hora (só admin) e preenche os campos. Só grava quando
+  a equipe toca em "Gerar o áudio".
+
+**Gemini:** recebe o **link** do vídeo e o próprio Google busca o vídeo, em resolução baixa e a 0,2
+quadro por segundo. O plano grátis permite até 8 horas de vídeo do YouTube por dia. Em 22/11/2026 deu
+403 ("The caller does not have permission"), mesmo com chave nova. Por isso o código para no primeiro
+403, para não gastar a cota. Em 23/11/2026 funcionou: a live de 1h08 foi lida em 24 s com
+`gemini-3.6-flash`, e a pregação ficou em 0:04:41 → 0:53:35, com confiança alta.
+
+**Instalar num computador (uma vez):** `powershell -ExecutionPolicy Bypass -File scripts\pregacao\instalar.ps1`.
+- Ele confere o Node e o Python, instala o yt-dlp (pip) e o ffmpeg (winget) se faltar, cria a chave
+  e cria a tarefa "Pregacao no podcast".
+- A chave fica em `%USERPROFILE%\.pregacao-podcast\config.json`, **fora do GitHub**; no banco fica só
+  o SHA-256.
+- **Computador novo:** `node scripts/pregacao/nova-chave.mjs --trocar` mostra o `update` para rodar
+  no Supabase. A chave antiga deixa de valer.
+- **Registro:** `%USERPROFILE%\.pregacao-podcast\registro.log`.
+- **Teste sem publicar:** `node scripts/pregacao/rodar.mjs --simular`.
+- **Desinstalar:** `Unregister-ScheduledTask -TaskName "Pregacao no podcast"`.
+- O yt-dlp se atualiza sozinho uma vez por dia, porque o YouTube muda sempre.
+
+**Espaço:** cerca de 23 MB por pregação de 50 min. O Storage grátis (1 GB, junto com as fotos)
+guarda umas 30 a 40 pregações. Depois disso, é preciso apagar episódios antigos no painel (Podcast)
+ou mudar para outro armazenamento.
 
 ## Resumo semanal e alertas por e-mail
 
