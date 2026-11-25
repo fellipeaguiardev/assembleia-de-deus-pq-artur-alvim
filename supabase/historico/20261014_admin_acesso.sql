@@ -42,7 +42,7 @@ revoke all on public.admins from anon, authenticated;
 -- adicionar ou remover um admin, veja o README (não edite este arquivo).
 insert into public.admins (user_id)
 select u.id from auth.users u
- where lower(u.email) in ('adparque@gmail.com', 'fellipe.aguiar1058@gmail.com')
+ where lower(u.email) in ('<email-do-admin-1>', '<email-do-admin-2>')
    and u.email_confirmed_at is not null
 on conflict (user_id) do nothing;
 

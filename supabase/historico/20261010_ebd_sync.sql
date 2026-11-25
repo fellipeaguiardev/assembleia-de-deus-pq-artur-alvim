@@ -29,7 +29,7 @@
 -- 1) Admin = usuário do Auth, e-mail confirmado e na lista
 do $outer$
 begin
-  if exists (select 1 from auth.users where lower(email) = 'adparque@gmail.com' and email_confirmed_at is not null) then
+  if exists (select 1 from auth.users where lower(email) = '<email-do-admin-1>' and email_confirmed_at is not null) then
     create or replace function public.is_site_admin()
     returns boolean
     language sql
@@ -42,12 +42,12 @@ begin
         from auth.users u
         where u.id = auth.uid()
           and u.email_confirmed_at is not null
-          and lower(u.email) in ('adparque@gmail.com', 'fellipe.aguiar1058@gmail.com')
+          and lower(u.email) in ('<email-do-admin-1>', '<email-do-admin-2>')
       )
     $fn$;
     raise notice 'is_site_admin reforçada';
   else
-    raise notice 'is_site_admin NÃO alterada: confirme o e-mail adparque@gmail.com em Authentication → Users e rode de novo';
+    raise notice 'is_site_admin NÃO alterada: confirme o e-mail do admin em Authentication → Users e rode de novo';
   end if;
 end
 $outer$;
