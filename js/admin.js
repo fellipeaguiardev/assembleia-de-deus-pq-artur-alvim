@@ -1424,9 +1424,12 @@ async function syncYoutubeNow() {
 const isPublished = (p) => normalizeText(p.status) === "publicado";
 
 function tabPodcast() {
-  const items = (data.podcasts || []).slice().sort((a, b) => (Number(b.episode_number) || 0) - (Number(a.episode_number) || 0));
+  // Mais recente em cima (pela data, como no site). Pelo número, as pregações
+  // das lives (episódio 0) iam parar no fim da lista.
+  const quando = (p) => new Date(p.published_at || p.created_at || 0).getTime() || 0;
+  const items = (data.podcasts || []).slice().sort((a, b) => quando(b) - quando(a) || (Number(b.episode_number) || 0) - (Number(a.episode_number) || 0));
   if (editingPodcastId) {
-    const nextNumber = (Number(items[0]?.episode_number) || 0) + 1;
+    const nextNumber = Math.max(0, ...items.map((p) => Number(p.episode_number) || 0)) + 1;
     const p = items.find((x) => String(x.id) === String(editingPodcastId)) || {
       id: "",
       title: "",
