@@ -385,10 +385,56 @@ SHA-256). Limite de 6 e-mails por conta por hora; registros apagados depois de 3
 Quem recebe o e-mail: `ADMIN_APROVADORES` (opcional, e-mails separados por vírgula) ou `NOTIFY_TO`.
 Sem domínio verificado, o Resend só entrega para o e-mail da conta Resend.
 
+### Auditoria de segurança (25/11/2026)
+
+Auditoria do código (14 itens: acesso ao painel, IDOR, chaves, valores, requisições forjadas,
+webhooks, limites, escalada de privilégio, exposição de erros, prompt injection, XSS, upload,
+segredos no Git e RLS). Resultado geral: risco baixo, nada crítico.
+- **Já protegidos:** RLS em todas as tabelas, só a chave publicável no navegador, liberação
+  por e-mail, `esc()` em todo texto do banco e cabeçalhos de segurança.
+- **Git:** o histórico inteiro (85 commits) foi varrido e não há segredo. O repositório é público.
+
+Correções (`supabase/migrations/20261125120000_seguranca_limites_auditoria.sql`):
+1. **Formulário de contato:** o limite agora fica no banco e vale para todas as instâncias da
+   função. São 3 mensagens por endereço em 10 min e 30 por hora no total (`contato_pode_enviar`).
+   O IP não é guardado: só um hash com sal, apagado em 1 dia. Antes, o limite ficava na memória
+   de cada instância, e um robô podia esgotar a cota do Resend, que é a mesma do e-mail de
+   liberação do painel.
+   - POST sem cabeçalho `Origin` é recusado. O navegador sempre manda; o `curl` não.
+   - Banco fora do ar: o formulário continua funcionando, com o freio da memória.
+2. **Pedidos da biblioteca:** `library_request` passou a ter também um limite de 5 por endereço
+   por hora, lido dos cabeçalhos que o PostgREST passa ao banco. Antes, quem trocava de telefone
+   esgotava o limite geral de 40 por hora.
+3. **Rascunhos:** eventos desativados e vídeos ocultos não são mais lidos por visitantes. O painel
+   continua vendo tudo.
+4. **E-mails dos admins** saíram das migrations antigas (viraram marcadores).
+5. **Auditoria:** criar, alterar e apagar nas tabelas do site (inclusive a chave PIX em
+   `donation_types` e a lista `admins`) fica em `private.auditoria`, com quando, quem (id do
+   login), antes e depois. Guarda 1 ano e só se lê pelo SQL Editor:
+   ```sql
+   select em, quem, tabela, acao, antes, depois from private.auditoria order by em desc limit 50;
+   -- só a chave PIX:
+   select em, quem, antes->>'pix_key' as antes, depois->>'pix_key' as depois
+     from private.auditoria where tabela = 'donation_types' order by em desc;
+   ```
+6. **Dependências:** `overrides` no `package.json` força o `fflate` 0.8.3 no `satori` (falha
+   GHSA-px8p-9vwx-vf98). O `scripts/publicar.sh` leva o `overrides` para a Vercel. O `serve`
+   (só testes) foi para a 14.2.8. O `npm audit` dá 0 vulnerabilidades.
+
+**Ficaram para depois (baixo risco):**
+- tirar `'unsafe-inline'` da CSP, o que exige trocar os `onclick` do código por `addEventListener`;
+- a chave `LIB_TRIGGER_KEY` vai no link "Atualizar agora" da planilha; se a planilha for
+  compartilhada com muita gente, troque o valor na Vercel.
+
+**Conferir no painel do Supabase:**
+- *Authentication → Allow new users to sign up* desligado;
+- *Settings → API → Exposed schemas* só com `public`.
+
 ### Adicionar ou remover um admin
 
-A lista de admins é **só a tabela `public.admins`** (nenhum e-mail fica no código; os e-mails que
-aparecem em migrations antigas são histórico). Tudo pelo *SQL Editor* do Supabase:
+A lista de admins é **só a tabela `public.admins`** (nenhum e-mail fica no código; nas migrations
+antigas de `supabase/historico/` os e-mails viraram marcadores `<email-do-admin-1>` em 25/11/2026,
+porque o repositório é público). Tudo pelo *SQL Editor* do Supabase:
 
 1. A pessoa precisa ter conta em *Authentication → Users*, com e-mail confirmado (*Add user →
    Create new user* com "Auto Confirm User", ou *Invite user*).
@@ -903,7 +949,7 @@ transmissão dentro do site.
 | Versão nova do app | O site confere `/version.json` ao voltar para o app e oferece “Atualizar” |
 
 **E-mail dos pedidos:** a função `api/contato.mjs` recebe o formulário, barra robôs (campo-isca,
-envio rápido demais, limite por endereço), monta o e-mail com o modelo `api/_lib/pedido-oracao.mjs`
+envio rápido demais, POST sem `Origin`, limite no banco por endereço e por hora: veja "Auditoria de segurança"), monta o e-mail com o modelo `api/_lib/pedido-oracao.mjs`
 (texto e versículo conforme o assunto, botão de WhatsApp) e envia pelo Resend (resend.com).
 Variáveis na Vercel (*Settings → Environment Variables*): `RESEND_API_KEY`, `NOTIFY_TO`
 (e-mails separados por vírgula: a secretaria), `EBD_SYNC_TOKEN`, `CRON_SECRET`, `ADMIN_ACCESS_TOKEN` e,
