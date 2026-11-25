@@ -14,7 +14,9 @@
 //                   para NOTIFY_TO, como os outros assuntos.
 //   NOTIFY_FROM     remetente (opcional). Padrão: REMETENTE em _lib/site.mjs
 // ============================================================
+import { createHash } from "node:crypto";
 import { origemDeFora, REMETENTE } from "./_lib/site.mjs";
+import { rpc } from "./_lib/fonte.mjs";
 import { buildPrayerEmail, FORM_TYPES as TYPES, LOGO_CID, LOGO_URL } from "./_lib/pedido-oracao.mjs";
 
 // Assunto que vai só para o pastor (NOTIFY_PASTOR), quando configurado.
@@ -23,8 +25,8 @@ if (!TYPES.includes(ASSUNTO_PASTOR)) console.warn("contato: o assunto do pastor 
 
 const json = (status, body) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" } });
 
-// Freio simples por endereço (vale por instância da função; o Resend e o
-// campo-isca seguram o resto).
+// Freio rápido por endereço, na memória (vale só para esta instância da
+// função). O limite de verdade fica no banco (limiteNoBanco).
 const recent = new Map();
 function tooMany(ip) {
   const now = Date.now();
@@ -33,6 +35,24 @@ function tooMany(ip) {
   recent.set(ip, list);
   if (recent.size > 500) recent.clear();
   return list.length > 5;
+}
+
+// Limite guardado no banco (supabase/migrations/20261125120000_seguranca_limites_auditoria.sql),
+// que vale para todas as instâncias: 3 mensagens por endereço em 10 min e 30 por
+// hora no total. Sem ele, um robô trocando de instância mandava centenas de e-mails
+// e esgotava a cota do Resend — e aí nem o e-mail de liberação do painel chegava.
+// O IP não sai daqui: vai só um hash com sal (a chave do servidor).
+// Banco fora do ar ou sem a migração: não derruba o formulário (fica o freio da memória).
+async function limiteNoBanco(ip) {
+  const chave = process.env.ROTINA_TOKEN;
+  if (!chave) return "ok";
+  const ipHash = createHash("sha256").update(`${ip}|${chave}`).digest("hex");
+  try {
+    return await rpc("contato_pode_enviar", { p_key: chave, p_ip_hash: ipHash });
+  } catch (e) {
+    console.error("contato: limite no banco indisponível:", e.message);
+    return "ok";
+  }
 }
 
 async function sendEmail(apiKey, message) {
@@ -46,7 +66,8 @@ async function sendEmail(apiKey, message) {
 }
 
 export async function POST(request) {
-  if (origemDeFora(request)) return json(403, { error: "Origem não permitida." });
+  // O navegador sempre manda Origin num POST: sem ele, não veio do formulário do site.
+  if (!request.headers.get("origin") || origemDeFora(request)) return json(403, { error: "Origem não permitida." });
   if (Number(request.headers.get("content-length") || 0) > 12000) return json(413, { error: "Mensagem grande demais." });
 
   let d;
@@ -63,8 +84,11 @@ export async function POST(request) {
   const data = { nome: str(d.nome, 80), contato: str(d.contato, 120), tipo: TYPES.includes(d.tipo) ? d.tipo : TYPES[0], mensagem: str(d.mensagem, 2000) };
   if (data.mensagem.length < 3) return json(400, { error: "Escreva a sua mensagem." });
   if (d.consentimento !== "sim") return json(400, { error: "Falta a autorização de uso dos dados." });
-  const ip = (request.headers.get("x-forwarded-for") || "").split(",")[0].trim() || "?";
+  const ip = request.headers.get("x-real-ip") || (request.headers.get("x-forwarded-for") || "").split(",")[0].trim() || "?";
   if (tooMany(ip)) return json(429, { error: "Muitas mensagens seguidas. Tente de novo daqui a alguns minutos." });
+  const vez = await limiteNoBanco(ip);
+  if (vez === "ip") return json(429, { error: "Muitas mensagens seguidas. Tente de novo daqui a alguns minutos." });
+  if (vez === "geral") return json(503, { error: "Recebemos muitas mensagens agora. Tente de novo em uma hora ou fale conosco pelo WhatsApp." });
 
   const apiKey = process.env.RESEND_API_KEY;
   const lista = (v) => String(v || "").split(",").map((s) => s.trim()).filter(Boolean);

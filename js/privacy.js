@@ -11,7 +11,7 @@
    carregam depois que a pessoa permite.
    ============================================================ */
 const CONSENT_KEY = "cookie-consent-v1";
-const PRIVACY_UPDATED = "2026-11-11";
+const PRIVACY_UPDATED = "2026-11-25";
 
 let consent = readConsent();
 
@@ -187,8 +187,12 @@ function privacyPageHTML() {
         renovações e a fila de espera. Esses dados ficam visíveis só para a equipe; no site aparece apenas se o livro está disponível.
         <em>Base legal: procedimentos para o empréstimo que você pediu (art. 7º, V) e legítimo interesse em cuidar do acervo (art. 7º, IX).</em></li>
         <li><strong>Painel administrativo:</strong> e-mail e sessão de login de quem administra o site e, a cada entrada no painel, um
-        registro de segurança (data, navegador, cidade aproximada e endereço IP) usado no e-mail de confirmação de acesso.
-        <em>Base legal: legítimo interesse em proteger o site (art. 7º, IX).</em></li>
+        registro de segurança (data, navegador, cidade aproximada e endereço IP) usado no e-mail de confirmação de acesso. As
+        alterações feitas no painel (o que mudou, quando e por qual login) ficam registradas por até 1 ano, para a equipe saber
+        quem mudou o quê. <em>Base legal: legítimo interesse em proteger o site (art. 7º, IX).</em></li>
+        <li><strong>Proteção contra envios em massa:</strong> quando você envia o formulário de contato ou pede um livro, guardamos
+        por até 1 dia um código criado a partir do seu endereço IP (não o endereço em si), só para limitar quantos envios saem do
+        mesmo lugar e barrar robôs. Depois de 1 dia ele é apagado. <em>Base legal: legítimo interesse em proteger o site (art. 7º, IX).</em></li>
         <li><strong>Podcast:</strong> o site não registra o que você ouve. Ao tocar um episódio, o áudio vem dos servidores do
         Spotify for Creators (anchor.fm), que recebem o seu endereço IP e o navegador, como em qualquer player de podcast.
         Onde você parou fica só no seu aparelho.</li>

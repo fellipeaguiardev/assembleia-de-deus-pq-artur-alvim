@@ -100,7 +100,12 @@ async function submitPrayer(e) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...Object.fromEntries(fd), t: Date.now() - (Number(form.dataset.shown) || 0) }),
     });
-    if (!res.ok) throw new Error("HTTP " + res.status);
+    if (!res.ok) {
+      // Limite de envios (api/contato.mjs): mostra a mensagem do servidor
+      const corpo = await res.json().catch(() => ({}));
+      if ([429, 503].includes(res.status) && corpo.error) return fail(corpo.error);
+      throw new Error("HTTP " + res.status);
+    }
     try {
       sessionStorage.setItem("prayer-last-sent", String(Date.now()));
     } catch {}
