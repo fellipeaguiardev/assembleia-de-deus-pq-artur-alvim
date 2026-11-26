@@ -899,7 +899,7 @@ const LIST_QUERIES = {
     query: (q) => q.eq("status", "Publicado").order("published_at", { ascending: false }),
   },
   news: {
-    cols: "id,title,slug,summary,content,cover_image,published_at,author,featured,published,created_at,source_id,source_url,source_name,dismissed",
+    cols: "id,title,slug,summary,content,cover_image,published_at,author,featured,published,created_at,source_id,source_url,source_name,dismissed,expires_at",
     first: 20,
     map: (rows) => rows.map(mapNews),
     query: (q) => q.eq("published", true).order("published_at", { ascending: false }),

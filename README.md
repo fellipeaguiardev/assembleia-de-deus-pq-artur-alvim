@@ -698,7 +698,9 @@ No painel, aba **Eventos**:
 **Validade das notícias** (pedido da equipe em 17/11/2026):
 
 - **O prazo:**
-  - cada notícia tem **"Fica no site até"** (`news.expires_at`, o último dia no site);
+  - cada notícia tem **"Fica no site até"** (`news.expires_at`, o último dia no site). A coluna
+    precisa estar nas listas de colunas do site (`js/core.js` e `api/dados.mjs`); o
+    `scripts/verificar.mjs` confere;
   - vazio = **1 semana** depois da data da notícia;
   - numa campanha, ponha o último dia dela.
 - **Ao vencer:** a notícia **sai do site, mas não é apagada**. No painel aparece "Expirada" e volta
@@ -1176,6 +1178,9 @@ A cada push, o GitHub Actions (`.github/workflows/check.yml`) roda `scripts/veri
   primeiro);
 - confere que `api/` tem no máximo **12 funções** (limite do plano grátis da Vercel por publicação;
   acima disso a Vercel recusa a publicação inteira). Arquivos e pastas com `_` (como `_lib`) não contam;
+- confere que as listas públicas (notícias, podcasts, vídeos) pedem ao banco **todas as colunas que o
+  site usa** (`LIST_QUERIES` em `js/core.js` e as listas de `api/dados.mjs`). Em 25/11/2026 as notícias
+  sumiram do site porque `expires_at` não era pedida: sem ela, valia a validade padrão de 1 semana;
 - procura segredos nos arquivos do git: chave secreta do Supabase (`sb_secret_…`), JWT com papel
   `service_role`, `service_role` com valor, blocos `-----BEGIN …` e arquivos `.env`.
 

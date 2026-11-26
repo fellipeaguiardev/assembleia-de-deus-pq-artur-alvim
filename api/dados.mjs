@@ -27,7 +27,7 @@ import { SUPABASE_URL, SUPABASE_KEY } from "./_lib/fonte.mjs";
 import { statusDoCanal } from "./_lib/aovivo.mjs";
 
 const VIDEOS = "id,title,youtube_url,youtube_id,category,date,description,source,created_at";
-const NEWS = "id,title,slug,summary,content,cover_image,published_at,author,featured,published,created_at,source_id,source_url,source_name,dismissed";
+const NEWS = "id,title,slug,summary,content,cover_image,published_at,author,featured,published,created_at,source_id,source_url,source_name,dismissed,expires_at";
 const PODCASTS = "id,title,description,episode_number,cover_url,audio_url,spotify_url,youtube_url,published_at,status,created_at";
 // Lição da semana da página inicial (ebdLoadCurrent em js/ebd.js)
 const EBD = "id,quarter_id,number,lesson_date,title,golden_ref,reading_ref,source_url,key_idea,summary,daily_refs,questions,status,publish_at,quarter:ebd_quarters!inner(id,year,quarter,magazine,magazine_slug,theme,start_date,lesson_count,visible)";

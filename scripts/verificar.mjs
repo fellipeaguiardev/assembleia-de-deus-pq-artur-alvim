@@ -13,6 +13,8 @@
 //     do roteador (pageHTML em js/site.js) são as mesmas.
 //  2d. Funções: no máximo 12 em api/ (limite do plano grátis da Vercel por
 //     publicação; acima disso a Vercel recusa a publicação inteira).
+//  2e. Colunas: as listas públicas (notícias, podcasts, vídeos) pedem ao banco
+//     todas as colunas que o site usa (js/core.js e api/dados.mjs).
 //  2c. Migrations: supabase/migrations/ só com nomes que o CLI do Supabase
 //     aceita (14 dígitos + _nome.sql, versões sem repetir) e o baseline primeiro.
 //  3. Segredos: chave secreta do Supabase (sb_secret_…), JWT com papel
@@ -147,6 +149,37 @@ function funcoes(pasta) {
 const listaFuncoes = funcoes("api");
 if (listaFuncoes.length > MAX_FUNCOES) falhar("funções", `${listaFuncoes.length} funções em api/ (o plano grátis da Vercel aceita ${MAX_FUNCOES}): junte alguma em outra`);
 console.log(`Funções: ${listaFuncoes.length} de ${MAX_FUNCOES} (plano grátis da Vercel).`);
+
+// ---------- 2e) Colunas das listas públicas ----------
+// O site não pede "select=*": cada lista diz as colunas (js/core.js LIST_QUERIES e
+// api/dados.mjs). Coluna que o map* lê e a lista não pede chega vazia — foi assim
+// que as notícias sumiram em 25/11/2026: sem expires_at, valia a validade padrão.
+const core = ler("js/core.js");
+const dados = ler("api/dados.mjs");
+const LISTAS = [
+  { tabela: "news", mapa: "mapNews", noDados: "NEWS" },
+  { tabela: "podcasts", mapa: "mapPodcast", noDados: "PODCASTS" },
+  { tabela: "videos", mapa: "mapVideo", noDados: "VIDEOS" },
+];
+let nColunas = 0;
+for (const { tabela, mapa, noDados } of LISTAS) {
+  const ini = core.indexOf(`const ${mapa} = `);
+  const corpoMapa = ini < 0 ? "" : core.slice(ini, core.indexOf("\n});", ini));
+  const lidas = new Set([...corpoMapa.matchAll(/\b[a-z]\.([a-z_]+)\b/g)].map((m) => m[1]));
+  const doCore = core.match(new RegExp(`\\n  ${tabela}: \\{\\s*cols: "([^"]+)"`))?.[1];
+  const doDados = dados.match(new RegExp(`const ${noDados} = "([^"]+)"`))?.[1];
+  if (!corpoMapa || !doCore || !doDados) {
+    falhar("colunas", `não achei ${mapa} / LIST_QUERIES.${tabela} / ${noDados} (mudou de nome?)`);
+    continue;
+  }
+  for (const [onde, lista] of [[`js/core.js (LIST_QUERIES.${tabela})`, doCore], [`api/dados.mjs (${noDados})`, doDados]]) {
+    const pedidas = new Set(lista.split(","));
+    const faltam = [...lidas].filter((c) => !pedidas.has(c));
+    if (faltam.length) falhar("colunas", `${onde} não pede ${faltam.join(", ")}, que ${mapa} usa`);
+  }
+  nColunas++;
+}
+console.log(`Colunas: ${nColunas} listas públicas conferidas.`);
 
 // ---------- 3) Segredos ----------
 // Os padrões são montados em partes para este arquivo não acusar a si mesmo.
