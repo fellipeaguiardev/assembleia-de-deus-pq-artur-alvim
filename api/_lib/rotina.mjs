@@ -15,6 +15,7 @@
 // encurtados, assunto sem caixa alta e poucos emojis.
 // ============================================================
 import { rpc } from "./fonte.mjs";
+import { PREGACAO_MIN_MINUTOS } from "./pregacao.mjs";
 import { SITE_URL, REMETENTE } from "./site.mjs";
 
 const IGREJA = "AD Belém - Parque Artur Alvim";
@@ -166,8 +167,11 @@ Painel: ${painel}`;
     titulo = "Confira a pregação";
     subtitulo = live;
     const achou = p.inicio != null;
+    // Trecho curto: o Gemini provavelmente pegou uma saudação (api/_lib/pregacao.mjs).
+    const min = achou && p.fim != null ? Math.round((p.fim - p.inicio) / 60) : null;
+    const saudacao = min !== null && min < PREGACAO_MIN_MINUTOS ? ` O trecho tem só ${Math.max(1, min)} min: pode ser uma saudação, não a pregação (que costuma ser mais longa e mais para o fim do culto).` : "";
     const msg = achou
-      ? `O Gemini não teve certeza de onde está a pregação (achou ${hms(p.inicio)} até ${hms(p.fim)}). Confira no YouTube e, no painel, corrija o início e o fim se precisar e toque em “Gerar o áudio”.`
+      ? `O Gemini não teve certeza de onde está a pregação (achou ${hms(p.inicio)} até ${hms(p.fim)}).${saudacao} Confira no YouTube e, no painel, corrija o início e o fim se precisar e toque em “Gerar o áudio”.`
       : "O Gemini não achou pregação nesta live. Se tiver, digite no painel onde ela começa e termina e toque em “Gerar o áudio”. Se não tiver, toque em “Não publicar”.";
     blocos = [caixa("aviso", `${esc(msg)}${achou ? linkPequeno(yt(p.inicio), "Ver no YouTube") : linkPequeno(yt(null), "Ver no YouTube")}`), `<p style="margin:14px 0 0;">${botao(painel, "Abrir o painel")}</p>`];
     texto = `${msg}

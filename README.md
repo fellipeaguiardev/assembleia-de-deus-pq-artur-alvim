@@ -821,6 +821,13 @@ quadro por segundo. O plano grátis permite até 8 horas de vídeo do YouTube po
 403 ("The caller does not have permission"), mesmo com chave nova. Em 23/11/2026 funcionou: a live de
 1h08 foi lida em 24 s com `gemini-3.6-flash`, e a pregação ficou em 0:04:41 → 0:53:35, com confiança
 alta.
+- **Saudação × pregação** (pedido da equipe em 27/11/2026): antes da pregação, pastores e visitantes
+  costumam "saudar a igreja" por poucos minutos (2 a 15), às vezes com versículo. O prompt explica a
+  diferença: a pregação é a fala **mais longa** (25 a 60 min) e fica **mais para o fim** (num culto de
+  2 h, começa por volta de 1:00 a 1:30). Trava no servidor (`PREGACAO_MIN_MINUTOS` = 15 em
+  `api/_lib/pregacao.mjs`): trecho com menos de 15 min vira confiança "baixa". Aí o banco não gera o
+  áudio sozinho e deixa para **conferir**; o e-mail e o painel avisam que pode ser uma saudação. Não
+  há trava pela posição no vídeo, porque uma gravação "Parte 2" começa já na pregação.
 - **Modelos para vídeo:** `gemini-3.6-flash` primeiro, depois `gemini-3.8-flash` e os da leitura de
   cartazes (`GEMINI_MODEL`, se existir, vem antes de todos). Em 26/11/2026 o `flash-lite` recusou o
   vídeo com 403 e o código parava ali, sem tentar os outros.
