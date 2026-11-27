@@ -79,11 +79,13 @@ function rodarProg(cmd, args, { timeoutMs = 30 * 60e3 } = {}) {
     let err = "";
     p.stdout.on("data", (d) => (out += d));
     p.stderr.on("data", (d) => (err = (err + d).slice(-4000)));
-    const t = setTimeout(() => p.kill(), timeoutMs);
+    let estourou = false;
+    const t = setTimeout(() => ((estourou = true), p.kill()), timeoutMs);
     p.on("error", (e) => (clearTimeout(t), reject(new Error(`${cmd}: ${e.message}`))));
     p.on("close", (code) => {
       clearTimeout(t);
-      if (code === 0) resolve(out);
+      if (estourou) reject(Object.assign(new Error(`${path.basename(cmd)} demorou mais de ${Math.round(timeoutMs / 60e3)} min e foi interrompido.`), { estourou: true }));
+      else if (code === 0) resolve(out);
       else reject(new Error(`${path.basename(cmd)} saiu com erro ${code}: ${err.trim().split("\n").slice(-3).join(" | ").slice(0, 400)}`));
     });
   });
@@ -191,12 +193,16 @@ async function gerarAudio(cfg, ffmpeg, p) {
   for (const f of fs.readdirSync(TMP)) if (f.startsWith(id)) fs.rmSync(path.join(TMP, f), { force: true });
   // O YouTube às vezes recusa um link de download (403) e aceita logo depois
   // (visto em 23/11/2026): até 3 tentativas, 30 s entre elas.
+  // Live que o YouTube ainda não terminou de processar ("post_live", como a de 26/11/2026,
+  // presa assim por mais de 14 h): não tem o 251 e baixa devagar, ~25 KB/s. Por isso o 139
+  // (64k, metade do 140; o MP3 final tem 32–64k) vem antes do 140, e o prazo é de 100 min
+  // (a trava da rodada vale 3 h). Se estourar o prazo, não tenta de novo nesta rodada.
   for (let tentativa = 1; ; tentativa++) {
     try {
-      await ytdlp(cfg, ["-f", "251/140/bestaudio", "--no-part", "--no-playlist", "--retries", "5", "-o", path.join(TMP, `${id}.%(ext)s`), `https://www.youtube.com/watch?v=${id}`]);
+      await ytdlp(cfg, ["-f", "251/139/140/bestaudio", "--no-part", "--no-playlist", "--retries", "5", "-o", path.join(TMP, `${id}.%(ext)s`), `https://www.youtube.com/watch?v=${id}`], { timeoutMs: 100 * 60e3 });
       break;
     } catch (e) {
-      if (tentativa >= 3) throw e;
+      if (tentativa >= 3 || e.estourou) throw e;
       log(`  → o download falhou (${e.message.slice(-90)}); tentando de novo em 30 s…`);
       for (const f of fs.readdirSync(TMP)) if (f.startsWith(id)) fs.rmSync(path.join(TMP, f), { force: true });
       await new Promise((r) => setTimeout(r, 30e3));

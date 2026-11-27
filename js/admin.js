@@ -1185,10 +1185,14 @@ function pregacaoHTML(v, i) {
   const row = pregRows?.[id];
   const r = pregacoes[id];
   if (r?.carregando) return `<p class="admin-note" role="status">${icon("clock", 14)}<span>O Gemini está assistindo o culto… pode levar até 5 minutos. Pode continuar usando o painel.</span></p>`;
-  const erroGemini = r?.erro ? `<p class="admin-note admin-warn" role="status">${icon("x", 14)}<span>${esc(r.erro)}</span></p>` : "";
+  // Gemini falhou: os campos aparecem vazios para preencher à mão (o computador gera o
+  // áudio do mesmo jeito; só não sabe sozinho onde a pregação começa).
+  const erroGemini = r?.erro
+    ? `<p class="admin-note admin-warn" role="status">${icon("x", 14)}<span>${esc(r.erro)}${row ? "" : " Ou preencha à mão: abra o vídeo no YouTube, anote onde a pregação começa e termina e toque em “Gerar o áudio”."}</span></p>`
+    : "";
   const novo = r && !r.erro ? r : null; // resultado do Gemini ainda não gravado
-  if (!row && !novo) return erroGemini;
-  const d = novo ? { inicio: novo.inicio, fim: novo.fim, pregador: novo.pregador, tema: novo.tema, texto: novo.texto_biblico } : row;
+  if (!row && !novo && !r?.erro) return "";
+  const d = novo ? { inicio: novo.inicio, fim: novo.fim, pregador: novo.pregador, tema: novo.tema, texto: novo.texto_biblico } : row || {};
   const yt = (seg) => `https://www.youtube.com/watch?v=${encodeURIComponent(id)}&t=${Math.max(0, seg)}s`;
   let situacao = "";
   if (row) {

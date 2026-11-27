@@ -827,6 +827,12 @@ alta.
 - **Live que acabou agora:** enquanto o YouTube processa a gravação (`live_status` = `post_live`), o
   Google pode recusar o vídeo. O programa só analisa live já processada (`was_live`), 1 hora depois do
   fim; no painel, espere algumas horas antes de "Achar a pregação".
+- **Live presa em processamento** (a de 26/11/2026 continuou `post_live` por mais de 14 h, e o Gemini
+  recusou nos 3 modelos): quando o "Achar a pregação" falha, o painel mostra os campos **vazios**. A
+  equipe anota no YouTube onde a pregação começa e termina, preenche e toca em "Gerar o áudio"; o
+  computador faz o resto. O áudio de live `post_live` baixa devagar (~25 KB/s, cerca de 30 min para
+  1h40 de culto): o programa prefere o formato 139 (64k), que tem metade do tamanho do 140, e dá até
+  100 min para o download.
 
 **Instalar num computador (uma vez):** `powershell -ExecutionPolicy Bypass -File scripts\pregacao\instalar.ps1`.
 - Ele confere o Node e o Python, instala o yt-dlp (pip) e o ffmpeg (winget) se faltar, cria a chave
