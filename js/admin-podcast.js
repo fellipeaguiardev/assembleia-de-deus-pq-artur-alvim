@@ -114,7 +114,7 @@ function podcastPlanHTML(plan) {
               ${plan.extras
                 .map(
                   (p) => `<label class="check-row"><input type="checkbox" data-id="${esc(p.id)}" ${podImport.remove.has(String(p.id)) ? "checked" : ""}
-                    onchange="podcastToggleRemove(this.dataset.id, this.checked)"> ${esc(p.title)} <small class="admin-muted">EP. ${esc(p.episode_number || "—")}</small></label>`,
+                    onchange="podcastToggleRemove(this.dataset.id, this.checked)"> ${esc(p.title)} <small class="admin-muted">${esc(epLabel(p))}</small></label>`,
                 )
                 .join("")}
             </div>`

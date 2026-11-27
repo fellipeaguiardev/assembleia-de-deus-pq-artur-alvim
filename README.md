@@ -793,7 +793,9 @@ precisar fazer nada. São três partes:
      para visitantes;
    - `pregacao_publicar`: cria ou atualiza o episódio, com número 0, capa da live, data do culto e
      link do YouTube no início da pregação. No site o rótulo é "Pregação" (`epLabel` em
-     `js/podcast.js`).
+     `js/podcast.js`), e no painel também.
+   - No painel → Podcast, o **número do episódio é opcional** (desde 27/11/2026). Vazio grava 0, como
+     as pregações, e o episódio continua sem número ao editar ou passar para rascunho.
 
 **Situações** (aba **Vídeos** do painel, caixa "Pregação no podcast" em cada live):
 

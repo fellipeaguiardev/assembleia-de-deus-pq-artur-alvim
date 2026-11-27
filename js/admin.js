@@ -1461,7 +1461,7 @@ function tabPodcast() {
               (p) => `
             <div class="podcast-admin-row">
               <div class="podcast-admin-thumb" style="${bgImage(imgThumb(p.cover_url, 160))}"></div>
-              <strong>EP. ${esc(p.episode_number || "—")}</strong>
+              <strong>${esc(epLabel(p))}</strong>
               <div class="podcast-admin-title">${esc(p.title)}</div>
               <span>${fmtDate(p.published_at ? String(p.published_at).slice(0, 10) : "") || "—"}</span>
               <span class="badge-inline ${isPublished(p) ? "is-published" : ""}">${isPublished(p) ? "Publicado" : "Rascunho"}</span>
@@ -1490,7 +1490,11 @@ function podcastFormHTML(p) {
     <div class="admin-card">
       <div class="field-row">
         ${field("Título", `<input id="podcastTitle" type="text" value="${esc(p.title)}" placeholder="Título do episódio">`, true)}
-        ${field("Número do episódio", `<input id="podcastEpisodeNumber" type="number" min="1" value="${esc(p.episode_number ?? "")}" placeholder="Ex.: 12">`)}
+        ${field(
+          "Número do episódio (opcional)",
+          `<input id="podcastEpisodeNumber" type="number" min="1" value="${esc(p.episode_number || "")}" placeholder="Sem número">
+           <small class="field-hint">Vazio = sem número, como as pregações. O site mostra “Pregação” ou “Episódio” no lugar.</small>`,
+        )}
         ${field("Data de publicação", `<input id="podcastPublishedAt" type="date" value="${esc(p.published_at ? String(p.published_at).slice(0, 10) : localISO())}">`)}
         ${field("Descrição", `<textarea id="podcastDescription" rows="4" placeholder="Resumo do episódio">${esc(p.description)}</textarea>`, true)}
         ${field(
@@ -1565,7 +1569,9 @@ function podcastFormPayload(forcePublish) {
 async function savePodcastForm(forcePublish) {
   const payload = podcastFormPayload(forcePublish);
   if (!payload.title) return showToast("Informe o título do episódio.", "error");
-  if (!payload.episode_number) return showToast("Informe o número do episódio.", "error");
+  // Número é opcional: vazio grava 0 (o banco exige um número). As pregações automáticas
+  // usam 0 — e a limpeza de 3 meses só apaga episódio 0 que veio de uma pregação.
+  if (payload.episode_number < 0 || !Number.isInteger(payload.episode_number)) return showToast("O número do episódio precisa ser inteiro (ou deixe vazio).", "error");
   if (payload.status === "Publicado" && !payload.audio_url && !payload.spotify_url && !payload.youtube_url) {
     return showToast("Adicione um áudio, link do Spotify ou do YouTube.", "error");
   }
