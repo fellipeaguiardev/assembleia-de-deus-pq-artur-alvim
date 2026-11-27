@@ -510,7 +510,8 @@ function footerHTML() {
 }
 
 /* Cabeçalho padrão das páginas internas */
-function pageHeroHTML(eyebrow, title, lead = "") {
+// extra: HTML já montado (botões) que entra logo abaixo do texto.
+function pageHeroHTML(eyebrow, title, lead = "", extra = "") {
   return `
   <section class="page-hero">
     <div class="page-hero-bg" aria-hidden="true"></div>
@@ -518,6 +519,7 @@ function pageHeroHTML(eyebrow, title, lead = "") {
       <span class="eyebrow">${esc(eyebrow)}</span>
       <h1>${esc(title)}</h1>
       ${lead ? `<p class="lead">${esc(lead)}</p>` : ""}
+      ${extra}
     </div>
   </section>`;
 }
@@ -1481,7 +1483,12 @@ function firstVisitPageHTML() {
     )
     .join("");
   return (
-    pageHeroHTML("Seja bem-vindo", "Sua primeira visita", fv.intro || "Que bom que você quer nos conhecer! Aqui estão as informações para planejar a sua visita.") +
+    pageHeroHTML(
+      "Seja bem-vindo",
+      "Sua primeira visita",
+      fv.intro || "Que bom que você quer nos conhecer! Aqui estão as informações para planejar a sua visita.",
+      `<div class="page-hero-actions"><button type="button" class="btn btn-accent" onclick="convidarAmigo()">${icon("share", 16)} Convidar um amigo</button></div>`,
+    ) +
     `
   <section class="block">
     <div class="container fv-grid" data-stagger>
@@ -1531,6 +1538,41 @@ function firstVisitPageHTML() {
     </div>
   </section>`
   );
+}
+
+/* Convite pronto para mandar a um amigo (WhatsApp etc.): horários dos cultos,
+   endereço, mapa, "Como chegar" (se for curto) e o link da página. */
+function conviteVisitaTexto() {
+  const c = data.church || {};
+  const fv = data.firstVisit || {};
+  const ehCulto = (n) => /culto|escola b[ií]blica|\bebd\b/i.test(n || "");
+  const ordem = (d) => (weekdayIndex(d.day) + 7) % 7; // domingo primeiro
+  let dias = (data.services || []).map((d) => ({ day: d.day, items: (d.items || []).filter((it) => ehCulto(it.name)) })).filter((d) => d.items.length);
+  if (!dias.length) dias = (data.services || []).filter((d) => d.items?.length);
+  dias = [...dias].sort((a, b) => ordem(a) - ordem(b));
+  const chegar = String(fv.directions || "").trim().replace(/\s+/g, " ");
+  const linhas = [
+    "Vem comigo conhecer a igreja! 😊",
+    "",
+    `⛪ ${c.name || "Assembleia de Deus Belém – Parque Artur Alvim"}`,
+  ];
+  if (dias.length) linhas.push("", "📅 Cultos", ...dias.map((d) => `• ${d.day}: ${d.items.map((it) => `${it.time} ${it.name}`).join(" · ")}`));
+  if (c.address) linhas.push("", `📍 ${c.address}`);
+  if (chegar && chegar.length <= 220) linhas.push(`🚶 ${chegar}`);
+  if (safeUrl(c.mapsUrl)) linhas.push(`🗺️ Mapa: ${c.mapsUrl}`);
+  linhas.push("", `Tudo sobre a primeira visita: ${window.APP_CONFIG.SITE_URL}/primeira-visita`);
+  return linhas.join("\n");
+}
+
+async function convidarAmigo() {
+  const text = conviteVisitaTexto();
+  try {
+    // Só o texto (o link já vai dentro): com "url" junto, alguns apps repetem o link.
+    if (navigator.share) await navigator.share({ title: "Sua primeira visita", text });
+    else window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener");
+  } catch (e) {
+    if (e?.name !== "AbortError") showToast("Não foi possível compartilhar.", "error");
+  }
 }
 
 /* ============================================================

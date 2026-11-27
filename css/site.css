@@ -628,6 +628,12 @@ section.block.tight {
   font-size: calc(17.5px * var(--fs));
   max-width: 600px;
 }
+.page-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
 @media (max-width: 600px) {
   .page-hero {
     padding: 56px 0 48px;
