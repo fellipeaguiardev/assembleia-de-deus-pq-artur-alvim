@@ -816,9 +816,17 @@ vira o título do episódio).
 
 **Gemini:** recebe o **link** do vídeo e o próprio Google busca o vídeo, em resolução baixa e a 0,2
 quadro por segundo. O plano grátis permite até 8 horas de vídeo do YouTube por dia. Em 22/11/2026 deu
-403 ("The caller does not have permission"), mesmo com chave nova. Por isso o código para no primeiro
-403, para não gastar a cota. Em 23/11/2026 funcionou: a live de 1h08 foi lida em 24 s com
-`gemini-3.6-flash`, e a pregação ficou em 0:04:41 → 0:53:35, com confiança alta.
+403 ("The caller does not have permission"), mesmo com chave nova. Em 23/11/2026 funcionou: a live de
+1h08 foi lida em 24 s com `gemini-3.6-flash`, e a pregação ficou em 0:04:41 → 0:53:35, com confiança
+alta.
+- **Modelos para vídeo:** `gemini-3.6-flash` primeiro, depois `gemini-3.8-flash` e os da leitura de
+  cartazes (`GEMINI_MODEL`, se existir, vem antes de todos). Em 26/11/2026 o `flash-lite` recusou o
+  vídeo com 403 e o código parava ali, sem tentar os outros.
+- **403:** a recusa volta em ~0,2 s, sem assistir nada. O código tenta uma vez em cada modelo e só
+  mostra o erro se todos recusarem.
+- **Live que acabou agora:** enquanto o YouTube processa a gravação (`live_status` = `post_live`), o
+  Google pode recusar o vídeo. O programa só analisa live já processada (`was_live`), 1 hora depois do
+  fim; no painel, espere algumas horas antes de "Achar a pregação".
 
 **Instalar num computador (uma vez):** `powershell -ExecutionPolicy Bypass -File scripts\pregacao\instalar.ps1`.
 - Ele confere o Node e o Python, instala o yt-dlp (pip) e o ffmpeg (winget) se faltar, cria a chave

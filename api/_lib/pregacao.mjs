@@ -13,6 +13,11 @@
 // ============================================================
 import { MODELOS } from "./cartaz.mjs";
 
+// Para VÍDEO, o primeiro é o que já leu as lives (gemini-3.6-flash, 23 e 25/11/2026).
+// O leve (flash-lite), primeiro na leitura de cartazes, recusou vídeo do YouTube com
+// 403 em 26/11/2026 — e, como o código parava no 1º 403, nem chegava a tentar os outros.
+const MODELOS_VIDEO = ["gemini-3.6-flash", "gemini-3.8-flash", ...MODELOS];
+
 const API = "https://generativelanguage.googleapis.com/v1beta/models";
 const PRAZO_MS = 270000; // a função tem 300 s (vercel.json)
 
@@ -84,7 +89,7 @@ export function limparPregacao(o) {
 export async function acharPregacao({ videoId, chave, modelos, fetchImpl = fetch, prazoMs = PRAZO_MS }) {
   if (!/^[\w-]{11}$/.test(String(videoId || ""))) throw new ErroPregacao(400, "Vídeo inválido.");
   if (!chave) throw new ErroPregacao(503, "Falta a chave do Gemini (GEMINI_API_KEY) na Vercel.");
-  const lista = [...new Set([...(modelos || []), ...MODELOS].filter(Boolean))];
+  const lista = [...new Set([...(modelos || []), ...MODELOS_VIDEO].filter(Boolean))];
   const fim = Date.now() + prazoMs;
   let ultimo = null;
   const watch = `https://www.youtube.com/watch?v=${videoId}`;
@@ -131,10 +136,10 @@ export async function acharPregacao({ videoId, chave, modelos, fetchImpl = fetch
       console.log(`pregacao: ${modelo} forma=${comFps} → ${res.status} em ${Date.now() - t0} ms`, res.status === 200 ? JSON.stringify(j?.usageMetadata || {}) : msg.slice(0, 200));
       if (res.status !== 403) so403 = false;
       if (res.status === 400 && /api key/i.test(msg)) throw new ErroPregacao(503, "A chave do Gemini não foi aceita.");
-      // 403 = o Google não libera vídeo do YouTube para esta conta (visto em 22/11/2026, também
-      // com chave nova em projeto novo). Para na 1ª recusa: tentar de novo só gasta a cota do
-      // plano grátis, que é a mesma da leitura de cartazes.
-      if (res.status === 403) break fora;
+      // 403 = este modelo não abriu o vídeo (volta em ~0,2 s, sem assistir nada). Outra forma
+      // no mesmo modelo dá o mesmo 403: passa para o próximo modelo. Também acontece logo
+      // depois da live, enquanto o YouTube ainda processa a gravação (mensagem no fim).
+      if (res.status === 403) continue fora;
       if (res.status === 400) {
         ultimo = new ErroPregacao(502, `O Gemini não respondeu (${res.status}): ${msg.slice(0, 140)}`);
         continue; // tenta a próxima forma de mandar o vídeo
@@ -162,7 +167,7 @@ export async function acharPregacao({ videoId, chave, modelos, fetchImpl = fetch
   if (so403)
     throw new ErroPregacao(
       403,
-      "O Gemini recusou abrir vídeos do YouTube com a chave atual (403, sem permissão). O vídeo é público; o bloqueio é do lado do Google — veja o README (Achar a pregação).",
+      "O Gemini não conseguiu abrir este vídeo (403). Se a live acabou há pouco, o YouTube ainda está processando a gravação: tente de novo daqui a algumas horas (o programa do computador tenta sozinho de hora em hora). Se continuar, veja o README (Achar a pregação).",
     );
   throw ultimo || new ErroPregacao(502, "O Gemini não respondeu. Tente de novo.");
 }
