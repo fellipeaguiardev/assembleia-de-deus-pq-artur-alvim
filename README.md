@@ -64,6 +64,7 @@ lições, livros, vídeos, cores) é editado pela equipe num **painel administra
 - **Biblioteca:** empréstimos com as regras da biblioteca (limite por pessoa, prazo, renovação, suspensão por atraso), fila de espera, mensagens prontas no WhatsApp, acervo com capas, leitores e exportação para planilha.
 - **Departamentos, sobre a igreja, primeira visita, igreja e redes, doações (PIX).**
 - **Entrada protegida:** e-mail e senha **e** confirmação por e-mail (“Liberar acesso” / “Não fui eu”) a cada login.
+- **No celular:** o painel nunca rola para os lados. A área do painel tem `overflow-x: hidden`, e no iPhone o campo de data perde a largura mínima nativa, que passava da tela (`css/admin.css`, `.admin-main` e `.field input[type="date"]`). Os campos têm 16 px, então o iPhone não dá zoom ao tocar neles. O toque duplo não dá zoom (`touch-action: manipulation`), mas o zoom de pinça continua, de propósito, para quem enxerga pouco.
 
 ## Como é feito
 

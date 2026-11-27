@@ -230,8 +230,10 @@ p.gate-note {
   flex: 1;
   min-width: 0;
   height: 100%;
+  overflow-x: hidden; /* nunca rola para os lados, nem se um campo passar da largura */
   overflow-y: auto;
   overscroll-behavior: contain;
+  touch-action: manipulation; /* sem zoom de toque duplo; o zoom de pinça continua (acessibilidade) */
 }
 .admin-content {
   max-width: 980px;
@@ -394,6 +396,26 @@ p.gate-note {
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease;
+}
+/* iPhone: o campo de data tem largura própria e passava da tela */
+.field input[type="date"],
+.field input[type="time"] {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+}
+@supports (-webkit-touch-callout: none) {
+  /* só no iPhone/iPad: tira a largura mínima do campo nativo e alinha o texto à esquerda */
+  .field input[type="date"],
+  .field input[type="time"] {
+    -webkit-appearance: none;
+    appearance: none;
+    text-align: left;
+  }
+  .field input[type="date"]::-webkit-date-and-time-value,
+  .field input[type="time"]::-webkit-date-and-time-value {
+    text-align: left;
+  }
 }
 .field textarea {
   resize: vertical;
