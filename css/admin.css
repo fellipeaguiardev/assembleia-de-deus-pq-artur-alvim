@@ -352,7 +352,7 @@ p.gate-note {
 
 .field-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
   margin-bottom: 8px;
 }
@@ -846,10 +846,12 @@ p.gate-note {
   .admin-content {
     padding: 22px 16px 80px;
   }
+  /* minmax(0, 1fr): a coluna encolhe até a tela; com 1fr ela crescia até a largura
+     natural do campo de data do iPhone e o cartão inteiro passava da borda */
   .field-row,
   .pix-admin,
   .admin-card-media {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .admin-thumb {
     margin-bottom: 14px;
